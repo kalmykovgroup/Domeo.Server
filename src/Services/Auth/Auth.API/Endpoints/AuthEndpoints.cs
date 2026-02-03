@@ -12,6 +12,9 @@ namespace Auth.API.Endpoints;
 
 public static class AuthEndpoints
 {
+    private const string AccessTokenCookieName = "access_token";
+    private const string RefreshTokenCookieName = "refresh_token";
+
     public static void MapAuthEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/auth").WithTags("Auth");
@@ -22,9 +25,60 @@ public static class AuthEndpoints
         group.MapPost("/logout", Logout).RequireAuthorization();
         group.MapGet("/me", GetCurrentUser).RequireAuthorization();
         group.MapPut("/me/password", ChangePassword).RequireAuthorization();
+        group.MapGet("/token", GetToken);
+    }
+
+    private static bool IsBrowserClient(HttpRequest request)
+    {
+        var userAgent = request.Headers.UserAgent.ToString();
+        var clientType = request.Headers["X-Client-Type"].ToString().ToLower();
+
+        // Если клиент явно указал тип "mobile", это не браузер
+        if (clientType == "mobile")
+            return false;
+
+        // Проверяем User-Agent на признаки браузера
+        return userAgent.Contains("Mozilla") || userAgent.Contains("Chrome") || userAgent.Contains("Safari");
+    }
+
+    private static void SetAuthCookies(HttpResponse response, string accessToken, string refreshToken, DateTime accessTokenExpires, DateTime refreshTokenExpires)
+    {
+        var accessCookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.None,
+            Expires = accessTokenExpires
+        };
+
+        var refreshCookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.None,
+            Expires = refreshTokenExpires
+        };
+
+        response.Cookies.Append(AccessTokenCookieName, accessToken, accessCookieOptions);
+        response.Cookies.Append(RefreshTokenCookieName, refreshToken, refreshCookieOptions);
+    }
+
+    private static void ClearAuthCookies(HttpResponse response)
+    {
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.None,
+            Expires = DateTime.UtcNow.AddDays(-1)
+        };
+
+        response.Cookies.Delete(AccessTokenCookieName, cookieOptions);
+        response.Cookies.Delete(RefreshTokenCookieName, cookieOptions);
     }
 
     private static async Task<IResult> Register(
+        HttpContext httpContext,
         [FromBody] RegisterRequest request,
         IPasswordHasher passwordHasher,
         IJwtTokenGenerator jwtGenerator,
@@ -71,23 +125,38 @@ public static class AuthEndpoints
             user.Role);
 
         var refreshTokenValue = jwtGenerator.GenerateRefreshToken();
+        var refreshTokenLifetime = jwtGenerator.GetRefreshTokenLifetime();
 
         // Store refresh token
         var refreshToken = RefreshToken.Create(
             user.Id,
             refreshTokenValue,
-            jwtGenerator.GetRefreshTokenLifetime());
+            refreshTokenLifetime);
 
         dbContext.RefreshTokens.Add(refreshToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        // Build response
-        var tokenDto = new TokenDto(accessToken, refreshTokenValue, jwtGenerator.GetAccessTokenExpiration());
+        var accessTokenExpiration = jwtGenerator.GetAccessTokenExpiration();
+
+        // Set cookies for browser clients
+        if (IsBrowserClient(httpContext.Request))
+        {
+            SetAuthCookies(
+                httpContext.Response,
+                accessToken,
+                refreshTokenValue,
+                accessTokenExpiration,
+                DateTime.UtcNow.Add(refreshTokenLifetime));
+        }
+
+        // Build response (token also returned for WebSocket/mobile)
+        var tokenDto = new TokenDto(accessToken, refreshTokenValue, accessTokenExpiration);
 
         return Results.Ok(ApiResponse<AuthResultDto>.Ok(new AuthResultDto(user, tokenDto)));
     }
 
     private static async Task<IResult> Login(
+        HttpContext httpContext,
         [FromBody] LoginRequest request,
         IPasswordHasher passwordHasher,
         IJwtTokenGenerator jwtGenerator,
@@ -124,18 +193,32 @@ public static class AuthEndpoints
             user.Role);
 
         var refreshTokenValue = jwtGenerator.GenerateRefreshToken();
+        var refreshTokenLifetime = jwtGenerator.GetRefreshTokenLifetime();
 
         // Store refresh token
         var refreshToken = RefreshToken.Create(
             user.Id,
             refreshTokenValue,
-            jwtGenerator.GetRefreshTokenLifetime());
+            refreshTokenLifetime);
 
         dbContext.RefreshTokens.Add(refreshToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        // Build response
-        var tokenDto = new TokenDto(accessToken, refreshTokenValue, jwtGenerator.GetAccessTokenExpiration());
+        var accessTokenExpiration = jwtGenerator.GetAccessTokenExpiration();
+
+        // Set cookies for browser clients
+        if (IsBrowserClient(httpContext.Request))
+        {
+            SetAuthCookies(
+                httpContext.Response,
+                accessToken,
+                refreshTokenValue,
+                accessTokenExpiration,
+                DateTime.UtcNow.Add(refreshTokenLifetime));
+        }
+
+        // Build response (token also returned for WebSocket/mobile)
+        var tokenDto = new TokenDto(accessToken, refreshTokenValue, accessTokenExpiration);
         var userDto = new UserDto(
             user.Id,
             user.Email,
@@ -149,14 +232,25 @@ public static class AuthEndpoints
     }
 
     private static async Task<IResult> RefreshTokenEndpoint(
-        [FromBody] RefreshTokenRequest request,
+        HttpContext httpContext,
+        [FromBody] RefreshTokenRequest? request,
         IJwtTokenGenerator jwtGenerator,
         AuthDbContext dbContext,
         IHttpClientFactory httpClientFactory,
         CancellationToken cancellationToken)
     {
+        // Try to get refresh token from request body or cookie
+        var refreshTokenValue = request?.RefreshToken;
+        if (string.IsNullOrEmpty(refreshTokenValue))
+        {
+            httpContext.Request.Cookies.TryGetValue(RefreshTokenCookieName, out refreshTokenValue);
+        }
+
+        if (string.IsNullOrEmpty(refreshTokenValue))
+            return Results.Ok(ApiResponse<AuthResultDto>.Fail("Refresh token is required"));
+
         var refreshToken = await dbContext.RefreshTokens
-            .FirstOrDefaultAsync(x => x.Token == request.RefreshToken, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Token == refreshTokenValue, cancellationToken);
 
         if (refreshToken is null || !refreshToken.IsActive)
             return Results.Ok(ApiResponse<AuthResultDto>.Fail("Invalid or expired refresh token"));
@@ -182,10 +276,11 @@ public static class AuthEndpoints
 
         // Create new tokens
         var newRefreshTokenValue = jwtGenerator.GenerateRefreshToken();
+        var refreshTokenLifetime = jwtGenerator.GetRefreshTokenLifetime();
         var newRefreshToken = RefreshToken.Create(
             user.Id,
             newRefreshTokenValue,
-            jwtGenerator.GetRefreshTokenLifetime());
+            refreshTokenLifetime);
 
         dbContext.RefreshTokens.Add(newRefreshToken);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -196,13 +291,27 @@ public static class AuthEndpoints
             $"{user.FirstName} {user.LastName}".Trim(),
             user.Role);
 
-        var tokenDto = new TokenDto(accessToken, newRefreshTokenValue, jwtGenerator.GetAccessTokenExpiration());
+        var accessTokenExpiration = jwtGenerator.GetAccessTokenExpiration();
+
+        // Set cookies for browser clients
+        if (IsBrowserClient(httpContext.Request))
+        {
+            SetAuthCookies(
+                httpContext.Response,
+                accessToken,
+                newRefreshTokenValue,
+                accessTokenExpiration,
+                DateTime.UtcNow.Add(refreshTokenLifetime));
+        }
+
+        var tokenDto = new TokenDto(accessToken, newRefreshTokenValue, accessTokenExpiration);
 
         return Results.Ok(ApiResponse<AuthResultDto>.Ok(new AuthResultDto(user, tokenDto)));
     }
 
     private static async Task<IResult> Logout(
-        [FromBody] LogoutRequest request,
+        HttpContext httpContext,
+        [FromBody] LogoutRequest? request,
         ICurrentUserAccessor currentUserAccessor,
         AuthDbContext dbContext,
         CancellationToken cancellationToken)
@@ -211,14 +320,27 @@ public static class AuthEndpoints
         if (userId is null)
             return Results.Ok(ApiResponse.Fail("Unauthorized"));
 
-        var refreshToken = await dbContext.RefreshTokens
-            .FirstOrDefaultAsync(x => x.Token == request.RefreshToken && x.UserId == userId, cancellationToken);
-
-        if (refreshToken is not null)
+        // Try to get refresh token from request body or cookie
+        var refreshTokenValue = request?.RefreshToken;
+        if (string.IsNullOrEmpty(refreshTokenValue))
         {
-            refreshToken.Revoke();
-            await dbContext.SaveChangesAsync(cancellationToken);
+            httpContext.Request.Cookies.TryGetValue(RefreshTokenCookieName, out refreshTokenValue);
         }
+
+        if (!string.IsNullOrEmpty(refreshTokenValue))
+        {
+            var refreshToken = await dbContext.RefreshTokens
+                .FirstOrDefaultAsync(x => x.Token == refreshTokenValue && x.UserId == userId, cancellationToken);
+
+            if (refreshToken is not null)
+            {
+                refreshToken.Revoke();
+                await dbContext.SaveChangesAsync(cancellationToken);
+            }
+        }
+
+        // Clear cookies
+        ClearAuthCookies(httpContext.Response);
 
         return Results.Ok(ApiResponse.Ok("Logged out successfully"));
     }
@@ -276,6 +398,20 @@ public static class AuthEndpoints
             return Results.Ok(ApiResponse.Fail("Failed to update password"));
 
         return Results.Ok(ApiResponse.Ok("Password changed successfully"));
+    }
+
+    /// <summary>
+    /// Get JWT token from HttpOnly cookie for WebSocket authentication
+    /// Uses In-Band Authentication pattern
+    /// </summary>
+    private static IResult GetToken(HttpContext httpContext)
+    {
+        if (httpContext.Request.Cookies.TryGetValue(AccessTokenCookieName, out var token))
+        {
+            return Results.Ok(ApiResponse<object>.Ok(new { token }));
+        }
+
+        return Results.Ok(ApiResponse<object>.Fail("Not authenticated"));
     }
 }
 

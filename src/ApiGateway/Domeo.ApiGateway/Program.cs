@@ -21,6 +21,27 @@ try
         .WriteTo.Console()
         .WriteTo.Seq(context.Configuration["Seq:ServerUrl"] ?? "http://localhost:5341"));
 
+    // CORS
+    var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+    builder.Services.AddCors(options =>
+    {
+        options.AddDefaultPolicy(policy =>
+        {
+            if (allowedOrigins.Length > 0)
+            {
+                policy.WithOrigins(allowedOrigins)
+                      .AllowAnyHeader()
+                      .AllowAnyMethod()
+                      .AllowCredentials(); // Required for cookies
+            }
+            else
+            {
+                // Fallback for production - no CORS allowed by default
+                policy.SetIsOriginAllowed(_ => false);
+            }
+        });
+    });
+
     // Auth
     builder.Services.AddSharedAuth(builder.Configuration);
 
@@ -49,6 +70,7 @@ try
 
     // Middleware Pipeline
     app.UseSerilogRequestLogging();
+    app.UseCors(); // Must be before Authentication
     app.UseAuthentication();
     app.UseAuthorization();
 
