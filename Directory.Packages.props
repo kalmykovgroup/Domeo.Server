@@ -21,6 +21,8 @@
     <PackageVersion Include="Dapper" Version="2.1.35" />
     <!-- Authentication -->
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.IdentityModel.Tokens" Version="8.3.1" />
+    <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.3.1" />
     <PackageVersion Include="BCrypt.Net-Next" Version="4.0.3" />
     <!-- Logging -->
     <PackageVersion Include="Scalar.AspNetCore" Version="2.12.30" />

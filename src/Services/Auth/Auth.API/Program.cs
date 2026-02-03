@@ -47,6 +47,12 @@ try
         client.BaseAddress = new Uri(builder.Configuration["Services:UsersApi"] ?? "http://localhost:5002");
     }).AddHttpMessageHandler<InternalApiKeyDelegatingHandler>();
 
+    // Auth Center Client
+    builder.Services.AddHttpClient<IAuthCenterClient, AuthCenterClient>(client =>
+    {
+        client.BaseAddress = new Uri(builder.Configuration["AuthCenter:BaseUrl"] ?? "http://localhost:5100");
+    });
+
     // OpenAPI
     builder.Services.AddOpenApi();
 

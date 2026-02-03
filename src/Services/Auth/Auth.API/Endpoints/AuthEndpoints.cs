@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using Auth.API.Contracts;
 using Auth.API.Entities;
 using Auth.API.Persistence;
@@ -19,8 +20,14 @@ public static class AuthEndpoints
     {
         var group = app.MapGroup("/auth").WithTags("Auth");
 
+        // OAuth callback (primary auth method)
+        group.MapPost("/callback", Callback);
+
+        // Legacy direct auth (for mobile/testing)
         group.MapPost("/register", Register);
         group.MapPost("/login", Login);
+
+        // Token management
         group.MapPost("/refresh", RefreshTokenEndpoint);
         group.MapPost("/logout", Logout).RequireAuthorization();
         group.MapGet("/me", GetCurrentUser).RequireAuthorization();
@@ -75,6 +82,108 @@ public static class AuthEndpoints
 
         response.Cookies.Delete(AccessTokenCookieName, cookieOptions);
         response.Cookies.Delete(RefreshTokenCookieName, cookieOptions);
+    }
+
+    /// <summary>
+    /// OAuth callback - exchange authorization code for tokens
+    /// </summary>
+    private static async Task<IResult> Callback(
+        HttpContext httpContext,
+        [FromBody] CallbackRequest request,
+        IAuthCenterClient authCenterClient,
+        IHttpClientFactory httpClientFactory,
+        IPasswordHasher passwordHasher,
+        AuthDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        // Exchange code for tokens at Auth Center
+        var tokenResponse = await authCenterClient.ExchangeCodeAsync(request.Code, request.RedirectUri, cancellationToken);
+        if (tokenResponse is null)
+        {
+            return Results.Ok(ApiResponse<AuthResultDto>.Fail("Invalid authorization code"));
+        }
+
+        // Parse JWT to extract user info
+        var handler = new JwtSecurityTokenHandler();
+        var jwt = handler.ReadJwtToken(tokenResponse.AccessToken);
+
+        var userId = jwt.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+        var email = jwt.Claims.FirstOrDefault(c => c.Type == "email")?.Value;
+        var name = jwt.Claims.FirstOrDefault(c => c.Type == "name")?.Value;
+        var role = jwt.Claims.FirstOrDefault(c => c.Type == "role")?.Value ?? "viewer";
+
+        if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(email))
+        {
+            return Results.Ok(ApiResponse<AuthResultDto>.Fail("Invalid token claims"));
+        }
+
+        // Find or create user in Users.API
+        var client = httpClientFactory.CreateClient("UsersApi");
+        var checkResponse = await client.GetAsync($"/users/by-email/{Uri.EscapeDataString(email)}", cancellationToken);
+
+        UserDto? user;
+        if (checkResponse.IsSuccessStatusCode)
+        {
+            var existingUser = await checkResponse.Content.ReadFromJsonAsync<ApiResponse<UserDto>>(cancellationToken);
+            user = existingUser?.Data;
+        }
+        else
+        {
+            // Create user - split name into first/last
+            var nameParts = (name ?? email.Split('@')[0]).Split(' ', 2);
+            var firstName = nameParts[0];
+            var lastName = nameParts.Length > 1 ? nameParts[1] : "";
+
+            var createUserRequest = new
+            {
+                Email = email,
+                PasswordHash = passwordHasher.Hash(Guid.NewGuid().ToString()), // Random password for SSO users
+                FirstName = firstName,
+                LastName = lastName,
+                Role = role,
+                ExternalId = userId
+            };
+
+            var createResponse = await client.PostAsJsonAsync("/users", createUserRequest, cancellationToken);
+            if (!createResponse.IsSuccessStatusCode)
+            {
+                return Results.Ok(ApiResponse<AuthResultDto>.Fail("Failed to create user"));
+            }
+
+            var userResponse = await createResponse.Content.ReadFromJsonAsync<ApiResponse<UserDto>>(cancellationToken);
+            user = userResponse?.Data;
+        }
+
+        if (user is null)
+        {
+            return Results.Ok(ApiResponse<AuthResultDto>.Fail("Failed to get user"));
+        }
+
+        // Store Auth Center refresh token in our DB for later use
+        var refreshToken = RefreshToken.Create(
+            user.Id,
+            tokenResponse.RefreshToken,
+            TimeSpan.FromDays(7));
+
+        dbContext.RefreshTokens.Add(refreshToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        var accessTokenExpiration = DateTime.UtcNow.AddSeconds(tokenResponse.ExpiresIn);
+
+        // Set cookies for browser clients
+        if (IsBrowserClient(httpContext.Request))
+        {
+            SetAuthCookies(
+                httpContext.Response,
+                tokenResponse.AccessToken,
+                tokenResponse.RefreshToken,
+                accessTokenExpiration,
+                DateTime.UtcNow.AddDays(7));
+        }
+
+        var tokenDto = new TokenDto(tokenResponse.AccessToken, tokenResponse.RefreshToken, accessTokenExpiration);
+
+        return Results.Ok(ApiResponse<AuthResultDto>.Ok(new AuthResultDto(user, tokenDto)));
     }
 
     private static async Task<IResult> Register(

@@ -1,0 +1,107 @@
+using Auth.API.Contracts;
+
+namespace Auth.API.Services;
+
+public class AuthCenterClient : IAuthCenterClient
+{
+    private readonly HttpClient _httpClient;
+    private readonly IConfiguration _configuration;
+    private readonly ILogger<AuthCenterClient> _logger;
+
+    public AuthCenterClient(
+        HttpClient httpClient,
+        IConfiguration configuration,
+        ILogger<AuthCenterClient> logger)
+    {
+        _httpClient = httpClient;
+        _configuration = configuration;
+        _logger = logger;
+    }
+
+    public async Task<AuthCenterTokenResponse?> ExchangeCodeAsync(
+        string code,
+        string redirectUri,
+        CancellationToken cancellationToken = default)
+    {
+        var clientId = _configuration["AuthCenter:ClientId"] ?? "domeo";
+
+        var content = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["grant_type"] = "authorization_code",
+            ["code"] = code,
+            ["redirect_uri"] = redirectUri,
+            ["client_id"] = clientId
+        });
+
+        try
+        {
+            var response = await _httpClient.PostAsync("/token", content, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogWarning("Failed to exchange code: {StatusCode} - {Error}",
+                    response.StatusCode, error);
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<AuthCenterTokenResponse>(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error exchanging authorization code");
+            return null;
+        }
+    }
+
+    public async Task<AuthCenterTokenResponse?> RefreshTokenAsync(
+        string refreshToken,
+        CancellationToken cancellationToken = default)
+    {
+        var clientId = _configuration["AuthCenter:ClientId"] ?? "domeo";
+
+        var content = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["grant_type"] = "refresh_token",
+            ["refresh_token"] = refreshToken,
+            ["client_id"] = clientId
+        });
+
+        try
+        {
+            var response = await _httpClient.PostAsync("/token", content, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogWarning("Failed to refresh token: {StatusCode} - {Error}",
+                    response.StatusCode, error);
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<AuthCenterTokenResponse>(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error refreshing token");
+            return null;
+        }
+    }
+
+    public async Task RevokeTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var content = new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["refresh_token"] = refreshToken
+            });
+
+            await _httpClient.PostAsync("/logout", content, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error revoking token at Auth Center");
+        }
+    }
+}
