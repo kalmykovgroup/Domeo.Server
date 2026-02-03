@@ -1,0 +1,98 @@
+# Domeo Infrastructure
+#
+# SERVICES:
+# - PostgreSQL 17: Database for all microservices
+# - Redis 7: Caching and pub/sub
+# - Seq: Centralized logging
+# - Nginx: Reverse proxy
+#
+# PORTS:
+# - 80: Nginx HTTP
+# - 443: Nginx HTTPS
+# - 5341: Seq UI
+# - 5432: PostgreSQL
+# - 6379: Redis
+#
+# USAGE:
+# cd infrastructure
+# docker compose up -d
+
+services:
+  # ==================== Infrastructure ====================
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: domeo-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_MULTIPLE_DATABASES: domeo_auth,domeo_users,domeo_projects,domeo_cabinets,domeo_catalog
+    ports:
+      - "${POSTGRES_EXTERNAL_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init-multiple-dbs.sh:/docker-entrypoint-initdb.d/init-multiple-dbs.sh
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - domeo-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: domeo-redis
+    ports:
+      - "${REDIS_EXTERNAL_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - domeo-network
+
+  seq:
+    image: datalust/seq:latest
+    container_name: domeo-seq
+    environment:
+      ACCEPT_EULA: "Y"
+    ports:
+      - "${SEQ_UI_PORT:-5341}:80"
+      - "5342:5341"
+    volumes:
+      - seq_data:/data
+    networks:
+      - domeo-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: domeo-nginx
+    ports:
+      - "${NGINX_HTTP_PORT:-80}:80"
+      - "${NGINX_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/nginx-health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - domeo-network
+
+networks:
+  domeo-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  seq_data:

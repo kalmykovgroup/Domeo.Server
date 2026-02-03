@@ -1,0 +1,22 @@
+bin/
+obj/
+/packages/
+riderModule.iml
+/_ReSharper.Caches/
+
+# Environment and secrets
+infrastructure/.env
+!infrastructure/.env.example
+infrastructure/secrets/*.txt
+
+# IDE
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# SSL certificates
+nginx/ssl/*.pem
+nginx/ssl/*.crt
+nginx/ssl/*.key
