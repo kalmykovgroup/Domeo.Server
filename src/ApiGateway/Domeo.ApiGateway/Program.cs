@@ -1,4 +1,4 @@
-using Domeo.Shared.Auth;
+using Domeo.ApiGateway.Auth;
 using Domeo.Shared.Infrastructure.Middleware;
 using Scalar.AspNetCore;
 using Serilog;
@@ -46,8 +46,8 @@ try
         });
     });
 
-    // Auth
-    builder.Services.AddSharedAuth(builder.Configuration);
+    // Auth - JWKS validation from MockAuthCenter
+    builder.Services.AddGatewayAuth(builder.Configuration);
 
     // YARP Reverse Proxy
     builder.Services
@@ -79,6 +79,7 @@ try
     app.UseSerilogRequestLogging();
     app.UseAuthentication();
     app.UseAuthorization();
+    app.UseClaimsForwarding(); // Forward user claims to microservices
 
     // Endpoints
     app.MapHealthChecks("/health");

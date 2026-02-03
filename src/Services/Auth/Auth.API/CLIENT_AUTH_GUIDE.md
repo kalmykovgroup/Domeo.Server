@@ -1,44 +1,40 @@
 # Руководство по авторизации для клиента (Frontend)
 
-## Обзор
-
-Система авторизации использует OAuth 2.0 Authorization Code Flow с внешним центром авторизации (Auth Center). Токены хранятся в HttpOnly cookies, что обеспечивает защиту от XSS-атак.
-
 ## Архитектура
 
 ```
+┌─────────────┐                              ┌─────────────────┐
+│   Browser   │ ──── 1. Redirect ──────────▶ │  Auth Center    │
+│             │ ◀─── 2. Redirect + code ──── │  :5100          │
+└─────────────┘                              └─────────────────┘
+       │
+       │ 3. POST /api/auth/callback {code}
+       ▼
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   Frontend  │────▶│  API Gateway │────▶│  Auth.API   │
-│  (Browser)  │◀────│  :5000      │◀────│  :5001      │
+│ API Gateway │────▶│  Auth.API   │────▶│ Auth Center │
+│   :5000     │◀────│  :5001      │◀────│ (token)     │
 └─────────────┘     └─────────────┘     └─────────────┘
-       │                                       │
-       │         ┌─────────────────┐           │
-       └────────▶│  Auth Center    │◀──────────┘
-                 │  :5100 (dev)    │
-                 └─────────────────┘
+       │
+       │ 4. Set-Cookie: access_token, refresh_token
+       ▼
+┌─────────────┐
+│   Browser   │  Токены в HttpOnly cookies (недоступны из JS)
+└─────────────┘
 ```
-
-## Endpoints
-
-### Базовый URL
-- **Development:** `http://localhost:5000/api`
-- **Auth Center (dev):** `http://localhost:5100`
-
----
 
 ## Поток авторизации
 
-### 1. Инициация входа
+### Шаг 1: Инициация входа
 
-Клиент должен инициировать редирект на Auth Center:
+Frontend выполняет redirect на Auth Center:
 
 ```typescript
 const AUTH_CENTER_URL = 'http://localhost:5100';
 const CLIENT_ID = 'domeo';
-const REDIRECT_URI = 'http://localhost:3000/auth/callback';
+const REDIRECT_URI = `${window.location.origin}/auth/callback`;
 
 function login() {
-  const state = generateRandomState(); // Сохранить в sessionStorage
+  const state = crypto.randomUUID();
   sessionStorage.setItem('auth_state', state);
 
   const params = new URLSearchParams({
@@ -50,73 +46,81 @@ function login() {
 
   window.location.href = `${AUTH_CENTER_URL}/authorize?${params}`;
 }
-
-function generateRandomState(): string {
-  return crypto.randomUUID();
-}
 ```
 
-### 2. Обработка callback
+### Шаг 2: Авторизация в Auth Center
 
-После успешной авторизации, Auth Center перенаправит пользователя на `redirect_uri` с параметрами `code` и `state`:
+Пользователь видит страницу логина Auth Center, вводит credentials.
+
+### Шаг 3: Redirect обратно на Frontend
+
+Auth Center перенаправляет браузер на `redirect_uri`:
 
 ```
 http://localhost:3000/auth/callback?code=abc123&state=xyz789
 ```
 
-```typescript
-// pages/auth/callback.tsx или routes/auth/callback.ts
+### Шаг 4: Обмен кода на токены
 
+Frontend отправляет код на API:
+
+```typescript
+// Страница /auth/callback
 async function handleCallback() {
   const params = new URLSearchParams(window.location.search);
   const code = params.get('code');
   const state = params.get('state');
 
-  // Проверка state для защиты от CSRF
-  const savedState = sessionStorage.getItem('auth_state');
-  if (state !== savedState) {
-    throw new Error('Invalid state parameter');
+  // Проверка state (защита от CSRF)
+  if (state !== sessionStorage.getItem('auth_state')) {
+    throw new Error('Invalid state');
   }
   sessionStorage.removeItem('auth_state');
 
-  if (!code) {
-    throw new Error('No authorization code received');
-  }
-
-  // Обмен кода на токены через API Gateway
+  // Обмен кода на токены
   const response = await fetch('http://localhost:5000/api/auth/callback', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include', // ВАЖНО: для получения cookies
+    credentials: 'include',
     body: JSON.stringify({
-      code,
-      redirectUri: REDIRECT_URI,
+      code: code,
+      redirectUri: 'http://localhost:3000/auth/callback'
     }),
   });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Authentication failed');
-  }
+  const result = await response.json();
 
-  // Токены установлены в cookies автоматически
-  // Перенаправляем на главную страницу
-  window.location.href = '/';
+  if (result.success) {
+    // Токены установлены в cookies автоматически
+    // Переход на главную
+    window.location.href = '/';
+  }
 }
 ```
 
-### 3. Выполнение API запросов
+## Хранение токенов
 
-После авторизации все запросы автоматически включают cookies:
+Токены хранятся в **HttpOnly cookies** (недоступны из JavaScript):
+
+| Cookie | Описание | Срок жизни |
+|--------|----------|------------|
+| `access_token` | JWT для API запросов | 15 минут |
+| `refresh_token` | Для обновления access token | 7 дней |
+
+**Безопасность:**
+- `HttpOnly: true` — защита от XSS
+- `Secure: true` — только HTTPS
+- `SameSite: None` — разрешает cross-origin (для API на другом домене)
+
+## API запросы
+
+После авторизации cookies отправляются автоматически:
 
 ```typescript
-async function apiRequest<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> {
+async function api<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`http://localhost:5000/api${endpoint}`, {
     ...options,
-    credentials: 'include', // ВАЖНО: всегда включать
+    credentials: 'include', // ОБЯЗАТЕЛЬНО
     headers: {
       'Content-Type': 'application/json',
       ...options.headers,
@@ -124,116 +128,159 @@ async function apiRequest<T>(
   });
 
   if (response.status === 401) {
-    // Токен истёк, пробуем обновить
+    // Токен истёк — пробуем обновить
     const refreshed = await refreshToken();
     if (refreshed) {
-      // Повторяем запрос
-      return apiRequest(endpoint, options);
-    } else {
-      // Refresh token тоже истёк - редирект на логин
-      window.location.href = '/login';
-      throw new Error('Session expired');
+      return api(endpoint, options); // Повторяем запрос
     }
-  }
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Request failed');
+    window.location.href = '/login';
+    throw new Error('Session expired');
   }
 
   return response.json();
 }
-```
 
-### 4. Обновление токена
-
-```typescript
 async function refreshToken(): Promise<boolean> {
-  try {
-    const response = await fetch('http://localhost:5000/api/auth/refresh', {
-      method: 'POST',
-      credentials: 'include',
-    });
+  const response = await fetch('http://localhost:5000/api/auth/refresh', {
+    method: 'POST',
+    credentials: 'include',
+  });
+  return response.ok;
+}
+```
 
-    return response.ok;
-  } catch {
-    return false;
+## Endpoints
+
+### POST /api/auth/callback
+
+Обмен authorization code на токены.
+
+**Request:**
+```json
+{
+  "code": "authorization_code_from_auth_center",
+  "redirectUri": "http://localhost:3000/auth/callback"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "guid",
+      "email": "user@example.com",
+      "firstName": "John",
+      "lastName": "Doe",
+      "role": "admin",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00Z"
+    },
+    "token": {
+      "accessToken": "eyJ...",
+      "refreshToken": "abc...",
+      "expiresAt": "2024-01-01T00:15:00Z"
+    }
   }
 }
 ```
 
-### 5. Получение информации о пользователе
+**Cookies в ответе:**
+```
+Set-Cookie: access_token=eyJ...; HttpOnly; Secure; SameSite=None
+Set-Cookie: refresh_token=abc...; HttpOnly; Secure; SameSite=None
+```
 
-```typescript
-interface User {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: string;
-}
+> **Примечание:** `token` в JSON нужен только для WebSocket и мобильных приложений. Для браузера используйте cookies.
 
-async function getCurrentUser(): Promise<User | null> {
-  try {
-    return await apiRequest<User>('/auth/me');
-  } catch {
-    return null;
+### POST /api/auth/refresh
+
+Обновление access token.
+
+**Request:** Пустой body (refresh_token берётся из cookie)
+
+**Response:** Аналогично /callback
+
+### GET /api/auth/me
+
+Информация о текущем пользователе.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "guid",
+    "email": "user@example.com",
+    "name": "John Doe",
+    "role": "admin"
   }
 }
 ```
 
-### 6. Выход из системы
+### POST /api/auth/logout
 
-```typescript
-async function logout() {
-  try {
-    await fetch('http://localhost:5000/api/auth/logout', {
-      method: 'POST',
-      credentials: 'include',
-    });
-  } finally {
-    // Редирект на страницу логина
-    window.location.href = '/login';
-  }
+Выход из системы.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": "Logged out successfully"
 }
 ```
 
----
+Cookies удаляются автоматически.
+
+### GET /api/auth/token
+
+Получение токена для WebSocket.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "token": "eyJ..."
+  }
+}
+```
 
 ## WebSocket авторизация
 
-Для WebSocket соединений токен нужно получить явно и передать в query параметре:
+WebSocket не поддерживает cookies, поэтому токен передаётся явно:
 
 ```typescript
-async function connectWebSocket(): Promise<WebSocket> {
-  // Получаем токен для WebSocket
-  const tokenResponse = await fetch('http://localhost:5000/api/auth/token', {
+async function connectWebSocket() {
+  // Получаем токен из cookie через API
+  const response = await fetch('http://localhost:5000/api/auth/token', {
     credentials: 'include',
   });
-
-  if (!tokenResponse.ok) {
-    throw new Error('Failed to get WebSocket token');
-  }
-
-  const { accessToken } = await tokenResponse.json();
+  const { data } = await response.json();
 
   // Подключаемся с токеном в query
   const ws = new WebSocket(
-    `ws://localhost:5000/ws?access_token=${encodeURIComponent(accessToken)}`
+    `ws://localhost:5000/ws?access_token=${encodeURIComponent(data.token)}`
   );
 
   return ws;
 }
 ```
 
----
+## React пример
 
-## React-хуки
-
-### useAuth
+### AuthProvider
 
 ```typescript
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+}
 
 interface AuthContextType {
   user: User | null;
@@ -241,7 +288,6 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: () => void;
   logout: () => Promise<void>;
-  refresh: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -256,8 +302,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function checkAuth() {
     try {
-      const user = await getCurrentUser();
-      setUser(user);
+      const response = await fetch('http://localhost:5000/api/auth/me', {
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const { data } = await response.json();
+        setUser(data);
+      }
     } catch {
       setUser(null);
     } finally {
@@ -265,7 +316,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const login = () => {
+  function login() {
     const state = crypto.randomUUID();
     sessionStorage.setItem('auth_state', state);
 
@@ -277,20 +328,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     window.location.href = `http://localhost:5100/authorize?${params}`;
-  };
+  }
 
-  const logout = async () => {
+  async function logout() {
     await fetch('http://localhost:5000/api/auth/logout', {
       method: 'POST',
       credentials: 'include',
     });
     setUser(null);
     window.location.href = '/login';
-  };
-
-  const refresh = async () => {
-    await checkAuth();
-  };
+  }
 
   return (
     <AuthContext.Provider value={{
@@ -299,7 +346,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: !!user,
       login,
       logout,
-      refresh,
     }}>
       {children}
     </AuthContext.Provider>
@@ -308,103 +354,75 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within AuthProvider');
   return context;
 }
 ```
 
-### Защищённый маршрут
+### Callback страница
 
 ```typescript
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from './useAuth';
+// pages/auth/callback.tsx
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-export function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
-  const location = useLocation();
+export function AuthCallback() {
+  const navigate = useNavigate();
 
-  if (isLoading) {
-    return <div>Loading...</div>;
+  useEffect(() => {
+    handleCallback();
+  }, []);
+
+  async function handleCallback() {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    const state = params.get('state');
+
+    if (state !== sessionStorage.getItem('auth_state')) {
+      navigate('/login?error=invalid_state');
+      return;
+    }
+    sessionStorage.removeItem('auth_state');
+
+    const response = await fetch('http://localhost:5000/api/auth/callback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        code,
+        redirectUri: `${window.location.origin}/auth/callback`,
+      }),
+    });
+
+    if (response.ok) {
+      navigate('/');
+    } else {
+      navigate('/login?error=auth_failed');
+    }
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  return <>{children}</>;
+  return <div>Авторизация...</div>;
 }
 ```
 
----
-
-## API Client (axios пример)
-
-```typescript
-import axios from 'axios';
-
-const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
-  withCredentials: true, // ВАЖНО: включить cookies
-});
-
-// Интерцептор для обновления токена
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      try {
-        await api.post('/auth/refresh');
-        return api(originalRequest);
-      } catch (refreshError) {
-        window.location.href = '/login';
-        return Promise.reject(refreshError);
-      }
-    }
-
-    return Promise.reject(error);
-  }
-);
-
-export { api };
-```
-
----
-
 ## Конфигурация
 
-### Environment Variables
+```typescript
+// config.ts
+export const config = {
+  apiUrl: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  authCenterUrl: import.meta.env.VITE_AUTH_CENTER_URL || 'http://localhost:5100',
+  clientId: 'domeo',
+};
+```
 
 ```env
 # .env.development
 VITE_API_URL=http://localhost:5000/api
 VITE_AUTH_CENTER_URL=http://localhost:5100
-VITE_CLIENT_ID=domeo
 ```
 
-### Config файл
-
-```typescript
-// config/auth.ts
-export const authConfig = {
-  apiUrl: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
-  authCenterUrl: import.meta.env.VITE_AUTH_CENTER_URL || 'http://localhost:5100',
-  clientId: import.meta.env.VITE_CLIENT_ID || 'domeo',
-
-  get redirectUri() {
-    return `${window.location.origin}/auth/callback`;
-  },
-};
-```
-
----
-
-## Тестовые пользователи (Development)
+## Тестовые пользователи
 
 | Email | Password | Role |
 |-------|----------|------|
@@ -412,69 +430,10 @@ export const authConfig = {
 | manager@test.com | manager123 | manager |
 | viewer@test.com | viewer123 | viewer |
 
----
+## Чеклист реализации
 
-## Обработка ошибок
-
-### Типичные коды ошибок
-
-| Код | Описание | Действие |
-|-----|----------|----------|
-| 401 | Не авторизован | Попробовать refresh, иначе редирект на логин |
-| 403 | Доступ запрещён | Показать сообщение о недостаточных правах |
-| 400 | Неверный запрос | Показать ошибку валидации |
-
-### Пример обработки
-
-```typescript
-async function handleApiError(error: any) {
-  if (error.response) {
-    switch (error.response.status) {
-      case 401:
-        // Сессия истекла
-        window.location.href = '/login';
-        break;
-      case 403:
-        showNotification('У вас нет прав для этого действия', 'error');
-        break;
-      case 400:
-        const errors = error.response.data.errors;
-        if (errors) {
-          // Показать ошибки валидации
-          Object.values(errors).flat().forEach((msg: string) => {
-            showNotification(msg, 'error');
-          });
-        }
-        break;
-      default:
-        showNotification('Произошла ошибка', 'error');
-    }
-  }
-}
-```
-
----
-
-## Checklist для реализации
-
-- [ ] Я 
-- [ ] Создать страницу `/auth/callback` для обработки редиректа
-- [ ] Настроить `credentials: 'include'` для всех fetch запросов
-- [ ] Реализовать автоматическое обновление токена при 401
-- [ ] Добавить `AuthProvider` в корень приложения
-- [ ] Защитить маршруты с помощью `ProtectedRoute`
-- [ ] Настроить WebSocket с токеном в query параметре
-- [ ] Добавить обработку ошибок авторизации
-
----
-
-## Миграция с предыдущей версии
-
-Если ранее использовался прямой логин с email/password:
-
-1. **Удалить**: форму логина с полями email/password
-2. **Удалить**: localStorage хранение токенов
-3. **Добавить**: редирект на Auth Center
-4. **Добавить**: callback страницу
-5. **Изменить**: все fetch запросы добавить `credentials: 'include'`
-6. **Удалить**: заголовок `Authorization: Bearer ...` (cookies передаются автоматически)
+- [ ] Создать страницу `/auth/callback`
+- [ ] Добавить `credentials: 'include'` ко всем fetch запросам
+- [ ] Реализовать `AuthProvider` с проверкой `/auth/me`
+- [ ] Добавить автоматический refresh при 401
+- [ ] Настроить WebSocket с токеном
