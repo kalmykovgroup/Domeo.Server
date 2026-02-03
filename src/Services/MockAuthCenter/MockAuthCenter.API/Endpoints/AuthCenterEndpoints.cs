@@ -412,14 +412,17 @@ public static class AuthCenterEndpoints
 
         <div class="test-users">
             <h3>Test Accounts (click to fill)</h3>
+            <div class="test-user" onclick="fillCredentials('sales@test.com', 'sales123')">
+                <strong>sales@test.com</strong> / sales123 <span>Комплектатор</span>
+            </div>
+            <div class="test-user" onclick="fillCredentials('designer@test.com', 'designer123')">
+                <strong>designer@test.com</strong> / designer123 <span>Проектировщик</span>
+            </div>
+            <div class="test-user" onclick="fillCredentials('catalog@test.com', 'catalog123')">
+                <strong>catalog@test.com</strong> / catalog123 <span>Админ каталога</span>
+            </div>
             <div class="test-user" onclick="fillCredentials('admin@test.com', 'admin123')">
-                <strong>admin@test.com</strong> / admin123 <span>Role: admin</span>
-            </div>
-            <div class="test-user" onclick="fillCredentials('manager@test.com', 'manager123')">
-                <strong>manager@test.com</strong> / manager123 <span>Role: manager</span>
-            </div>
-            <div class="test-user" onclick="fillCredentials('viewer@test.com', 'viewer123')">
-                <strong>viewer@test.com</strong> / viewer123 <span>Role: viewer</span>
+                <strong>admin@test.com</strong> / admin123 <span>Системный админ</span>
             </div>
         </div>
     </div>

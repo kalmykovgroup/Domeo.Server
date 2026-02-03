@@ -422,13 +422,23 @@ VITE_API_URL=http://localhost:5000/api
 VITE_AUTH_CENTER_URL=http://localhost:5100
 ```
 
+## Роли
+
+| Роль | Код | Описание |
+|------|-----|----------|
+| Комплектатор | `sales` | Создание проектов, подбор материалов, формирование КП, доступ к продажным ценам |
+| Проектировщик | `designer` | Работа с проектами, доступ к закупочным ценам и ограничениям фабрик |
+| Админ каталога | `catalogAdmin` | Управление каталогом, материалами, прайсами, шаблонами документов |
+| Системный админ | `systemAdmin` | Полный доступ: пользователи, права, настройки, интеграции |
+
 ## Тестовые пользователи
 
-| Email | Password | Role |
+| Email | Password | Роль |
 |-------|----------|------|
-| admin@test.com | admin123 | admin |
-| manager@test.com | manager123 | manager |
-| viewer@test.com | viewer123 | viewer |
+| sales@test.com | sales123 | Комплектатор |
+| designer@test.com | designer123 | Проектировщик |
+| catalog@test.com | catalog123 | Админ каталога |
+| admin@test.com | admin123 | Системный админ |
 
 ## Чеклист реализации
 
