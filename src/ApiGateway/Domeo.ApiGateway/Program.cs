@@ -22,10 +22,11 @@ try
         .WriteTo.Seq(context.Configuration["Seq:ServerUrl"] ?? "http://localhost:5341"));
 
     // CORS
+    const string corsPolicyName = "AllowFrontend";
     var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
     builder.Services.AddCors(options =>
     {
-        options.AddDefaultPolicy(policy =>
+        options.AddPolicy(corsPolicyName, policy =>
         {
             if (allowedOrigins.Length > 0)
             {
@@ -70,13 +71,13 @@ try
 
     // Middleware Pipeline
     app.UseSerilogRequestLogging();
-    app.UseCors(); // Must be before Authentication
+    app.UseCors(corsPolicyName); // Must be before Authentication
     app.UseAuthentication();
     app.UseAuthorization();
 
     // Endpoints
     app.MapHealthChecks("/health");
-    app.MapReverseProxy();
+    app.MapReverseProxy().RequireCors(corsPolicyName);
 
     await app.RunAsync();
 }
