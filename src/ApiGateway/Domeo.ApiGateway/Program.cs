@@ -24,6 +24,9 @@ try
     // CORS
     const string corsPolicyName = "AllowFrontend";
     var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+
+    Log.Information("CORS AllowedOrigins: {Origins}", string.Join(", ", allowedOrigins));
+
     builder.Services.AddCors(options =>
     {
         options.AddPolicy(corsPolicyName, policy =>
@@ -37,7 +40,7 @@ try
             }
             else
             {
-                // Fallback for production - no CORS allowed by default
+                Log.Warning("No CORS origins configured!");
                 policy.SetIsOriginAllowed(_ => false);
             }
         });
@@ -59,7 +62,10 @@ try
 
     var app = builder.Build();
 
-    // Global Exception Handler (first in pipeline)
+    // CORS must be very early in pipeline (before any other middleware that might short-circuit)
+    app.UseCors(corsPolicyName);
+
+    // Global Exception Handler
     app.UseGlobalExceptionHandler();
 
     // Development
@@ -71,13 +77,12 @@ try
 
     // Middleware Pipeline
     app.UseSerilogRequestLogging();
-    app.UseCors(corsPolicyName); // Must be before Authentication
     app.UseAuthentication();
     app.UseAuthorization();
 
     // Endpoints
     app.MapHealthChecks("/health");
-    app.MapReverseProxy().RequireCors(corsPolicyName);
+    app.MapReverseProxy();
 
     await app.RunAsync();
 }
