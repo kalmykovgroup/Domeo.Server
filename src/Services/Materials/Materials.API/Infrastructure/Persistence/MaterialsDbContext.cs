@@ -1,10 +1,11 @@
 using Domeo.Shared.Infrastructure.Audit;
-using Materials.API.Entities;
+using Domeo.Shared.Kernel.Application.Abstractions;
+using Materials.Abstractions.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Materials.API.Persistence;
+namespace Materials.API.Infrastructure.Persistence;
 
-public sealed class MaterialsDbContext : DbContext
+public sealed class MaterialsDbContext : DbContext, IUnitOfWork
 {
     private readonly AuditSaveChangesInterceptor? _auditInterceptor;
 

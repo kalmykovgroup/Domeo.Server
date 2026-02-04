@@ -1,6 +1,6 @@
 using Domeo.Shared.Kernel.Domain.Abstractions;
 
-namespace Materials.API.Entities;
+namespace Materials.Abstractions.Entities;
 
 public sealed class Supplier : Entity<Guid>
 {

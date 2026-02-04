@@ -11,6 +11,12 @@ public sealed record Error(string Code, string Description)
     public static Error NotFound(string entityName, object id) =>
         new($"{entityName}.NotFound", $"{entityName} with id '{id}' was not found");
 
+    public static Error NotFound(string message) =>
+        new("NotFound", message);
+
+    public static Error ServiceUnavailable(string message) =>
+        new("ServiceUnavailable", message);
+
     public static Error Validation(string code, string description) =>
         new(code, description);
 

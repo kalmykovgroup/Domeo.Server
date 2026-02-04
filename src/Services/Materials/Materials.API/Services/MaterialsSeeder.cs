@@ -1,6 +1,6 @@
 using System.Text.Json;
-using Materials.API.Entities;
-using Materials.API.Persistence;
+using Materials.Abstractions.Entities;
+using Materials.API.Infrastructure.Persistence;
 
 namespace Materials.API.Services;
 

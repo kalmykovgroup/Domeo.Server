@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Materials.API.ExternalServices;
+namespace Materials.Abstractions.ExternalServices;
 
 // Response wrapper from external API
 public sealed class ExternalApiResponse<T>

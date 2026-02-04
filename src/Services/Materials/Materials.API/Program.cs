@@ -3,9 +3,8 @@ using Domeo.Shared.Infrastructure;
 using Domeo.Shared.Infrastructure.Logging;
 using Domeo.Shared.Infrastructure.Middleware;
 using Domeo.Shared.Infrastructure.Resilience;
-using Materials.API.Endpoints;
-using Materials.API.ExternalServices;
-using Materials.API.Persistence;
+using Materials.API.Infrastructure;
+using Materials.API.Infrastructure.Persistence;
 using Materials.API.Services;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
@@ -42,11 +41,18 @@ try
     builder.Services.AddSharedAuth(builder.Configuration);
     builder.Services.AddResilientInfrastructure<MaterialsDbContext>(builder.Configuration, "Materials.API");
 
-    // Services
-    builder.Services.AddScoped<MaterialsSeeder>();
+    // Application & Infrastructure
+    builder.Services.AddApplication();
+    builder.Services.AddInfrastructure();
 
     // External Supplier API Client
     builder.Services.AddSupplierApiClient(builder.Configuration);
+
+    // Services
+    builder.Services.AddScoped<MaterialsSeeder>();
+
+    // Controllers
+    builder.Services.AddControllers();
 
     // OpenAPI
     builder.Services.AddOpenApi();
@@ -77,7 +83,7 @@ try
 
     // Endpoints
     app.MapHealthChecks("/health");
-    app.MapMaterialsEndpoints();
+    app.MapControllers();
 
     await app.RunAsync();
 }

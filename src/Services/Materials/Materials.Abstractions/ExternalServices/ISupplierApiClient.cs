@@ -1,4 +1,4 @@
-namespace Materials.API.ExternalServices;
+namespace Materials.Abstractions.ExternalServices;
 
 public interface ISupplierApiClient
 {

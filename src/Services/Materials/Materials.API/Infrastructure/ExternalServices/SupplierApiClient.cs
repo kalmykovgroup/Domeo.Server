@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
+using Materials.Abstractions.ExternalServices;
 
-namespace Materials.API.ExternalServices;
+namespace Materials.API.Infrastructure.ExternalServices;
 
 public sealed class SupplierApiClient : ISupplierApiClient
 {
