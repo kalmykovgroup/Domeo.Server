@@ -52,10 +52,21 @@ public static class AuthRoutes
     /// </summary>
     public static class External
     {
-        /// <summary>AuthCenter OAuth authorize endpoint</summary>
-        public const string AuthorizeEndpoint = "/authorize";
-
         /// <summary>Frontend login page for error redirects</summary>
         public const string FrontendLoginPath = "/login";
+    }
+
+    /// <summary>
+    /// AuthCenter API endpoints
+    /// </summary>
+    public static class AuthCenter
+    {
+        public const string Authorize = "/authorize";
+        public const string Token = "/token";
+        public const string Logout = "/logout";
+        public const string Users = "/users";
+
+        public static string GetUser(Guid userId, string clientId) =>
+            $"{Users}/{userId}?client_id={clientId}";
     }
 }

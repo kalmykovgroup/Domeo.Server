@@ -43,4 +43,41 @@ public static class MaterialsRoutes
         /// </summary>
         public const string Suppliers = "/api/suppliers";
     }
+
+    /// <summary>
+    /// External Supplier API endpoints (MockSupplier service)
+    /// </summary>
+    public static class SupplierApi
+    {
+        public const string Categories = "/api/categories";
+        public const string Suppliers = "/api/suppliers";
+        public const string Materials = "/api/materials";
+        public const string Offers = "/api/offers";
+
+        public static string CategoriesTree(bool activeOnly = true) =>
+            $"{Categories}/tree?activeOnly={activeOnly.ToString().ToLower()}";
+
+        public static string CategoriesList(bool activeOnly = true) =>
+            $"{Categories}?activeOnly={activeOnly.ToString().ToLower()}";
+
+        public static string SuppliersList(bool activeOnly = true) =>
+            $"{Suppliers}?activeOnly={activeOnly.ToString().ToLower()}";
+
+        public static string SupplierById(string id) =>
+            $"{Suppliers}/{id}";
+
+        public static string MaterialsList(bool activeOnly = true, string? categoryId = null)
+        {
+            var url = $"{Materials}?activeOnly={activeOnly.ToString().ToLower()}";
+            if (!string.IsNullOrEmpty(categoryId))
+                url += $"&categoryId={categoryId}";
+            return url;
+        }
+
+        public static string MaterialById(string id) =>
+            $"{Materials}/{id}";
+
+        public static string OffersByMaterial(string materialId) =>
+            $"{Offers}?materialId={materialId}";
+    }
 }

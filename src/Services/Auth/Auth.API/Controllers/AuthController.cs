@@ -55,7 +55,7 @@ public class AuthController : ControllerBase
             System.Text.Encoding.UTF8.GetBytes(
                 System.Text.Json.JsonSerializer.Serialize(new { returnUrl = returnUrl ?? "/" })));
 
-        var authorizeUrl = $"{authCenterUrl}{AuthRoutes.External.AuthorizeEndpoint}?" +
+        var authorizeUrl = $"{authCenterUrl}{AuthRoutes.AuthCenter.Authorize}?" +
             $"response_type=code&" +
             $"client_id={Uri.EscapeDataString(clientId)}&" +
             $"redirect_uri={Uri.EscapeDataString(callbackUrl)}&" +

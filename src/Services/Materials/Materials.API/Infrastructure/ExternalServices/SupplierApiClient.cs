@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using Materials.Abstractions.ExternalServices;
+using Materials.Abstractions.Routes;
 
 namespace Materials.API.Infrastructure.ExternalServices;
 
@@ -18,8 +19,8 @@ public sealed class SupplierApiClient : ISupplierApiClient
     {
         try
         {
-            var url = $"/api/categories/tree?activeOnly={activeOnly.ToString().ToLower()}";
-            var response = await _httpClient.GetFromJsonAsync<ExternalApiResponse<List<ExternalCategoryTreeNode>>>(url, ct);
+            var response = await _httpClient.GetFromJsonAsync<ExternalApiResponse<List<ExternalCategoryTreeNode>>>(
+                MaterialsRoutes.SupplierApi.CategoriesTree(activeOnly), ct);
 
             if (response?.Success == true && response.Data != null)
                 return response.Data;
@@ -38,8 +39,8 @@ public sealed class SupplierApiClient : ISupplierApiClient
     {
         try
         {
-            var url = $"/api/categories?activeOnly={activeOnly.ToString().ToLower()}";
-            var response = await _httpClient.GetFromJsonAsync<ExternalApiResponse<List<ExternalCategory>>>(url, ct);
+            var response = await _httpClient.GetFromJsonAsync<ExternalApiResponse<List<ExternalCategory>>>(
+                MaterialsRoutes.SupplierApi.CategoriesList(activeOnly), ct);
 
             if (response?.Success == true && response.Data != null)
                 return response.Data;
@@ -58,8 +59,8 @@ public sealed class SupplierApiClient : ISupplierApiClient
     {
         try
         {
-            var url = $"/api/suppliers?activeOnly={activeOnly.ToString().ToLower()}";
-            var response = await _httpClient.GetFromJsonAsync<ExternalApiResponse<List<ExternalSupplier>>>(url, ct);
+            var response = await _httpClient.GetFromJsonAsync<ExternalApiResponse<List<ExternalSupplier>>>(
+                MaterialsRoutes.SupplierApi.SuppliersList(activeOnly), ct);
 
             if (response?.Success == true && response.Data != null)
                 return response.Data;
@@ -78,8 +79,8 @@ public sealed class SupplierApiClient : ISupplierApiClient
     {
         try
         {
-            var url = $"/api/suppliers/{id}";
-            var response = await _httpClient.GetFromJsonAsync<ExternalApiResponse<ExternalSupplier>>(url, ct);
+            var response = await _httpClient.GetFromJsonAsync<ExternalApiResponse<ExternalSupplier>>(
+                MaterialsRoutes.SupplierApi.SupplierById(id), ct);
 
             if (response?.Success == true)
                 return response.Data;
@@ -102,11 +103,8 @@ public sealed class SupplierApiClient : ISupplierApiClient
     {
         try
         {
-            var url = $"/api/materials?activeOnly={activeOnly.ToString().ToLower()}";
-            if (!string.IsNullOrEmpty(categoryId))
-                url += $"&categoryId={categoryId}";
-
-            var response = await _httpClient.GetFromJsonAsync<ExternalApiResponse<List<ExternalMaterial>>>(url, ct);
+            var response = await _httpClient.GetFromJsonAsync<ExternalApiResponse<List<ExternalMaterial>>>(
+                MaterialsRoutes.SupplierApi.MaterialsList(activeOnly, categoryId), ct);
 
             if (response?.Success == true && response.Data != null)
                 return response.Data;
@@ -125,8 +123,8 @@ public sealed class SupplierApiClient : ISupplierApiClient
     {
         try
         {
-            var url = $"/api/materials/{id}";
-            var response = await _httpClient.GetFromJsonAsync<ExternalApiResponse<ExternalMaterial>>(url, ct);
+            var response = await _httpClient.GetFromJsonAsync<ExternalApiResponse<ExternalMaterial>>(
+                MaterialsRoutes.SupplierApi.MaterialById(id), ct);
 
             if (response?.Success == true)
                 return response.Data;
@@ -149,8 +147,8 @@ public sealed class SupplierApiClient : ISupplierApiClient
     {
         try
         {
-            var url = $"/api/offers?materialId={materialId}";
-            var response = await _httpClient.GetFromJsonAsync<ExternalApiResponse<ExternalOffersData>>(url, ct);
+            var response = await _httpClient.GetFromJsonAsync<ExternalApiResponse<ExternalOffersData>>(
+                MaterialsRoutes.SupplierApi.OffersByMaterial(materialId), ct);
 
             if (response?.Success == true)
                 return response.Data;

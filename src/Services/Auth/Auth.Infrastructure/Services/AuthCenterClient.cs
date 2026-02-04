@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using Auth.Application.Services;
 using Auth.Contracts;
+using Auth.Contracts.Routes;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -39,7 +40,7 @@ public class AuthCenterClient : IAuthCenterClient
 
         try
         {
-            var response = await _httpClient.PostAsync("/token", content, cancellationToken);
+            var response = await _httpClient.PostAsync(AuthRoutes.AuthCenter.Token, content, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -73,7 +74,7 @@ public class AuthCenterClient : IAuthCenterClient
 
         try
         {
-            var response = await _httpClient.PostAsync("/token", content, cancellationToken);
+            var response = await _httpClient.PostAsync(AuthRoutes.AuthCenter.Token, content, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -101,7 +102,7 @@ public class AuthCenterClient : IAuthCenterClient
                 ["refresh_token"] = refreshToken
             });
 
-            await _httpClient.PostAsync("/logout", content, cancellationToken);
+            await _httpClient.PostAsync(AuthRoutes.AuthCenter.Logout, content, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -116,7 +117,7 @@ public class AuthCenterClient : IAuthCenterClient
         try
         {
             return await _httpClient.GetFromJsonAsync<User>(
-                $"/users/{userId}?client_id={clientId}",
+                AuthRoutes.AuthCenter.GetUser(userId, clientId),
                 cancellationToken);
         }
         catch (HttpRequestException ex)
