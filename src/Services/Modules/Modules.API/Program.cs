@@ -1,10 +1,11 @@
-using Clients.API.Endpoints;
-using Clients.API.Persistence;
 using Domeo.Shared.Auth;
 using Domeo.Shared.Infrastructure;
 using Domeo.Shared.Infrastructure.Middleware;
 using Domeo.Shared.Infrastructure.Resilience;
 using Microsoft.EntityFrameworkCore;
+using Modules.API.Endpoints;
+using Modules.API.Persistence;
+using Modules.API.Services;
 using Scalar.AspNetCore;
 using Serilog;
 
@@ -14,7 +15,7 @@ Log.Logger = new LoggerConfiguration()
 
 try
 {
-    Log.Information("Starting Clients.API");
+    Log.Information("Starting Modules.API");
 
     var builder = WebApplication.CreateBuilder(args);
 
@@ -27,14 +28,17 @@ try
         .WriteTo.Seq(context.Configuration["Seq:ServerUrl"] ?? "http://localhost:5341"));
 
     // Database
-    builder.Services.AddDbContext<ClientsDbContext>(options =>
+    builder.Services.AddDbContext<ModulesDbContext>(options =>
         options.UseNpgsql(
-            builder.Configuration.GetConnectionString("ClientsDb"),
-            npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "clients")));
+            builder.Configuration.GetConnectionString("ModulesDb"),
+            npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "modules")));
 
     // Auth & Infrastructure with resilience
     builder.Services.AddSharedAuth(builder.Configuration);
-    builder.Services.AddResilientInfrastructure<ClientsDbContext>(builder.Configuration, "Clients.API");
+    builder.Services.AddResilientInfrastructure<ModulesDbContext>(builder.Configuration, "Modules.API");
+
+    // Services
+    builder.Services.AddScoped<ModulesSeeder>();
 
     // OpenAPI
     builder.Services.AddOpenApi();
@@ -65,7 +69,7 @@ try
 
     // Endpoints
     app.MapHealthChecks("/health");
-    app.MapClientsEndpoints();
+    app.MapModulesEndpoints();
 
     await app.RunAsync();
 }
@@ -85,7 +89,7 @@ async Task InitializeDatabaseAsync(WebApplication app)
     try
     {
         using var scope = app.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ClientsDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<ModulesDbContext>();
 
         // Check if database is available (with timeout)
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
@@ -115,6 +119,10 @@ async Task InitializeDatabaseAsync(WebApplication app)
             await db.Database.EnsureDeletedAsync(cts.Token);
             await db.Database.EnsureCreatedAsync(cts.Token);
             Log.Information("Database recreated successfully");
+
+            var seeder = scope.ServiceProvider.GetRequiredService<ModulesSeeder>();
+            await seeder.SeedAsync();
+            Log.Information("Database seeding completed");
         }
         else
         {

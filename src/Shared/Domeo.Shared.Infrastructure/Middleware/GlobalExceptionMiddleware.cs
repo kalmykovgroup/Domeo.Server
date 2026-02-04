@@ -3,7 +3,10 @@ using System.Text.Json;
 using Domeo.Shared.Contracts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Npgsql;
+using StackExchange.Redis;
 
 namespace Domeo.Shared.Infrastructure.Middleware;
 
@@ -42,6 +45,22 @@ public sealed class GlobalExceptionMiddleware
 
         var (statusCode, response) = exception switch
         {
+            NpgsqlException => (
+                HttpStatusCode.ServiceUnavailable,
+                ApiResponse.Fail("Database temporarily unavailable")
+            ),
+            DbUpdateException { InnerException: NpgsqlException } => (
+                HttpStatusCode.ServiceUnavailable,
+                ApiResponse.Fail("Database temporarily unavailable")
+            ),
+            RedisConnectionException => (
+                HttpStatusCode.ServiceUnavailable,
+                ApiResponse.Fail("Cache service temporarily unavailable")
+            ),
+            RedisTimeoutException => (
+                HttpStatusCode.ServiceUnavailable,
+                ApiResponse.Fail("Cache service temporarily unavailable")
+            ),
             ArgumentException argEx => (
                 HttpStatusCode.BadRequest,
                 ApiResponse.Fail(argEx.Message)

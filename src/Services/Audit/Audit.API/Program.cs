@@ -4,6 +4,7 @@ using Audit.API.Services;
 using Domeo.Shared.Auth;
 using Domeo.Shared.Infrastructure;
 using Domeo.Shared.Infrastructure.Middleware;
+using Domeo.Shared.Infrastructure.Resilience;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Serilog;
@@ -32,24 +33,27 @@ try
             builder.Configuration.GetConnectionString("AuditDb"),
             npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "audit")));
 
-    // Auth & Infrastructure
+    // Auth & Infrastructure with resilience
     builder.Services.AddSharedAuth(builder.Configuration);
-    builder.Services.AddSharedInfrastructure(builder.Configuration, "Audit.API");
+    builder.Services.AddResilientInfrastructure<AuditDbContext>(builder.Configuration, "Audit.API");
 
-    // Background service for Redis subscription
+    // Audit event buffer (outbox pattern for graceful degradation)
+    builder.Services.AddSingleton<IAuditEventBuffer, AuditEventBuffer>();
+
+    // Background services
     builder.Services.AddHostedService<AuditEventSubscriber>();
+    builder.Services.AddHostedService<AuditBufferFlushService>();
 
     // OpenAPI
     builder.Services.AddOpenApi();
-
-    // Health Checks
-    builder.Services.AddHealthChecks()
-        .AddNpgSql(builder.Configuration.GetConnectionString("AuditDb")!);
 
     var app = builder.Build();
 
     // Global Exception Handler (first in pipeline)
     app.UseGlobalExceptionHandler();
+
+    // Database availability middleware (returns 503 if DB unavailable)
+    app.UseDatabaseAvailability();
 
     // Development
     if (app.Environment.IsDevelopment())
@@ -58,31 +62,8 @@ try
         app.MapScalarApiReference();
     }
 
-    // Database initialization
-    try
-    {
-        using var scope = app.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AuditDbContext>();
-
-        if (app.Environment.IsDevelopment())
-        {
-            Log.Information("Development mode: Recreating database...");
-            await db.Database.EnsureDeletedAsync();
-            await db.Database.EnsureCreatedAsync();
-            Log.Information("Database recreated successfully");
-        }
-        else
-        {
-            await db.Database.MigrateAsync();
-            Log.Information("Database migrations applied successfully");
-        }
-    }
-    catch (Exception ex)
-    {
-        Log.Warning(ex, "Database initialization failed. Ensure PostgreSQL is running");
-        if (!app.Environment.IsDevelopment())
-            throw;
-    }
+    // Database initialization - resilient startup (never throws)
+    await InitializeDatabaseAsync(app);
 
     // Middleware Pipeline
     app.UseSerilogRequestLogging();
@@ -104,4 +85,57 @@ catch (Exception ex)
 finally
 {
     await Log.CloseAndFlushAsync();
+}
+
+async Task InitializeDatabaseAsync(WebApplication app)
+{
+    var stateTracker = app.Services.GetRequiredService<IConnectionStateTracker>();
+
+    try
+    {
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AuditDbContext>();
+
+        // Check if database is available (with timeout)
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+
+        bool canConnect;
+        try
+        {
+            canConnect = await db.Database.CanConnectAsync(cts.Token);
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Database connection check failed. Starting in degraded mode");
+            stateTracker.SetDatabaseAvailable(false);
+            return;
+        }
+
+        if (!canConnect)
+        {
+            Log.Warning("Database unavailable at startup. Starting in degraded mode");
+            stateTracker.SetDatabaseAvailable(false);
+            return;
+        }
+
+        if (app.Environment.IsDevelopment())
+        {
+            Log.Information("Development mode: Recreating database...");
+            await db.Database.EnsureDeletedAsync(cts.Token);
+            await db.Database.EnsureCreatedAsync(cts.Token);
+            Log.Information("Database recreated successfully");
+        }
+        else
+        {
+            await db.Database.MigrateAsync(cts.Token);
+            Log.Information("Database migrations applied successfully");
+        }
+
+        stateTracker.SetDatabaseAvailable(true);
+    }
+    catch (Exception ex)
+    {
+        Log.Warning(ex, "Database initialization failed. Starting in degraded mode");
+        stateTracker.SetDatabaseAvailable(false);
+    }
 }

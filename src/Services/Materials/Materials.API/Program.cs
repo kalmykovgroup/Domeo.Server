@@ -1,9 +1,10 @@
-using Clients.API.Endpoints;
-using Clients.API.Persistence;
 using Domeo.Shared.Auth;
 using Domeo.Shared.Infrastructure;
 using Domeo.Shared.Infrastructure.Middleware;
 using Domeo.Shared.Infrastructure.Resilience;
+using Materials.API.Endpoints;
+using Materials.API.Persistence;
+using Materials.API.Services;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Serilog;
@@ -14,7 +15,7 @@ Log.Logger = new LoggerConfiguration()
 
 try
 {
-    Log.Information("Starting Clients.API");
+    Log.Information("Starting Materials.API");
 
     var builder = WebApplication.CreateBuilder(args);
 
@@ -27,14 +28,17 @@ try
         .WriteTo.Seq(context.Configuration["Seq:ServerUrl"] ?? "http://localhost:5341"));
 
     // Database
-    builder.Services.AddDbContext<ClientsDbContext>(options =>
+    builder.Services.AddDbContext<MaterialsDbContext>(options =>
         options.UseNpgsql(
-            builder.Configuration.GetConnectionString("ClientsDb"),
-            npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "clients")));
+            builder.Configuration.GetConnectionString("MaterialsDb"),
+            npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "materials")));
 
     // Auth & Infrastructure with resilience
     builder.Services.AddSharedAuth(builder.Configuration);
-    builder.Services.AddResilientInfrastructure<ClientsDbContext>(builder.Configuration, "Clients.API");
+    builder.Services.AddResilientInfrastructure<MaterialsDbContext>(builder.Configuration, "Materials.API");
+
+    // Services
+    builder.Services.AddScoped<MaterialsSeeder>();
 
     // OpenAPI
     builder.Services.AddOpenApi();
@@ -65,7 +69,7 @@ try
 
     // Endpoints
     app.MapHealthChecks("/health");
-    app.MapClientsEndpoints();
+    app.MapMaterialsEndpoints();
 
     await app.RunAsync();
 }
@@ -85,7 +89,7 @@ async Task InitializeDatabaseAsync(WebApplication app)
     try
     {
         using var scope = app.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ClientsDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<MaterialsDbContext>();
 
         // Check if database is available (with timeout)
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
@@ -115,6 +119,10 @@ async Task InitializeDatabaseAsync(WebApplication app)
             await db.Database.EnsureDeletedAsync(cts.Token);
             await db.Database.EnsureCreatedAsync(cts.Token);
             Log.Information("Database recreated successfully");
+
+            var seeder = scope.ServiceProvider.GetRequiredService<MaterialsSeeder>();
+            await seeder.SeedAsync();
+            Log.Information("Database seeding completed");
         }
         else
         {

@@ -3,6 +3,7 @@ using Audit.API.Entities;
 using Audit.API.Persistence;
 using Domeo.Shared.Contracts.Events;
 using Domeo.Shared.Infrastructure.Redis;
+using Domeo.Shared.Infrastructure.Resilience;
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
 
@@ -11,6 +12,8 @@ namespace Audit.API.Services;
 public sealed class AuditEventSubscriber : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IAuditEventBuffer _buffer;
+    private readonly IConnectionStateTracker _stateTracker;
     private readonly ILogger<AuditEventSubscriber> _logger;
     private readonly string _redisConnectionString;
 
@@ -21,12 +24,22 @@ public sealed class AuditEventSubscriber : BackgroundService
 
     public AuditEventSubscriber(
         IServiceScopeFactory scopeFactory,
+        IAuditEventBuffer buffer,
+        IConnectionStateTracker stateTracker,
         IConfiguration configuration,
         ILogger<AuditEventSubscriber> logger)
     {
         _scopeFactory = scopeFactory;
+        _buffer = buffer;
+        _stateTracker = stateTracker;
         _logger = logger;
-        _redisConnectionString = configuration.GetConnectionString("Redis") ?? "localhost:6379";
+
+        var redisConnectionString = configuration.GetConnectionString("Redis") ?? "localhost:6379";
+        if (!redisConnectionString.Contains("abortConnect", StringComparison.OrdinalIgnoreCase))
+        {
+            redisConnectionString = redisConnectionString.TrimEnd(',', ';') + ",abortConnect=false";
+        }
+        _redisConnectionString = redisConnectionString;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -38,12 +51,10 @@ public sealed class AuditEventSubscriber : BackgroundService
             var connection = await ConnectionMultiplexer.ConnectAsync(_redisConnectionString);
             var subscriber = connection.GetSubscriber();
 
-            // Subscribe to entity audit events
             await subscriber.SubscribeAsync(
                 RedisChannel.Literal(RedisEventPublisher.AuditChannel),
                 async (channel, message) => await HandleAuditEventAsync(message));
 
-            // Subscribe to session events
             await subscriber.SubscribeAsync(
                 RedisChannel.Literal(RedisEventPublisher.SessionChannel),
                 async (channel, message) => await HandleSessionEventAsync(message));
@@ -53,7 +64,6 @@ public sealed class AuditEventSubscriber : BackgroundService
                 RedisEventPublisher.AuditChannel,
                 RedisEventPublisher.SessionChannel);
 
-            // Keep the service running
             await Task.Delay(Timeout.Infinite, stoppingToken);
         }
         catch (RedisConnectionException ex)
@@ -77,7 +87,18 @@ public sealed class AuditEventSubscriber : BackgroundService
             if (auditEvent is null)
                 return;
 
-            await ProcessAuditEventAsync(auditEvent);
+            // If database is available, write directly
+            if (_stateTracker.IsDatabaseAvailable)
+            {
+                await ProcessAuditEventDirectlyAsync(auditEvent);
+            }
+            else
+            {
+                // Otherwise, buffer for later
+                await _buffer.EnqueueAuditAsync(auditEvent);
+                _logger.LogDebug("Audit event buffered (DB unavailable): {Action} on {EntityType}",
+                    auditEvent.Action, auditEvent.EntityType);
+            }
         }
         catch (Exception ex)
         {
@@ -96,23 +117,15 @@ public sealed class AuditEventSubscriber : BackgroundService
             if (wrapper is null)
                 return;
 
-            switch (wrapper.EventType)
+            // If database is available, write directly
+            if (_stateTracker.IsDatabaseAvailable)
             {
-                case nameof(UserLoggedInEvent):
-                    var loginEvent = JsonSerializer.Deserialize<UserLoggedInEvent>(wrapper.Payload, JsonOptions);
-                    if (loginEvent is not null)
-                        await ProcessLoginEventAsync(loginEvent);
-                    break;
-
-                case nameof(UserLoggedOutEvent):
-                    var logoutEvent = JsonSerializer.Deserialize<UserLoggedOutEvent>(wrapper.Payload, JsonOptions);
-                    if (logoutEvent is not null)
-                        await ProcessLogoutEventAsync(logoutEvent);
-                    break;
-
-                default:
-                    _logger.LogWarning("Unknown session event type: {EventType}", wrapper.EventType);
-                    break;
+                await ProcessSessionEventDirectlyAsync(wrapper);
+            }
+            else
+            {
+                // Otherwise, buffer for later
+                await BufferSessionEventAsync(wrapper);
             }
         }
         catch (Exception ex)
@@ -121,7 +134,35 @@ public sealed class AuditEventSubscriber : BackgroundService
         }
     }
 
-    private async Task ProcessAuditEventAsync(AuditEvent auditEvent)
+    private async Task BufferSessionEventAsync(SessionEventWrapper wrapper)
+    {
+        switch (wrapper.EventType)
+        {
+            case nameof(UserLoggedInEvent):
+                var loginEvent = JsonSerializer.Deserialize<UserLoggedInEvent>(wrapper.Payload, JsonOptions);
+                if (loginEvent is not null)
+                {
+                    await _buffer.EnqueueSessionAsync(loginEvent, wrapper.EventType);
+                    _logger.LogDebug("Login event buffered (DB unavailable): {UserEmail}", loginEvent.UserEmail);
+                }
+                break;
+
+            case nameof(UserLoggedOutEvent):
+                var logoutEvent = JsonSerializer.Deserialize<UserLoggedOutEvent>(wrapper.Payload, JsonOptions);
+                if (logoutEvent is not null)
+                {
+                    await _buffer.EnqueueSessionAsync(logoutEvent, wrapper.EventType);
+                    _logger.LogDebug("Logout event buffered (DB unavailable): {UserEmail}", logoutEvent.UserEmail);
+                }
+                break;
+
+            default:
+                _logger.LogWarning("Unknown session event type: {EventType}", wrapper.EventType);
+                break;
+        }
+    }
+
+    private async Task ProcessAuditEventDirectlyAsync(AuditEvent auditEvent)
     {
         using var scope = _scopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AuditDbContext>();
@@ -142,6 +183,28 @@ public sealed class AuditEventSubscriber : BackgroundService
 
         _logger.LogDebug("Audit event saved: {Action} on {EntityType}/{EntityId}",
             auditEvent.Action, auditEvent.EntityType, auditEvent.EntityId);
+    }
+
+    private async Task ProcessSessionEventDirectlyAsync(SessionEventWrapper wrapper)
+    {
+        switch (wrapper.EventType)
+        {
+            case nameof(UserLoggedInEvent):
+                var loginEvent = JsonSerializer.Deserialize<UserLoggedInEvent>(wrapper.Payload, JsonOptions);
+                if (loginEvent is not null)
+                    await ProcessLoginEventAsync(loginEvent);
+                break;
+
+            case nameof(UserLoggedOutEvent):
+                var logoutEvent = JsonSerializer.Deserialize<UserLoggedOutEvent>(wrapper.Payload, JsonOptions);
+                if (logoutEvent is not null)
+                    await ProcessLogoutEventAsync(logoutEvent);
+                break;
+
+            default:
+                _logger.LogWarning("Unknown session event type: {EventType}", wrapper.EventType);
+                break;
+        }
     }
 
     private async Task ProcessLoginEventAsync(UserLoggedInEvent loginEvent)
