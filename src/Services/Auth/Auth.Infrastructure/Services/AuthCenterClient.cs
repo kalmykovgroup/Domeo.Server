@@ -1,5 +1,4 @@
 using System.Net.Http.Json;
-using System.Text.Json;
 using Auth.Application.Services;
 using Auth.Contracts;
 using Microsoft.Extensions.Configuration;
@@ -116,30 +115,14 @@ public class AuthCenterClient : IAuthCenterClient
 
         try
         {
-            var response = await _httpClient.GetAsync($"/users/{userId}?client_id={clientId}", cancellationToken);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogWarning("Failed to get user info: {StatusCode}", response.StatusCode);
-                return null;
-            }
-
-            using var doc = await JsonDocument.ParseAsync(
-                await response.Content.ReadAsStreamAsync(cancellationToken),
-                cancellationToken: cancellationToken);
-
-            var root = doc.RootElement;
-
-            if (!root.TryGetProperty("id", out var idProp) || !Guid.TryParse(idProp.GetString(), out var id))
-                return null;
-
-            return new User
-            {
-                Id = id,
-                Role = root.TryGetProperty("role", out var roleProp) ? roleProp.GetString() ?? string.Empty : string.Empty,
-                Email = root.TryGetProperty("email", out var emailProp) ? emailProp.GetString() : null,
-                Name = root.TryGetProperty("name", out var nameProp) ? nameProp.GetString() : null
-            };
+            return await _httpClient.GetFromJsonAsync<User>(
+                $"/users/{userId}?client_id={clientId}",
+                cancellationToken);
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogWarning(ex, "Failed to get user info for {UserId}", userId);
+            return null;
         }
         catch (Exception ex)
         {
