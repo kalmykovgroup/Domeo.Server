@@ -1,5 +1,3 @@
-using Auth.API.Contracts;
-
 namespace Auth.API.Services;
 
 public class AuthCenterClient : IAuthCenterClient

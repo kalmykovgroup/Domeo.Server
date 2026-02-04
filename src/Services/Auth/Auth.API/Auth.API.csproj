@@ -21,10 +21,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\src\Shared\Domeo.Shared.Auth\Domeo.Shared.Auth.csproj" />
-    <ProjectReference Include="..\..\..\..\src\Shared\Domeo.Shared.Contracts\Domeo.Shared.Contracts.csproj" />
-    <ProjectReference Include="..\..\..\..\src\Shared\Domeo.Shared.Infrastructure\Domeo.Shared.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\..\..\src\Shared\Domeo.Shared.Kernel\Domeo.Shared.Kernel.csproj" />
+    <ProjectReference Include="..\Auth.Abstractions\Auth.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Domeo.Shared.Auth\Domeo.Shared.Auth.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Domeo.Shared.Contracts\Domeo.Shared.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Domeo.Shared.Infrastructure\Domeo.Shared.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Domeo.Shared.Kernel\Domeo.Shared.Kernel.csproj" />
   </ItemGroup>
 
 </Project>

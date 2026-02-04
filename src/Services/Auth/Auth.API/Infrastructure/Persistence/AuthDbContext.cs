@@ -1,9 +1,10 @@
-using Auth.API.Entities;
+using Auth.Abstractions.Entities;
+using Domeo.Shared.Kernel.Application.Abstractions;
 using Microsoft.EntityFrameworkCore;
 
-namespace Auth.API.Persistence;
+namespace Auth.API.Infrastructure.Persistence;
 
-public sealed class AuthDbContext : DbContext
+public sealed class AuthDbContext : DbContext, IUnitOfWork
 {
     public AuthDbContext(DbContextOptions<AuthDbContext> options) : base(options)
     {

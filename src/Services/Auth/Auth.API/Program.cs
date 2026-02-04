@@ -1,5 +1,5 @@
-using Auth.API.Endpoints;
-using Auth.API.Persistence;
+using Auth.API.Infrastructure;
+using Auth.API.Infrastructure.Persistence;
 using Auth.API.Services;
 using Domeo.Shared.Auth;
 using Domeo.Shared.Infrastructure;
@@ -41,9 +41,9 @@ try
     builder.Services.AddSharedAuth(builder.Configuration);
     builder.Services.AddResilientInfrastructure<AuthDbContext>(builder.Configuration, "Auth.API");
 
-    // Services
-    builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
-    builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
+    // Application & Infrastructure (Services, Repositories)
+    builder.Services.AddApplication();
+    builder.Services.AddInfrastructure();
 
     // HTTP Clients
     builder.Services.AddTransient<InternalApiKeyDelegatingHandler>();
@@ -53,6 +53,9 @@ try
     {
         client.BaseAddress = new Uri(builder.Configuration["AuthCenter:BaseUrl"] ?? "http://localhost:5100");
     });
+
+    // Controllers
+    builder.Services.AddControllers();
 
     // OpenAPI
     builder.Services.AddOpenApi();
@@ -83,7 +86,7 @@ try
 
     // Endpoints
     app.MapHealthChecks("/health");
-    app.MapAuthEndpoints();
+    app.MapControllers();
 
     await app.RunAsync();
 }

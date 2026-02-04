@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Auth.API.Contracts;
+namespace Auth.API.Services;
 
 /// <summary>
 /// Response from Auth Center token endpoint

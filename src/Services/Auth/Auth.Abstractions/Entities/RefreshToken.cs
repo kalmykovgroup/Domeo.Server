@@ -1,6 +1,6 @@
 using Domeo.Shared.Kernel.Domain.Abstractions;
 
-namespace Auth.API.Entities;
+namespace Auth.Abstractions.Entities;
 
 public sealed class RefreshToken : Entity<Guid>
 {
