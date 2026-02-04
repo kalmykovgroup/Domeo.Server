@@ -2,6 +2,7 @@ using Domeo.ApiGateway.Auth;
 using Domeo.Shared.Infrastructure;
 using Domeo.Shared.Infrastructure.Logging;
 using Domeo.Shared.Infrastructure.Middleware;
+using Domeo.ApiGateway.Gateway;
 using Scalar.AspNetCore;
 using Serilog;
 using Serilog.Events;
@@ -57,10 +58,12 @@ try
     // Auth - JWKS validation from MockAuthCenter
     builder.Services.AddGatewayAuth(builder.Configuration);
 
-    // YARP Reverse Proxy
+    // YARP Reverse Proxy - code-based configuration from Domeo.Shared.Routes
     builder.Services
         .AddReverseProxy()
-        .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+        .LoadFromMemory(
+            GatewayRouteBuilder.BuildRoutes(),
+            GatewayClusterBuilder.BuildClusters(builder.Configuration));
 
     // OpenAPI
     builder.Services.AddOpenApi();

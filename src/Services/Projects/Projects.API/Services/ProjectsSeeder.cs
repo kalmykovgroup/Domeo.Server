@@ -1,5 +1,6 @@
+using Projects.Abstractions.Entities;
 using Projects.API.Entities;
-using Projects.API.Persistence;
+using Projects.API.Infrastructure.Persistence;
 
 namespace Projects.API.Services;
 

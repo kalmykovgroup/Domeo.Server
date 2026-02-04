@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using Modules.API.Entities;
-using Modules.API.Persistence;
+using Modules.Abstractions.Entities;
+using Modules.API.Infrastructure.Persistence;
 
 namespace Modules.API.Services;
 

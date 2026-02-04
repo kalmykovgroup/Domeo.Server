@@ -14,6 +14,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Shared\Domeo.Shared.Auth\Domeo.Shared.Auth.csproj" />
     <ProjectReference Include="..\..\Shared\Domeo.Shared.Infrastructure\Domeo.Shared.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Shared\Domeo.Shared.Routes\Domeo.Shared.Routes.csproj" />
   </ItemGroup>
 
 </Project>

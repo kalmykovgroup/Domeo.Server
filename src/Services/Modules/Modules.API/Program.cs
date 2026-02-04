@@ -4,8 +4,8 @@ using Domeo.Shared.Infrastructure.Logging;
 using Domeo.Shared.Infrastructure.Middleware;
 using Domeo.Shared.Infrastructure.Resilience;
 using Microsoft.EntityFrameworkCore;
-using Modules.API.Endpoints;
-using Modules.API.Persistence;
+using Modules.API.Infrastructure;
+using Modules.API.Infrastructure.Persistence;
 using Modules.API.Services;
 using Scalar.AspNetCore;
 using Serilog;
@@ -41,6 +41,13 @@ try
     builder.Services.AddSharedAuth(builder.Configuration);
     builder.Services.AddResilientInfrastructure<ModulesDbContext>(builder.Configuration, "Modules.API");
 
+    // Application & Infrastructure (MediatR, Repositories)
+    builder.Services.AddApplication();
+    builder.Services.AddInfrastructure();
+
+    // Controllers
+    builder.Services.AddControllers();
+
     // Services
     builder.Services.AddScoped<ModulesSeeder>();
 
@@ -73,7 +80,7 @@ try
 
     // Endpoints
     app.MapHealthChecks("/health");
-    app.MapModulesEndpoints();
+    app.MapControllers();
 
     await app.RunAsync();
 }

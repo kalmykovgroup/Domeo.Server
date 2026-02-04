@@ -2,9 +2,9 @@ using Domeo.Shared.Contracts;
 using Domeo.Shared.Contracts.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Projects.API.Contracts;
+using Projects.Abstractions.DTOs;
 using Projects.API.Entities;
-using Projects.API.Persistence;
+using Projects.API.Infrastructure.Persistence;
 
 namespace Projects.API.Endpoints;
 

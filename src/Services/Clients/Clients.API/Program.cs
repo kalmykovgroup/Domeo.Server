@@ -1,5 +1,5 @@
-using Clients.API.Endpoints;
-using Clients.API.Persistence;
+using Clients.API.Infrastructure;
+using Clients.API.Infrastructure.Persistence;
 using Domeo.Shared.Auth;
 using Domeo.Shared.Infrastructure;
 using Domeo.Shared.Infrastructure.Logging;
@@ -40,6 +40,13 @@ try
     builder.Services.AddSharedAuth(builder.Configuration);
     builder.Services.AddResilientInfrastructure<ClientsDbContext>(builder.Configuration, "Clients.API");
 
+    // Application & Infrastructure (MediatR, Repositories)
+    builder.Services.AddApplication();
+    builder.Services.AddInfrastructure();
+
+    // Controllers
+    builder.Services.AddControllers();
+
     // OpenAPI
     builder.Services.AddOpenApi();
 
@@ -69,7 +76,7 @@ try
 
     // Endpoints
     app.MapHealthChecks("/health");
-    app.MapClientsEndpoints();
+    app.MapControllers();
 
     await app.RunAsync();
 }

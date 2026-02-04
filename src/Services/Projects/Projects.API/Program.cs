@@ -5,7 +5,8 @@ using Domeo.Shared.Infrastructure.Middleware;
 using Domeo.Shared.Infrastructure.Resilience;
 using Microsoft.EntityFrameworkCore;
 using Projects.API.Endpoints;
-using Projects.API.Persistence;
+using Projects.API.Infrastructure;
+using Projects.API.Infrastructure.Persistence;
 using Projects.API.Services;
 using Scalar.AspNetCore;
 using Serilog;
@@ -41,6 +42,13 @@ try
     builder.Services.AddSharedAuth(builder.Configuration);
     builder.Services.AddResilientInfrastructure<ProjectsDbContext>(builder.Configuration, "Projects.API");
 
+    // Application & Infrastructure
+    builder.Services.AddApplication();
+    builder.Services.AddInfrastructure();
+
+    // Controllers
+    builder.Services.AddControllers();
+
     // Services
     builder.Services.AddScoped<ProjectsSeeder>();
 
@@ -73,7 +81,8 @@ try
 
     // Endpoints
     app.MapHealthChecks("/health");
-    app.MapProjectsEndpoints();
+    app.MapControllers();
+    app.MapProjectsEndpoints(); // Rooms, Vertices, Edges, Zones
     app.MapCabinetsEndpoints();
     app.MapCabinetHardwareOverrideEndpoints();
 

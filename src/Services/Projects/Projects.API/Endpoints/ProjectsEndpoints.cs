@@ -1,11 +1,10 @@
-using Domeo.Shared.Auth;
 using Domeo.Shared.Contracts;
 using Domeo.Shared.Contracts.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Projects.API.Contracts;
+using Projects.Abstractions.DTOs;
 using Projects.API.Entities;
-using Projects.API.Persistence;
+using Projects.API.Infrastructure.Persistence;
 
 namespace Projects.API.Endpoints;
 
@@ -13,16 +12,6 @@ public static class ProjectsEndpoints
 {
     public static void MapProjectsEndpoints(this IEndpointRouteBuilder app)
     {
-        // Projects
-        var projects = app.MapGroup("/projects").WithTags("Projects");
-        projects.MapGet("/", GetProjects).RequireAuthorization("Permission:projects:read");
-        projects.MapGet("/{id:guid}", GetProject).RequireAuthorization("Permission:projects:read");
-        projects.MapPost("/", CreateProject).RequireAuthorization("Permission:projects:write");
-        projects.MapPut("/{id:guid}", UpdateProject).RequireAuthorization("Permission:projects:write");
-        projects.MapPut("/{id:guid}/status", UpdateProjectStatus).RequireAuthorization("Permission:projects:write");
-        projects.MapPut("/{id:guid}/questionnaire", UpdateQuestionnaire).RequireAuthorization("Permission:projects:write");
-        projects.MapDelete("/{id:guid}", DeleteProject).RequireAuthorization("Permission:projects:delete");
-
         // Rooms
         var rooms = app.MapGroup("/projects/{projectId:guid}/rooms").WithTags("Rooms");
         rooms.MapGet("/", GetRooms).RequireAuthorization("Permission:projects:read");
@@ -50,197 +39,6 @@ public static class ProjectsEndpoints
         zones.MapPost("/", CreateZone).RequireAuthorization("Permission:projects:write");
         zones.MapPut("/{zoneId:guid}", UpdateZone).RequireAuthorization("Permission:projects:write");
         zones.MapDelete("/{zoneId:guid}", DeleteZone).RequireAuthorization("Permission:projects:delete");
-    }
-
-    // Projects
-    private static async Task<IResult> GetProjects(
-        [FromQuery] Guid? clientId,
-        [FromQuery] string? search,
-        [FromQuery] string? status,
-        [FromQuery] string? type,
-        [FromQuery] int? page,
-        [FromQuery] int? pageSize,
-        [FromQuery] string? sortBy,
-        [FromQuery] string? sortOrder,
-        ICurrentUserAccessor currentUserAccessor,
-        ProjectsDbContext dbContext,
-        CancellationToken cancellationToken)
-    {
-        var userId = currentUserAccessor.User?.Id;
-        if (userId is null)
-            return Results.Ok(ApiResponse<PaginatedResponse<ProjectDto>>.Fail("Unauthorized"));
-
-        var query = dbContext.Projects
-            .Where(p => p.UserId == userId && p.DeletedAt == null);
-
-        // Client filter
-        if (clientId.HasValue)
-            query = query.Where(p => p.ClientId == clientId.Value);
-
-        // Search filter
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            var searchLower = search.ToLower();
-            query = query.Where(p => p.Name.ToLower().Contains(searchLower));
-        }
-
-        // Status filter
-        if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<ProjectStatus>(status, true, out var statusEnum))
-            query = query.Where(p => p.Status == statusEnum);
-
-        // Type filter
-        if (!string.IsNullOrWhiteSpace(type))
-            query = query.Where(p => p.Type == type);
-
-        // Sorting
-        query = sortBy?.ToLower() switch
-        {
-            "name" => sortOrder?.ToLower() == "desc"
-                ? query.OrderByDescending(p => p.Name)
-                : query.OrderBy(p => p.Name),
-            "createdat" => sortOrder?.ToLower() == "desc"
-                ? query.OrderByDescending(p => p.CreatedAt)
-                : query.OrderBy(p => p.CreatedAt),
-            "updatedat" => sortOrder?.ToLower() == "desc"
-                ? query.OrderByDescending(p => p.UpdatedAt)
-                : query.OrderBy(p => p.UpdatedAt),
-            "status" => sortOrder?.ToLower() == "desc"
-                ? query.OrderByDescending(p => p.Status)
-                : query.OrderBy(p => p.Status),
-            _ => query.OrderByDescending(p => p.UpdatedAt)
-        };
-
-        // Pagination
-        var currentPage = page ?? 1;
-        var currentPageSize = pageSize ?? 20;
-        var total = await query.CountAsync(cancellationToken);
-
-        var projects = await query
-            .Skip((currentPage - 1) * currentPageSize)
-            .Take(currentPageSize)
-            .Select(p => new ProjectDto(
-                p.Id,
-                p.Name,
-                p.Type,
-                p.Status.ToString(),
-                p.ClientId,
-                p.UserId,
-                p.Notes,
-                p.QuestionnaireData,
-                p.CreatedAt,
-                p.UpdatedAt,
-                p.DeletedAt))
-            .ToListAsync(cancellationToken);
-
-        return Results.Ok(ApiResponse<PaginatedResponse<ProjectDto>>.Ok(
-            new PaginatedResponse<ProjectDto>(total, currentPage, currentPageSize, projects)));
-    }
-
-    private static async Task<IResult> GetProject(
-        Guid id,
-        ProjectsDbContext dbContext,
-        CancellationToken cancellationToken)
-    {
-        var project = await dbContext.Projects.FindAsync([id], cancellationToken);
-        if (project is null)
-            return Results.Ok(ApiResponse<ProjectDto>.Fail("Project not found"));
-
-        return Results.Ok(ApiResponse<ProjectDto>.Ok(new ProjectDto(
-            project.Id,
-            project.Name,
-            project.Type,
-            project.Status.ToString(),
-            project.ClientId,
-            project.UserId,
-            project.Notes,
-            project.QuestionnaireData,
-            project.CreatedAt,
-            project.UpdatedAt,
-            project.DeletedAt)));
-    }
-
-    private static async Task<IResult> CreateProject(
-        [FromBody] CreateProjectRequest request,
-        ICurrentUserAccessor currentUserAccessor,
-        ProjectsDbContext dbContext,
-        CancellationToken cancellationToken)
-    {
-        var userId = currentUserAccessor.User?.Id;
-        if (userId is null)
-            return Results.Ok(ApiResponse<IdResponse>.Fail("Unauthorized"));
-
-        var project = Project.Create(request.Name, request.Type, request.ClientId, userId.Value, request.Notes);
-
-        dbContext.Projects.Add(project);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Results.Ok(ApiResponse<IdResponse>.Ok(new IdResponse(project.Id), "Project created successfully"));
-    }
-
-    private static async Task<IResult> UpdateProject(
-        Guid id,
-        [FromBody] UpdateProjectRequest request,
-        ProjectsDbContext dbContext,
-        CancellationToken cancellationToken)
-    {
-        var project = await dbContext.Projects.FindAsync([id], cancellationToken);
-        if (project is null)
-            return Results.Ok(ApiResponse.Fail("Project not found"));
-
-        project.Update(request.Name, request.Notes);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Results.Ok(ApiResponse.Ok("Project updated successfully"));
-    }
-
-    private static async Task<IResult> UpdateProjectStatus(
-        Guid id,
-        [FromBody] UpdateStatusRequest request,
-        ProjectsDbContext dbContext,
-        CancellationToken cancellationToken)
-    {
-        var project = await dbContext.Projects.FindAsync([id], cancellationToken);
-        if (project is null)
-            return Results.Ok(ApiResponse.Fail("Project not found"));
-
-        if (!Enum.TryParse<ProjectStatus>(request.Status, true, out var status))
-            return Results.Ok(ApiResponse.Fail("Invalid status"));
-
-        project.UpdateStatus(status);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Results.Ok(ApiResponse.Ok("Status updated successfully"));
-    }
-
-    private static async Task<IResult> UpdateQuestionnaire(
-        Guid id,
-        [FromBody] UpdateQuestionnaireRequest request,
-        ProjectsDbContext dbContext,
-        CancellationToken cancellationToken)
-    {
-        var project = await dbContext.Projects.FindAsync([id], cancellationToken);
-        if (project is null)
-            return Results.Ok(ApiResponse.Fail("Project not found"));
-
-        project.SetQuestionnaireData(request.QuestionnaireData);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Results.Ok(ApiResponse.Ok("Questionnaire updated successfully"));
-    }
-
-    private static async Task<IResult> DeleteProject(
-        Guid id,
-        ProjectsDbContext dbContext,
-        CancellationToken cancellationToken)
-    {
-        var project = await dbContext.Projects.FindAsync([id], cancellationToken);
-        if (project is null)
-            return Results.Ok(ApiResponse.Fail("Project not found"));
-
-        project.SoftDelete();
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Results.Ok(ApiResponse.Ok("Project deleted successfully"));
     }
 
     // Rooms
