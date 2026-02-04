@@ -1,5 +1,6 @@
 using Clients.Abstractions.Commands;
 using Clients.Abstractions.Queries;
+using Clients.Abstractions.Routes;
 using Domeo.Shared.Contracts;
 using Domeo.Shared.Contracts.DTOs;
 using MediatR;
@@ -9,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Clients.API.Controllers;
 
 [ApiController]
-[Route("clients")]
+[Route(ClientsRoutes.Controller.Base)]
 [Tags("Clients")]
 public class ClientsController : ControllerBase
 {
@@ -18,7 +19,7 @@ public class ClientsController : ControllerBase
     public ClientsController(ISender sender) => _sender = sender;
 
     [HttpGet]
-    [Authorize(Policy = "Permission:clients:read")]
+    [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
     public async Task<IActionResult> GetClients(
         [FromQuery] string? search,
         [FromQuery] int? page,
@@ -32,8 +33,8 @@ public class ClientsController : ControllerBase
             : Ok(ApiResponse<PaginatedResponse<ClientDto>>.Fail(result.Error.Description));
     }
 
-    [HttpGet("{id:guid}")]
-    [Authorize(Policy = "Permission:clients:read")]
+    [HttpGet(ClientsRoutes.Controller.ById)]
+    [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
     public async Task<IActionResult> GetClient(Guid id)
     {
         var result = await _sender.Send(new GetClientByIdQuery(id));
@@ -43,7 +44,7 @@ public class ClientsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Policy = "Permission:clients:write")]
+    [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
     public async Task<IActionResult> CreateClient([FromBody] CreateClientRequest request)
     {
         var result = await _sender.Send(new CreateClientCommand(
@@ -53,8 +54,8 @@ public class ClientsController : ControllerBase
             : Ok(ApiResponse<ClientDto>.Fail(result.Error.Description));
     }
 
-    [HttpPut("{id:guid}")]
-    [Authorize(Policy = "Permission:clients:write")]
+    [HttpPut(ClientsRoutes.Controller.ById)]
+    [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
     public async Task<IActionResult> UpdateClient(Guid id, [FromBody] UpdateClientRequest request)
     {
         var result = await _sender.Send(new UpdateClientCommand(
@@ -64,8 +65,8 @@ public class ClientsController : ControllerBase
             : Ok(ApiResponse<ClientDto>.Fail(result.Error.Description));
     }
 
-    [HttpPost("{id:guid}/restore")]
-    [Authorize(Policy = "Permission:clients:write")]
+    [HttpPost(ClientsRoutes.Controller.Restore)]
+    [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
     public async Task<IActionResult> RestoreClient(Guid id)
     {
         var result = await _sender.Send(new RestoreClientCommand(id));
@@ -74,8 +75,8 @@ public class ClientsController : ControllerBase
             : Ok(ApiResponse<ClientDto>.Fail(result.Error.Description));
     }
 
-    [HttpDelete("{id:guid}")]
-    [Authorize(Policy = "Permission:clients:delete")]
+    [HttpDelete(ClientsRoutes.Controller.ById)]
+    [Authorize(Roles = "designer,catalogAdmin,systemAdmin")]
     public async Task<IActionResult> DeleteClient(Guid id)
     {
         var result = await _sender.Send(new DeleteClientCommand(id));

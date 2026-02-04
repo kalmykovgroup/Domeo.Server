@@ -3,6 +3,7 @@ using Domeo.Shared.Contracts.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Projects.Abstractions.DTOs;
+using Projects.Abstractions.Routes;
 using Projects.API.Entities;
 using Projects.API.Infrastructure.Persistence;
 
@@ -13,32 +14,32 @@ public static class ProjectsEndpoints
     public static void MapProjectsEndpoints(this IEndpointRouteBuilder app)
     {
         // Rooms
-        var rooms = app.MapGroup("/projects/{projectId:guid}/rooms").WithTags("Rooms");
+        var rooms = app.MapGroup(ProjectsRoutes.Controller.Rooms).WithTags("Rooms");
         rooms.MapGet("/", GetRooms).RequireAuthorization("Permission:projects:read");
-        rooms.MapGet("/{roomId:guid}", GetRoom).RequireAuthorization("Permission:projects:read");
+        rooms.MapGet("/" + ProjectsRoutes.Controller.RoomById, GetRoom).RequireAuthorization("Permission:projects:read");
         rooms.MapPost("/", CreateRoom).RequireAuthorization("Permission:projects:write");
-        rooms.MapPut("/{roomId:guid}", UpdateRoom).RequireAuthorization("Permission:projects:write");
-        rooms.MapDelete("/{roomId:guid}", DeleteRoom).RequireAuthorization("Permission:projects:delete");
+        rooms.MapPut("/" + ProjectsRoutes.Controller.RoomById, UpdateRoom).RequireAuthorization("Permission:projects:write");
+        rooms.MapDelete("/" + ProjectsRoutes.Controller.RoomById, DeleteRoom).RequireAuthorization("Permission:projects:delete");
 
         // Room Vertices
-        var vertices = app.MapGroup("/rooms/{roomId:guid}/vertices").WithTags("Room Vertices");
+        var vertices = app.MapGroup(ProjectsRoutes.Controller.Vertices).WithTags("Room Vertices");
         vertices.MapGet("/", GetRoomVertices).RequireAuthorization("Permission:projects:read");
         vertices.MapPost("/", CreateRoomVertex).RequireAuthorization("Permission:projects:write");
-        vertices.MapDelete("/{vertexId:guid}", DeleteRoomVertex).RequireAuthorization("Permission:projects:delete");
+        vertices.MapDelete("/" + ProjectsRoutes.Controller.VertexById, DeleteRoomVertex).RequireAuthorization("Permission:projects:delete");
 
         // Room Edges
-        var edges = app.MapGroup("/rooms/{roomId:guid}/edges").WithTags("Room Edges");
+        var edges = app.MapGroup(ProjectsRoutes.Controller.Edges).WithTags("Room Edges");
         edges.MapGet("/", GetRoomEdges).RequireAuthorization("Permission:projects:read");
         edges.MapPost("/", CreateRoomEdge).RequireAuthorization("Permission:projects:write");
-        edges.MapPut("/{edgeId:guid}", UpdateRoomEdge).RequireAuthorization("Permission:projects:write");
-        edges.MapDelete("/{edgeId:guid}", DeleteRoomEdge).RequireAuthorization("Permission:projects:delete");
+        edges.MapPut("/" + ProjectsRoutes.Controller.EdgeById, UpdateRoomEdge).RequireAuthorization("Permission:projects:write");
+        edges.MapDelete("/" + ProjectsRoutes.Controller.EdgeById, DeleteRoomEdge).RequireAuthorization("Permission:projects:delete");
 
         // Zones
-        var zones = app.MapGroup("/edges/{edgeId:guid}/zones").WithTags("Zones");
+        var zones = app.MapGroup(ProjectsRoutes.Controller.Zones).WithTags("Zones");
         zones.MapGet("/", GetZones).RequireAuthorization("Permission:projects:read");
         zones.MapPost("/", CreateZone).RequireAuthorization("Permission:projects:write");
-        zones.MapPut("/{zoneId:guid}", UpdateZone).RequireAuthorization("Permission:projects:write");
-        zones.MapDelete("/{zoneId:guid}", DeleteZone).RequireAuthorization("Permission:projects:delete");
+        zones.MapPut("/" + ProjectsRoutes.Controller.ZoneById, UpdateZone).RequireAuthorization("Permission:projects:write");
+        zones.MapDelete("/" + ProjectsRoutes.Controller.ZoneById, DeleteZone).RequireAuthorization("Permission:projects:delete");
     }
 
     // Rooms

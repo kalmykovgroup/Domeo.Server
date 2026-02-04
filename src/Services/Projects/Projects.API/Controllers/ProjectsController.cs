@@ -5,11 +5,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Projects.Abstractions.Commands.Projects;
 using Projects.Abstractions.DTOs;
+using Projects.Abstractions.Routes;
 
 namespace Projects.API.Controllers;
 
 [ApiController]
-[Route("projects")]
+[Route(ProjectsRoutes.Controller.Projects)]
 public class ProjectsController : ControllerBase
 {
     private readonly ISender _sender;
@@ -20,7 +21,7 @@ public class ProjectsController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Policy = "Permission:projects:read")]
+    [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
     public async Task<IActionResult> GetProjects(
         [FromQuery] Guid? clientId,
         [FromQuery] string? search,
@@ -48,8 +49,8 @@ public class ProjectsController : ControllerBase
             : Ok(ApiResponse<PaginatedResponse<ProjectDto>>.Fail(result.Error.Description));
     }
 
-    [HttpGet("{id:guid}")]
-    [Authorize(Policy = "Permission:projects:read")]
+    [HttpGet(ProjectsRoutes.Controller.ById)]
+    [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
     public async Task<IActionResult> GetProject(Guid id, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetProjectByIdQuery(id), cancellationToken);
@@ -59,7 +60,7 @@ public class ProjectsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Policy = "Permission:projects:write")]
+    [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
     public async Task<IActionResult> CreateProject([FromBody] CreateProjectRequest request, CancellationToken cancellationToken)
     {
         var command = new CreateProjectCommand(request.Name, request.Type, request.ClientId, request.Notes);
@@ -69,8 +70,8 @@ public class ProjectsController : ControllerBase
             : Ok(ApiResponse<IdResponse>.Fail(result.Error.Description));
     }
 
-    [HttpPut("{id:guid}")]
-    [Authorize(Policy = "Permission:projects:write")]
+    [HttpPut(ProjectsRoutes.Controller.ById)]
+    [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
     public async Task<IActionResult> UpdateProject(Guid id, [FromBody] UpdateProjectRequest request, CancellationToken cancellationToken)
     {
         var command = new UpdateProjectCommand(id, request.Name, request.Notes);
@@ -80,8 +81,8 @@ public class ProjectsController : ControllerBase
             : Ok(ApiResponse.Fail(result.Error.Description));
     }
 
-    [HttpPut("{id:guid}/status")]
-    [Authorize(Policy = "Permission:projects:write")]
+    [HttpPut(ProjectsRoutes.Controller.Status)]
+    [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
     public async Task<IActionResult> UpdateProjectStatus(Guid id, [FromBody] UpdateStatusRequest request, CancellationToken cancellationToken)
     {
         var command = new UpdateProjectStatusCommand(id, request.Status);
@@ -91,8 +92,8 @@ public class ProjectsController : ControllerBase
             : Ok(ApiResponse.Fail(result.Error.Description));
     }
 
-    [HttpPut("{id:guid}/questionnaire")]
-    [Authorize(Policy = "Permission:projects:write")]
+    [HttpPut(ProjectsRoutes.Controller.Questionnaire)]
+    [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
     public async Task<IActionResult> UpdateQuestionnaire(Guid id, [FromBody] UpdateQuestionnaireRequest request, CancellationToken cancellationToken)
     {
         var command = new UpdateQuestionnaireCommand(id, request.QuestionnaireData);
@@ -102,8 +103,8 @@ public class ProjectsController : ControllerBase
             : Ok(ApiResponse.Fail(result.Error.Description));
     }
 
-    [HttpDelete("{id:guid}")]
-    [Authorize(Policy = "Permission:projects:delete")]
+    [HttpDelete(ProjectsRoutes.Controller.ById)]
+    [Authorize(Roles = "designer,catalogAdmin,systemAdmin")]
     public async Task<IActionResult> DeleteProject(Guid id, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new DeleteProjectCommand(id), cancellationToken);

@@ -1,4 +1,9 @@
-using Domeo.Shared.Routes.Routers;
+using Auth.Abstractions.Routes;
+using Audit.Abstractions.Routes;
+using Clients.Abstractions.Routes;
+using Materials.Abstractions.Routes;
+using Modules.Abstractions.Routes;
+using Projects.Abstractions.Routes;
 using Yarp.ReverseProxy.Configuration;
 
 namespace Domeo.ApiGateway.Gateway;

@@ -1,5 +1,6 @@
 using Audit.Abstractions.DTOs;
 using Audit.Abstractions.Queries.AuditLogs;
+using Audit.Abstractions.Routes;
 using Domeo.Shared.Contracts;
 using Domeo.Shared.Contracts.DTOs;
 using MediatR;
@@ -9,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Audit.API.Controllers;
 
 [ApiController]
-[Route("audit/logs")]
+[Route(AuditRoutes.Controller.Logs)]
 [Tags("Audit Logs")]
 public class AuditLogsController : ControllerBase
 {
@@ -18,7 +19,7 @@ public class AuditLogsController : ControllerBase
     public AuditLogsController(ISender sender) => _sender = sender;
 
     [HttpGet]
-    [Authorize(Policy = "Permission:audit:read")]
+    [Authorize(Roles = "systemAdmin")]
     public async Task<IActionResult> GetAuditLogs(
         [FromQuery] Guid? userId,
         [FromQuery] string? action,
@@ -37,8 +38,8 @@ public class AuditLogsController : ControllerBase
             : Ok(ApiResponse<PaginatedResponse<AuditLogDto>>.Fail(result.Error.Description));
     }
 
-    [HttpGet("entity/{entityType}/{entityId}")]
-    [Authorize(Policy = "Permission:audit:read")]
+    [HttpGet(AuditRoutes.Controller.EntityHistory)]
+    [Authorize(Roles = "systemAdmin")]
     public async Task<IActionResult> GetEntityHistory(
         string entityType,
         string entityId,

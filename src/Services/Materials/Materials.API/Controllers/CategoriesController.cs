@@ -1,6 +1,7 @@
 using Domeo.Shared.Contracts;
 using Materials.Abstractions.DTOs;
 using Materials.Abstractions.Queries.Categories;
+using Materials.Abstractions.Routes;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Materials.API.Controllers;
 
 [ApiController]
-[Route("categories")]
+[Route(MaterialsRoutes.Controller.Categories)]
 [Tags("Categories")]
 public class CategoriesController : ControllerBase
 {
@@ -19,8 +20,8 @@ public class CategoriesController : ControllerBase
     /// <summary>
     /// Get categories tree with supplier IDs
     /// </summary>
-    [HttpGet("tree")]
-    [Authorize(Policy = "Permission:catalog:read")]
+    [HttpGet(MaterialsRoutes.Controller.Tree)]
+    [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
     public async Task<IActionResult> GetCategoriesTree(
         [FromQuery] bool? activeOnly,
         CancellationToken cancellationToken)

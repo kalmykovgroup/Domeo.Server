@@ -3,6 +3,7 @@ using Domeo.Shared.Contracts.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Projects.Abstractions.DTOs;
+using Projects.Abstractions.Routes;
 using Projects.API.Entities;
 using Projects.API.Infrastructure.Persistence;
 
@@ -13,19 +14,19 @@ public static class CabinetHardwareOverrideEndpoints
     public static void MapCabinetHardwareOverrideEndpoints(this IEndpointRouteBuilder app)
     {
         // Nested under /cabinets/{cabinetId}/hardware-overrides
-        var nested = app.MapGroup("/cabinets/{cabinetId:guid}/hardware-overrides")
+        var nested = app.MapGroup(ProjectsRoutes.Controller.CabinetHardwareOverridesNested)
             .WithTags("Cabinet Hardware Overrides");
 
         nested.MapGet("/", GetOverridesByCabinet).RequireAuthorization("Permission:cabinets:read");
         nested.MapPost("/", CreateOverride).RequireAuthorization("Permission:cabinets:write");
 
         // Direct access /cabinet-hardware-overrides/{id}
-        var direct = app.MapGroup("/cabinet-hardware-overrides")
+        var direct = app.MapGroup("/" + ProjectsRoutes.Controller.CabinetHardwareOverrides)
             .WithTags("Cabinet Hardware Overrides");
 
-        direct.MapGet("/{id:guid}", GetOverride).RequireAuthorization("Permission:cabinets:read");
-        direct.MapPut("/{id:guid}", UpdateOverride).RequireAuthorization("Permission:cabinets:write");
-        direct.MapDelete("/{id:guid}", DeleteOverride).RequireAuthorization("Permission:cabinets:delete");
+        direct.MapGet("/" + ProjectsRoutes.Controller.HardwareOverrideById, GetOverride).RequireAuthorization("Permission:cabinets:read");
+        direct.MapPut("/" + ProjectsRoutes.Controller.HardwareOverrideById, UpdateOverride).RequireAuthorization("Permission:cabinets:write");
+        direct.MapDelete("/" + ProjectsRoutes.Controller.HardwareOverrideById, DeleteOverride).RequireAuthorization("Permission:cabinets:delete");
     }
 
     private static async Task<IResult> GetOverridesByCabinet(

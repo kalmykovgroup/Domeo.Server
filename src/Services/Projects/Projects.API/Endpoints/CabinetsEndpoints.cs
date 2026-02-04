@@ -3,6 +3,7 @@ using Domeo.Shared.Contracts.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Projects.Abstractions.DTOs;
+using Projects.Abstractions.Routes;
 using Projects.API.Entities;
 using Projects.API.Infrastructure.Persistence;
 
@@ -12,18 +13,18 @@ public static class CabinetsEndpoints
 {
     public static void MapCabinetsEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/cabinets").WithTags("Cabinets");
+        var group = app.MapGroup("/" + ProjectsRoutes.Controller.Cabinets).WithTags("Cabinets");
 
         // Read endpoints
-        group.MapGet("/room/{roomId:guid}", GetCabinetsByRoom).RequireAuthorization("Permission:cabinets:read");
-        group.MapGet("/{id:guid}", GetCabinet).RequireAuthorization("Permission:cabinets:read");
+        group.MapGet("/" + ProjectsRoutes.Controller.CabinetsByRoom, GetCabinetsByRoom).RequireAuthorization("Permission:cabinets:read");
+        group.MapGet("/" + ProjectsRoutes.Controller.CabinetById, GetCabinet).RequireAuthorization("Permission:cabinets:read");
 
         // Write endpoints
         group.MapPost("/", CreateCabinet).RequireAuthorization("Permission:cabinets:write");
-        group.MapPut("/{id:guid}", UpdateCabinet).RequireAuthorization("Permission:cabinets:write");
+        group.MapPut("/" + ProjectsRoutes.Controller.CabinetById, UpdateCabinet).RequireAuthorization("Permission:cabinets:write");
 
         // Delete endpoints
-        group.MapDelete("/{id:guid}", DeleteCabinet).RequireAuthorization("Permission:cabinets:delete");
+        group.MapDelete("/" + ProjectsRoutes.Controller.CabinetById, DeleteCabinet).RequireAuthorization("Permission:cabinets:delete");
     }
 
     private static async Task<IResult> GetCabinetsByRoom(

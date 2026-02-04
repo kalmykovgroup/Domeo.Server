@@ -1,6 +1,7 @@
 using Domeo.Shared.Contracts;
 using Materials.Abstractions.DTOs;
 using Materials.Abstractions.Queries.Materials;
+using Materials.Abstractions.Routes;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Materials.API.Controllers;
 
 [ApiController]
-[Route("items")]
+[Route(MaterialsRoutes.Controller.Items)]
 [Tags("Materials")]
 public class MaterialsController : ControllerBase
 {
@@ -20,7 +21,7 @@ public class MaterialsController : ControllerBase
     /// Get all materials
     /// </summary>
     [HttpGet]
-    [Authorize(Policy = "Permission:catalog:read")]
+    [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
     public async Task<IActionResult> GetMaterials(
         [FromQuery] string? categoryId,
         [FromQuery] bool? activeOnly,
@@ -36,8 +37,8 @@ public class MaterialsController : ControllerBase
     /// <summary>
     /// Get material by ID
     /// </summary>
-    [HttpGet("{id}")]
-    [Authorize(Policy = "Permission:catalog:read")]
+    [HttpGet(MaterialsRoutes.Controller.ItemById)]
+    [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
     public async Task<IActionResult> GetMaterial(
         string id,
         CancellationToken cancellationToken)
@@ -52,8 +53,8 @@ public class MaterialsController : ControllerBase
     /// <summary>
     /// Get material offers
     /// </summary>
-    [HttpGet("{id}/offers")]
-    [Authorize(Policy = "Permission:catalog:read")]
+    [HttpGet(MaterialsRoutes.Controller.ItemOffers)]
+    [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
     public async Task<IActionResult> GetMaterialOffers(
         string id,
         CancellationToken cancellationToken)

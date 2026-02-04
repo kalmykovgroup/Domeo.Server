@@ -1,6 +1,7 @@
 using Audit.Abstractions.Commands;
 using Audit.Abstractions.DTOs;
 using Audit.Abstractions.Queries.LoginSessions;
+using Audit.Abstractions.Routes;
 using Domeo.Shared.Contracts;
 using Domeo.Shared.Contracts.DTOs;
 using MediatR;
@@ -10,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Audit.API.Controllers;
 
 [ApiController]
-[Route("audit/login-sessions")]
+[Route(AuditRoutes.Controller.LoginSessions)]
 [Tags("Login Sessions")]
 public class LoginSessionsController : ControllerBase
 {
@@ -41,7 +42,7 @@ public class LoginSessionsController : ControllerBase
     /// <summary>
     /// Internal API - called by Auth.API
     /// </summary>
-    [HttpPut("{id:guid}/logout")]
+    [HttpPut(AuditRoutes.Controller.Logout)]
     [Authorize(Policy = "InternalApi")]
     public async Task<IActionResult> LogoutSession(Guid id)
     {
@@ -53,7 +54,7 @@ public class LoginSessionsController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Policy = "Permission:audit:read")]
+    [Authorize(Roles = "systemAdmin")]
     public async Task<IActionResult> GetLoginSessions(
         [FromQuery] Guid? userId,
         [FromQuery] bool? activeOnly,
@@ -70,8 +71,8 @@ public class LoginSessionsController : ControllerBase
             : Ok(ApiResponse<PaginatedResponse<LoginSessionDto>>.Fail(result.Error.Description));
     }
 
-    [HttpGet("{id:guid}")]
-    [Authorize(Policy = "Permission:audit:read")]
+    [HttpGet(AuditRoutes.Controller.ById)]
+    [Authorize(Roles = "systemAdmin")]
     public async Task<IActionResult> GetLoginSession(Guid id)
     {
         var result = await _sender.Send(new GetLoginSessionByIdQuery(id));
@@ -81,8 +82,8 @@ public class LoginSessionsController : ControllerBase
             : Ok(ApiResponse<LoginSessionDto>.Fail(result.Error.Description));
     }
 
-    [HttpGet("user/{userId:guid}")]
-    [Authorize(Policy = "Permission:audit:read")]
+    [HttpGet(AuditRoutes.Controller.UserSessions)]
+    [Authorize(Roles = "systemAdmin")]
     public async Task<IActionResult> GetUserSessions(
         Guid userId,
         [FromQuery] bool? activeOnly,

@@ -1,6 +1,7 @@
 using Domeo.Shared.Contracts;
 using Materials.Abstractions.DTOs;
 using Materials.Abstractions.Queries.Suppliers;
+using Materials.Abstractions.Routes;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Materials.API.Controllers;
 
 [ApiController]
-[Route("suppliers")]
+[Route(MaterialsRoutes.Controller.Suppliers)]
 [Tags("Suppliers")]
 public class SuppliersController : ControllerBase
 {
@@ -20,7 +21,7 @@ public class SuppliersController : ControllerBase
     /// Get all suppliers
     /// </summary>
     [HttpGet]
-    [Authorize(Policy = "Permission:suppliers:read")]
+    [Authorize(Roles = "catalogAdmin,systemAdmin")]
     public async Task<IActionResult> GetSuppliers(
         [FromQuery] bool? activeOnly,
         CancellationToken cancellationToken)
@@ -35,8 +36,8 @@ public class SuppliersController : ControllerBase
     /// <summary>
     /// Get supplier by ID
     /// </summary>
-    [HttpGet("{id}")]
-    [Authorize(Policy = "Permission:suppliers:read")]
+    [HttpGet(MaterialsRoutes.Controller.SupplierById)]
+    [Authorize(Roles = "catalogAdmin,systemAdmin")]
     public async Task<IActionResult> GetSupplier(
         string id,
         CancellationToken cancellationToken)

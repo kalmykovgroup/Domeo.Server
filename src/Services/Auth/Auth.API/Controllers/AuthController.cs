@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using Auth.Abstractions.DTOs;
 using Auth.Abstractions.Entities;
 using Auth.Abstractions.Repositories;
+using Auth.Abstractions.Routes;
 using Auth.API.Services;
 using Domeo.Shared.Auth;
 using Domeo.Shared.Contracts;
@@ -15,7 +16,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Auth.API.Controllers;
 
 [ApiController]
-[Route("auth")]
+[Route(AuthRoutes.Controller.Base)]
 [Tags("Auth")]
 public class AuthController : ControllerBase
 {
@@ -51,7 +52,7 @@ public class AuthController : ControllerBase
     /// <summary>
     /// Initiate OAuth login - redirects to Auth Center
     /// </summary>
-    [HttpGet("login")]
+    [HttpGet(AuthRoutes.Controller.Login)]
     public IActionResult Login([FromQuery] string? returnUrl)
     {
         var authCenterUrl = _configuration["AuthCenter:BaseUrl"] ?? "http://localhost:5100";
@@ -74,7 +75,7 @@ public class AuthController : ControllerBase
     /// <summary>
     /// OAuth callback (GET) - receives code from Auth Center, exchanges for tokens, redirects to frontend
     /// </summary>
-    [HttpGet("callback")]
+    [HttpGet(AuthRoutes.Controller.Callback)]
     public async Task<IActionResult> CallbackGet(
         [FromQuery] string code,
         [FromQuery] string? state,
@@ -161,7 +162,7 @@ public class AuthController : ControllerBase
     /// <summary>
     /// OAuth callback - exchange authorization code for tokens from external Auth Center
     /// </summary>
-    [HttpPost("callback")]
+    [HttpPost(AuthRoutes.Controller.Callback)]
     public async Task<IActionResult> Callback(
         [FromBody] CallbackRequest request,
         CancellationToken cancellationToken)
@@ -239,7 +240,7 @@ public class AuthController : ControllerBase
     /// <summary>
     /// Refresh access token using Auth Center
     /// </summary>
-    [HttpPost("refresh")]
+    [HttpPost(AuthRoutes.Controller.Refresh)]
     public async Task<IActionResult> RefreshTokenEndpoint(
         [FromBody] RefreshTokenRequest? request,
         CancellationToken cancellationToken)
@@ -312,7 +313,7 @@ public class AuthController : ControllerBase
     /// <summary>
     /// Logout - revoke refresh token and record logout in audit
     /// </summary>
-    [HttpPost("logout")]
+    [HttpPost(AuthRoutes.Controller.Logout)]
     [Authorize]
     public async Task<IActionResult> Logout(
         [FromBody] LogoutRequest? request,
@@ -370,7 +371,7 @@ public class AuthController : ControllerBase
     /// <summary>
     /// Get current user info from JWT token
     /// </summary>
-    [HttpGet("me")]
+    [HttpGet(AuthRoutes.Controller.Me)]
     [Authorize]
     public IActionResult GetCurrentUser()
     {
@@ -391,7 +392,7 @@ public class AuthController : ControllerBase
     /// <summary>
     /// Get JWT token from HttpOnly cookie for WebSocket authentication
     /// </summary>
-    [HttpGet("token")]
+    [HttpGet(AuthRoutes.Controller.Token)]
     public IActionResult GetToken()
     {
         if (Request.Cookies.TryGetValue(AccessTokenCookieName, out var token))

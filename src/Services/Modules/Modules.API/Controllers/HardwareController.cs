@@ -4,11 +4,12 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Modules.Abstractions.Queries.Hardware;
+using Modules.Abstractions.Routes;
 
 namespace Modules.API.Controllers;
 
 [ApiController]
-[Route("hardware")]
+[Route(ModulesRoutes.Controller.Hardware)]
 [Tags("Hardware")]
 public class HardwareController : ControllerBase
 {
@@ -17,7 +18,7 @@ public class HardwareController : ControllerBase
     public HardwareController(ISender sender) => _sender = sender;
 
     [HttpGet]
-    [Authorize(Policy = "Permission:catalog:read")]
+    [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
     public async Task<IActionResult> GetHardware(
         [FromQuery] string? type,
         [FromQuery] bool? activeOnly)
@@ -28,8 +29,8 @@ public class HardwareController : ControllerBase
             : Ok(ApiResponse<List<HardwareDto>>.Fail(result.Error.Description));
     }
 
-    [HttpGet("{id:int}")]
-    [Authorize(Policy = "Permission:catalog:read")]
+    [HttpGet(ModulesRoutes.Controller.HardwareById)]
+    [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
     public async Task<IActionResult> GetHardwareItem(int id)
     {
         var result = await _sender.Send(new GetHardwareByIdQuery(id));

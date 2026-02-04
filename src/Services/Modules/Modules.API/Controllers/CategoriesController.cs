@@ -4,11 +4,12 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Modules.Abstractions.Queries.Categories;
+using Modules.Abstractions.Routes;
 
 namespace Modules.API.Controllers;
 
 [ApiController]
-[Route("categories")]
+[Route(ModulesRoutes.Controller.Categories)]
 [Tags("Module Categories")]
 public class CategoriesController : ControllerBase
 {
@@ -17,7 +18,7 @@ public class CategoriesController : ControllerBase
     public CategoriesController(ISender sender) => _sender = sender;
 
     [HttpGet]
-    [Authorize(Policy = "Permission:catalog:read")]
+    [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
     public async Task<IActionResult> GetCategories([FromQuery] bool? activeOnly)
     {
         var result = await _sender.Send(new GetCategoriesQuery(activeOnly));
@@ -26,8 +27,8 @@ public class CategoriesController : ControllerBase
             : Ok(ApiResponse<List<ModuleCategoryDto>>.Fail(result.Error.Description));
     }
 
-    [HttpGet("tree")]
-    [Authorize(Policy = "Permission:catalog:read")]
+    [HttpGet(ModulesRoutes.Controller.Tree)]
+    [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
     public async Task<IActionResult> GetCategoriesTree([FromQuery] bool? activeOnly)
     {
         var result = await _sender.Send(new GetCategoriesTreeQuery(activeOnly));

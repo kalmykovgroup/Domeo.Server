@@ -1,5 +1,6 @@
 using Audit.Abstractions.DTOs;
 using Audit.Abstractions.Queries.ApplicationLogs;
+using Audit.Abstractions.Routes;
 using Domeo.Shared.Contracts;
 using Domeo.Shared.Contracts.DTOs;
 using MediatR;
@@ -9,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Audit.API.Controllers;
 
 [ApiController]
-[Route("audit/application-logs")]
+[Route(AuditRoutes.Controller.ApplicationLogs)]
 [Tags("Application Logs")]
 public class ApplicationLogsController : ControllerBase
 {
@@ -18,7 +19,7 @@ public class ApplicationLogsController : ControllerBase
     public ApplicationLogsController(ISender sender) => _sender = sender;
 
     [HttpGet]
-    [Authorize(Policy = "Permission:audit:read")]
+    [Authorize(Roles = "systemAdmin")]
     public async Task<IActionResult> GetApplicationLogs(
         [FromQuery] string? level,
         [FromQuery] string? serviceName,
@@ -36,8 +37,8 @@ public class ApplicationLogsController : ControllerBase
             : Ok(ApiResponse<PaginatedResponse<ApplicationLogDto>>.Fail(result.Error.Description));
     }
 
-    [HttpGet("{id:guid}")]
-    [Authorize(Policy = "Permission:audit:read")]
+    [HttpGet(AuditRoutes.Controller.ById)]
+    [Authorize(Roles = "systemAdmin")]
     public async Task<IActionResult> GetApplicationLog(Guid id)
     {
         var result = await _sender.Send(new GetApplicationLogByIdQuery(id));
@@ -47,8 +48,8 @@ public class ApplicationLogsController : ControllerBase
             : Ok(ApiResponse<ApplicationLogDto>.Fail(result.Error.Description));
     }
 
-    [HttpGet("stats")]
-    [Authorize(Policy = "Permission:audit:read")]
+    [HttpGet(AuditRoutes.Controller.Stats)]
+    [Authorize(Roles = "systemAdmin")]
     public async Task<IActionResult> GetLogStats(
         [FromQuery] string? groupBy,
         [FromQuery] DateTime? from,

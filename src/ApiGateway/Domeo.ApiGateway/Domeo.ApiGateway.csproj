@@ -14,7 +14,12 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Shared\Domeo.Shared.Auth\Domeo.Shared.Auth.csproj" />
     <ProjectReference Include="..\..\Shared\Domeo.Shared.Infrastructure\Domeo.Shared.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\Shared\Domeo.Shared.Routes\Domeo.Shared.Routes.csproj" />
+    <ProjectReference Include="..\..\Services\Auth\Auth.Abstractions\Auth.Abstractions.csproj" />
+    <ProjectReference Include="..\..\Services\Clients\Clients.Abstractions\Clients.Abstractions.csproj" />
+    <ProjectReference Include="..\..\Services\Audit\Audit.Abstractions\Audit.Abstractions.csproj" />
+    <ProjectReference Include="..\..\Services\Projects\Projects.Abstractions\Projects.Abstractions.csproj" />
+    <ProjectReference Include="..\..\Services\Modules\Modules.Abstractions\Modules.Abstractions.csproj" />
+    <ProjectReference Include="..\..\Services\Materials\Materials.Abstractions\Materials.Abstractions.csproj" />
   </ItemGroup>
 
 </Project>

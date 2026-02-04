@@ -4,11 +4,12 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Modules.Abstractions.Queries.ModuleTypes;
+using Modules.Abstractions.Routes;
 
 namespace Modules.API.Controllers;
 
 [ApiController]
-[Route("types")]
+[Route(ModulesRoutes.Controller.Types)]
 [Tags("Module Types")]
 public class ModuleTypesController : ControllerBase
 {
@@ -17,7 +18,7 @@ public class ModuleTypesController : ControllerBase
     public ModuleTypesController(ISender sender) => _sender = sender;
 
     [HttpGet]
-    [Authorize(Policy = "Permission:catalog:read")]
+    [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
     public async Task<IActionResult> GetModuleTypes(
         [FromQuery] string? categoryId,
         [FromQuery] bool? activeOnly,
@@ -45,8 +46,8 @@ public class ModuleTypesController : ControllerBase
         return Ok(ApiResponse<List<ModuleTypeDto>>.Ok(response.Items));
     }
 
-    [HttpGet("count")]
-    [Authorize(Policy = "Permission:catalog:read")]
+    [HttpGet(ModulesRoutes.Controller.Count)]
+    [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
     public async Task<IActionResult> GetModuleTypesCount(
         [FromQuery] string? categoryId,
         [FromQuery] bool? activeOnly,
@@ -58,8 +59,8 @@ public class ModuleTypesController : ControllerBase
             : Ok(ApiResponse<object>.Fail(result.Error.Description));
     }
 
-    [HttpGet("{id:int}")]
-    [Authorize(Policy = "Permission:catalog:read")]
+    [HttpGet(ModulesRoutes.Controller.TypeById)]
+    [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
     public async Task<IActionResult> GetModuleType(int id)
     {
         var result = await _sender.Send(new GetModuleTypeByIdQuery(id));
