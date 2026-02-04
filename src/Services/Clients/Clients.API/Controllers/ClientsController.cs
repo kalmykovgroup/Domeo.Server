@@ -1,4 +1,5 @@
 using Clients.Abstractions.Commands;
+using Clients.Abstractions.DTOs;
 using Clients.Abstractions.Queries;
 using Clients.Abstractions.Routes;
 using Domeo.Shared.Contracts;
@@ -85,17 +86,3 @@ public class ClientsController : ControllerBase
             : Ok(ApiResponse.Fail(result.Error.Description));
     }
 }
-
-public sealed record CreateClientRequest(
-    string Name,
-    string? Phone,
-    string? Email,
-    string? Address,
-    string? Notes);
-
-public sealed record UpdateClientRequest(
-    string Name,
-    string? Phone,
-    string? Email,
-    string? Address,
-    string? Notes);

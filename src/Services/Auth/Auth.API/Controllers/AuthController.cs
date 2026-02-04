@@ -1,4 +1,3 @@
-using System.IdentityModel.Tokens.Jwt;
 using Auth.Abstractions.DTOs;
 using Auth.Abstractions.Entities;
 using Auth.Abstractions.Repositories;
@@ -12,7 +11,7 @@ using Domeo.Shared.Infrastructure.Redis;
 using Domeo.Shared.Kernel.Application.Abstractions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
+ 
 namespace Auth.API.Controllers;
 
 [ApiController]
@@ -107,20 +106,13 @@ public class AuthController : ControllerBase
             return Redirect($"{frontendUrl}/login?error=invalid_code");
         }
 
-        var handler = new JwtSecurityTokenHandler();
-        var jwt = handler.ReadJwtToken(tokenResponse.AccessToken);
-
-        var userId = jwt.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
-        var email = jwt.Claims.FirstOrDefault(c => c.Type == "email")?.Value;
-        var name = jwt.Claims.FirstOrDefault(c => c.Type == "name")?.Value;
-        var role = jwt.Claims.FirstOrDefault(c => c.Type == "role")?.Value ?? "viewer";
-
-        if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(email))
+        var user = tokenResponse.User;
+        if (string.IsNullOrEmpty(user.Id) || string.IsNullOrEmpty(user.Email))
         {
             return Redirect($"{frontendUrl}/login?error=invalid_token");
         }
 
-        var userGuid = Guid.Parse(userId);
+        var userGuid = Guid.Parse(user.Id);
 
         var ipAddress = GetClientIpAddress();
         var userAgent = Request.Headers.UserAgent.ToString();
@@ -129,9 +121,9 @@ public class AuthController : ControllerBase
         var loginEvent = new UserLoggedInEvent
         {
             UserId = userGuid,
-            UserEmail = email,
-            UserName = name,
-            UserRole = role,
+            UserEmail = user.Email,
+            UserName = user.Name,
+            UserRole = user.Role,
             IpAddress = ipAddress,
             UserAgent = userAgent,
             SessionId = loginSessionId
@@ -170,23 +162,16 @@ public class AuthController : ControllerBase
         var tokenResponse = await _authCenterClient.ExchangeCodeAsync(request.Code, request.RedirectUri, cancellationToken);
         if (tokenResponse is null)
         {
-            return Ok(ApiResponse<SsoAuthResultDto>.Fail("Invalid authorization code"));
+            return Ok(ApiResponse<AuthResultDto>.Fail("Invalid authorization code"));
         }
 
-        var handler = new JwtSecurityTokenHandler();
-        var jwt = handler.ReadJwtToken(tokenResponse.AccessToken);
-
-        var userId = jwt.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
-        var email = jwt.Claims.FirstOrDefault(c => c.Type == "email")?.Value;
-        var name = jwt.Claims.FirstOrDefault(c => c.Type == "name")?.Value;
-        var role = jwt.Claims.FirstOrDefault(c => c.Type == "role")?.Value ?? "viewer";
-
-        if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(email))
+        var user = tokenResponse.User;
+        if (string.IsNullOrEmpty(user.Id) || string.IsNullOrEmpty(user.Email))
         {
-            return Ok(ApiResponse<SsoAuthResultDto>.Fail("Invalid token claims"));
+            return Ok(ApiResponse<AuthResultDto>.Fail("Invalid token claims"));
         }
 
-        var userGuid = Guid.Parse(userId);
+        var userGuid = Guid.Parse(user.Id);
 
         var ipAddress = GetClientIpAddress();
         var userAgent = Request.Headers.UserAgent.ToString();
@@ -195,9 +180,9 @@ public class AuthController : ControllerBase
         var loginEvent = new UserLoggedInEvent
         {
             UserId = userGuid,
-            UserEmail = email,
-            UserName = name,
-            UserRole = role,
+            UserEmail = user.Email,
+            UserName = user.Name,
+            UserRole = user.Role,
             IpAddress = ipAddress,
             UserAgent = userAgent,
             SessionId = loginSessionId
@@ -224,17 +209,10 @@ public class AuthController : ControllerBase
                 DateTime.UtcNow.AddDays(7));
         }
 
-        var nameParts = (name ?? email.Split('@')[0]).Split(' ', 2);
-        var user = new SsoUserDto(
-            userGuid,
-            email,
-            nameParts[0],
-            nameParts.Length > 1 ? nameParts[1] : "",
-            role);
-
+        var userDto = new UserDto(userGuid, user.Email, user.Name, user.Role);
         var tokenDto = new TokenDto(tokenResponse.AccessToken, tokenResponse.RefreshToken, accessTokenExpiration);
 
-        return Ok(ApiResponse<SsoAuthResultDto>.Ok(new SsoAuthResultDto(user, tokenDto)));
+        return Ok(ApiResponse<AuthResultDto>.Ok(new AuthResultDto(userDto, tokenDto)));
     }
 
     /// <summary>
@@ -252,19 +230,19 @@ public class AuthController : ControllerBase
         }
 
         if (string.IsNullOrEmpty(refreshTokenValue))
-            return Ok(ApiResponse<SsoAuthResultDto>.Fail("Refresh token is required"));
+            return Ok(ApiResponse<AuthResultDto>.Fail("Refresh token is required"));
 
         var storedToken = await _refreshTokenRepository.GetByTokenAsync(refreshTokenValue, cancellationToken);
 
         if (storedToken is null || !storedToken.IsActive)
-            return Ok(ApiResponse<SsoAuthResultDto>.Fail("Invalid or expired refresh token"));
+            return Ok(ApiResponse<AuthResultDto>.Fail("Invalid or expired refresh token"));
 
         var tokenResponse = await _authCenterClient.RefreshTokenAsync(refreshTokenValue, cancellationToken);
         if (tokenResponse is null)
         {
             storedToken.Revoke();
             await _unitOfWork.SaveChangesAsync(cancellationToken);
-            return Ok(ApiResponse<SsoAuthResultDto>.Fail("Failed to refresh token"));
+            return Ok(ApiResponse<AuthResultDto>.Fail("Failed to refresh token"));
         }
 
         storedToken.Revoke();
@@ -278,14 +256,7 @@ public class AuthController : ControllerBase
         _refreshTokenRepository.Add(newRefreshToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        var handler = new JwtSecurityTokenHandler();
-        var jwt = handler.ReadJwtToken(tokenResponse.AccessToken);
-
-        var userId = jwt.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
-        var email = jwt.Claims.FirstOrDefault(c => c.Type == "email")?.Value;
-        var name = jwt.Claims.FirstOrDefault(c => c.Type == "name")?.Value;
-        var role = jwt.Claims.FirstOrDefault(c => c.Type == "role")?.Value ?? "viewer";
-
+        var user = tokenResponse.User;
         var accessTokenExpiration = DateTime.UtcNow.AddSeconds(tokenResponse.ExpiresIn);
 
         if (IsBrowserClient())
@@ -297,17 +268,15 @@ public class AuthController : ControllerBase
                 DateTime.UtcNow.AddDays(7));
         }
 
-        var nameParts = (name ?? email?.Split('@')[0] ?? "").Split(' ', 2);
-        var user = new SsoUserDto(
-            Guid.Parse(userId ?? Guid.Empty.ToString()),
-            email ?? "",
-            nameParts[0],
-            nameParts.Length > 1 ? nameParts[1] : "",
-            role);
+        var userDto = new UserDto(
+            Guid.Parse(user.Id),
+            user.Email,
+            user.Name,
+            user.Role);
 
         var tokenDto = new TokenDto(tokenResponse.AccessToken, tokenResponse.RefreshToken, accessTokenExpiration);
 
-        return Ok(ApiResponse<SsoAuthResultDto>.Ok(new SsoAuthResultDto(user, tokenDto)));
+        return Ok(ApiResponse<AuthResultDto>.Ok(new AuthResultDto(userDto, tokenDto)));
     }
 
     /// <summary>
@@ -468,7 +437,3 @@ public class AuthController : ControllerBase
 
     #endregion
 }
-
-public sealed record CallbackRequest(string Code, string RedirectUri);
-public sealed record RefreshTokenRequest(string RefreshToken);
-public sealed record LogoutRequest(string RefreshToken);

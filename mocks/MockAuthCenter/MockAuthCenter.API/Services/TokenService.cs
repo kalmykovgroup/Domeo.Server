@@ -57,13 +57,21 @@ public class TokenService
     public TokenResponse CreateTokenResponse(TestUser user, string clientId, string refreshToken)
     {
         var accessToken = GenerateAccessToken(user, clientId);
+        var role = _userStore.GetRoleForProgram(user, clientId);
 
         return new TokenResponse
         {
             AccessToken = accessToken,
             TokenType = "Bearer",
             ExpiresIn = _accessTokenLifetimeMinutes * 60,
-            RefreshToken = refreshToken
+            RefreshToken = refreshToken,
+            User = new TokenUserInfo
+            {
+                Id = user.Id,
+                Email = user.Email,
+                Name = user.Name,
+                Role = role ?? string.Empty
+            }
         };
     }
 }
@@ -81,4 +89,22 @@ public class TokenResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("refresh_token")]
     public string RefreshToken { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonPropertyName("user")]
+    public TokenUserInfo User { get; set; } = new();
+}
+
+public class TokenUserInfo
+{
+    [System.Text.Json.Serialization.JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonPropertyName("email")]
+    public string Email { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonPropertyName("role")]
+    public string Role { get; set; } = string.Empty;
 }
