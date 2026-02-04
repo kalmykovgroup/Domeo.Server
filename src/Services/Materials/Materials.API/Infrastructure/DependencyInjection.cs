@@ -1,8 +1,6 @@
-using Domeo.Shared.Application;
 using FluentValidation;
 using Materials.Abstractions.ExternalServices;
 using Materials.API.Infrastructure.ExternalServices;
-using Materials.API.Infrastructure.Persistence;
 using MediatR;
 
 namespace Materials.API.Infrastructure;
@@ -14,15 +12,7 @@ public static class DependencyInjection
         services.AddMediatR(cfg =>
             cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly));
 
-        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
-
-        return services;
-    }
-
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services)
-    {
-        services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<MaterialsDbContext>());
 
         return services;
     }

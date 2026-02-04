@@ -1,3 +1,4 @@
+using System.Text.Json;
 using MockSupplier.API.Models;
 
 namespace MockSupplier.API.Services;
@@ -11,11 +12,74 @@ public sealed class DataStore
 
     public DataStore(IConfiguration configuration)
     {
-        _categories = configuration.GetSection("Data:Categories").Get<List<Category>>() ?? [];
-        _materials = configuration.GetSection("Data:Materials").Get<List<Material>>() ?? [];
-        _suppliers = configuration.GetSection("Data:Suppliers").Get<List<Supplier>>() ?? [];
-        _offers = configuration.GetSection("Data:Offers").Get<List<Offer>>() ?? [];
+        var dbJsonPath = configuration.GetValue<string>("Data:DbJsonPath");
+
+        if (!string.IsNullOrEmpty(dbJsonPath) && File.Exists(dbJsonPath))
+        {
+            var json = File.ReadAllText(dbJsonPath);
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var dbData = JsonSerializer.Deserialize<DbJsonData>(json, options);
+
+            _categories = dbData?.MaterialCategories?.Select(MapToCategory).ToList() ?? [];
+            _materials = dbData?.Materials?.Select(MapToMaterial).ToList() ?? [];
+            _suppliers = dbData?.Suppliers?.Select(MapToSupplier).ToList() ?? [];
+            _offers = dbData?.SupplierMaterials?.Select(MapToOffer).ToList() ?? [];
+        }
+        else
+        {
+            // Fallback на данные из appsettings.json
+            _categories = configuration.GetSection("Data:Categories").Get<List<Category>>() ?? [];
+            _materials = configuration.GetSection("Data:Materials").Get<List<Material>>() ?? [];
+            _suppliers = configuration.GetSection("Data:Suppliers").Get<List<Supplier>>() ?? [];
+            _offers = configuration.GetSection("Data:Offers").Get<List<Offer>>() ?? [];
+        }
     }
+
+    private static Category MapToCategory(DbMaterialCategory c) => new()
+    {
+        Id = c.Id,
+        Name = c.Name,
+        ParentId = c.ParentId,
+        Level = c.Level,
+        OrderIndex = c.Order,
+        IsActive = c.IsActive
+    };
+
+    private static Material MapToMaterial(DbMaterial m) => new()
+    {
+        Id = m.Id,
+        CategoryId = m.CategoryId,
+        Name = m.Name,
+        Description = m.Description,
+        Unit = m.Unit,
+        Color = m.Color,
+        TextureUrl = m.TextureUrl,
+        IsActive = true
+    };
+
+    private static Supplier MapToSupplier(DbSupplier s) => new()
+    {
+        Id = s.Id,
+        Company = s.Company,
+        ContactName = $"{s.FirstName} {s.LastName}".Trim(),
+        Email = s.Email,
+        Phone = s.Phone,
+        IsActive = true
+    };
+
+    private static Offer MapToOffer(DbSupplierMaterial sm) => new()
+    {
+        Id = sm.Id,
+        MaterialId = sm.MaterialId,
+        SupplierId = sm.SupplierId,
+        Price = sm.Price,
+        Currency = sm.Currency,
+        MinOrderQty = sm.MinOrderQty,
+        LeadTimeDays = sm.LeadTimeDays,
+        InStock = sm.InStock,
+        Sku = sm.Sku,
+        Notes = sm.Notes
+    };
 
     public IReadOnlyList<Category> GetCategories(bool activeOnly = true)
     {
