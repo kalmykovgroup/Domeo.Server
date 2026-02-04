@@ -2,14 +2,12 @@
 #
 # SERVICES:
 # - PostgreSQL 17: Database for all microservices
-# - Redis 7: Caching and pub/sub
-# - Seq: Centralized logging
+# - Redis 7: Caching, pub/sub, and audit log queue
 # - Nginx: Reverse proxy
 #
 # PORTS:
 # - 80: Nginx HTTP
 # - 443: Nginx HTTPS
-# - 5341: Seq UI
 # - 5432: PostgreSQL
 # - 6379: Redis
 #
@@ -56,19 +54,6 @@ services:
     networks:
       - domeo-network
 
-  seq:
-    image: datalust/seq:latest
-    container_name: domeo-seq
-    environment:
-      ACCEPT_EULA: "Y"
-    ports:
-      - "${SEQ_UI_PORT:-5341}:80"
-      - "5342:5341"
-    volumes:
-      - seq_data:/data
-    networks:
-      - domeo-network
-
   nginx:
     image: nginx:alpine
     container_name: domeo-nginx
@@ -95,4 +80,3 @@ networks:
 volumes:
   postgres_data:
   redis_data:
-  seq_data:

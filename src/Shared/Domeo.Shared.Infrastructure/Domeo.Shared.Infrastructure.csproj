@@ -9,6 +9,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
     <PackageReference Include="Npgsql" />
+    <PackageReference Include="Serilog" />
     <PackageReference Include="StackExchange.Redis" />
   </ItemGroup>
 

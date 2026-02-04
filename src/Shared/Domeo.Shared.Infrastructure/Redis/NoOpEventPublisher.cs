@@ -32,4 +32,11 @@ public sealed class NoOpEventPublisher : IEventPublisher
             sessionEvent.GetType().Name, sessionEvent.UserEmail);
         return Task.CompletedTask;
     }
+
+    public Task PublishErrorAsync(ApplicationErrorEvent errorEvent, CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("NoOp: Error event from {ServiceName} would be published (Redis unavailable)",
+            errorEvent.ServiceName);
+        return Task.CompletedTask;
+    }
 }

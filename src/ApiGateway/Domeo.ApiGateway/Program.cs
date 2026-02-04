@@ -1,10 +1,14 @@
 using Domeo.ApiGateway.Auth;
+using Domeo.Shared.Infrastructure;
+using Domeo.Shared.Infrastructure.Logging;
 using Domeo.Shared.Infrastructure.Middleware;
 using Scalar.AspNetCore;
 using Serilog;
+using Serilog.Events;
+using Serilog.Sinks.SystemConsole.Themes;
 
 Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
+    .WriteTo.Console(theme: AnsiConsoleTheme.Code)
     .CreateBootstrapLogger();
 
 try
@@ -13,13 +17,17 @@ try
 
     var builder = WebApplication.CreateBuilder(args);
 
-    // Serilog
+    // Minimal infrastructure for logging to Redis
+    builder.Services.AddMinimalInfrastructure(builder.Configuration);
+
+    // Serilog with Redis sink for Error/Fatal logs
     builder.Host.UseSerilog((context, services, configuration) => configuration
-        .ReadFrom.Configuration(context.Configuration)
-        .ReadFrom.Services(services)
+        .MinimumLevel.Information()
+        .MinimumLevel.Override("Microsoft.AspNetCore.Routing", LogEventLevel.Warning)
+        .MinimumLevel.Override("Yarp", LogEventLevel.Warning)
         .Enrich.FromLogContext()
-        .WriteTo.Console()
-        .WriteTo.Seq(context.Configuration["Seq:ServerUrl"] ?? "http://localhost:5341"));
+        .WriteTo.Console(theme: AnsiConsoleTheme.Code)
+        .WriteTo.Redis(services, serviceName: "ApiGateway"));
 
     // CORS
     const string corsPolicyName = "AllowFrontend";

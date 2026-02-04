@@ -10,6 +10,7 @@ public sealed class RedisEventPublisher : IEventPublisher
 
     public const string AuditChannel = "domeo:audit:entities";
     public const string SessionChannel = "domeo:audit:sessions";
+    public const string ErrorChannel = "domeo:logs:errors";
 
     public RedisEventPublisher(IConnectionMultiplexer redis)
     {
@@ -46,6 +47,14 @@ public sealed class RedisEventPublisher : IEventPublisher
         var message = JsonSerializer.Serialize(wrapper, options);
 
         await subscriber.PublishAsync(RedisChannel.Literal(SessionChannel), message);
+    }
+
+    public async Task PublishErrorAsync(ApplicationErrorEvent errorEvent, CancellationToken cancellationToken = default)
+    {
+        var subscriber = _redis.GetSubscriber();
+        var message = JsonSerializer.Serialize(errorEvent);
+
+        await subscriber.PublishAsync(RedisChannel.Literal(ErrorChannel), message);
     }
 }
 

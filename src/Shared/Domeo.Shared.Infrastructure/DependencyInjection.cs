@@ -50,12 +50,18 @@ public static class DependencyInjection
             // Redis unavailable at startup - will monitor and reconnect
         }
 
-        // Always use resilient event publisher
+        // Fallback event store for when Redis is unavailable
+        services.AddSingleton<FallbackEventStore>();
+
+        // Always use resilient event publisher with fallback support
         services.AddSingleton<IEventPublisher, ResilientEventPublisher>();
 
         // Add health monitor services
         services.AddHostedService<DatabaseHealthMonitorService<TDbContext>>();
         services.AddHostedService<RedisHealthMonitorService>();
+
+        // Add fallback event replay service (replays events when Redis becomes available)
+        services.AddHostedService<FallbackEventReplayService>();
 
         // Add degraded health checks
         services.AddHealthChecks()
@@ -68,6 +74,53 @@ public static class DependencyInjection
             sp.GetRequiredService<IEventPublisher>(),
             sp.GetRequiredService<IAuditContextAccessor>(),
             serviceName));
+
+        return services;
+    }
+
+    /// <summary>
+    /// Adds minimal infrastructure for services without database (e.g., API Gateway)
+    /// </summary>
+    public static IServiceCollection AddMinimalInfrastructure(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        // Register connection state tracker as singleton
+        services.AddSingleton<IConnectionStateTracker, ConnectionStateTracker>();
+
+        // Configure Redis with graceful fallback
+        var redisConnectionString = configuration.GetConnectionString("Redis")
+            ?? "localhost:6379";
+
+        if (!redisConnectionString.Contains("abortConnect", StringComparison.OrdinalIgnoreCase))
+        {
+            redisConnectionString = redisConnectionString.TrimEnd(',', ';') + ",abortConnect=false";
+        }
+
+        try
+        {
+            var redisConnection = ConnectionMultiplexer.Connect(redisConnectionString);
+            if (redisConnection.IsConnected)
+            {
+                services.AddSingleton<IConnectionMultiplexer>(redisConnection);
+            }
+        }
+        catch
+        {
+            // Redis unavailable at startup
+        }
+
+        // Fallback event store for when Redis is unavailable
+        services.AddSingleton<FallbackEventStore>();
+
+        // Resilient event publisher with fallback support
+        services.AddSingleton<IEventPublisher, ResilientEventPublisher>();
+
+        // Add Redis health monitor
+        services.AddHostedService<RedisHealthMonitorService>();
+
+        // Add fallback event replay service
+        services.AddHostedService<FallbackEventReplayService>();
 
         return services;
     }

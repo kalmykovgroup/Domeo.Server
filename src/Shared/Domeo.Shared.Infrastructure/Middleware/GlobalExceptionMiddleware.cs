@@ -40,8 +40,7 @@ public sealed class GlobalExceptionMiddleware
 
     private async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
-        _logger.LogError(exception, "Unhandled exception occurred: {Message}. StackTrace: {StackTrace}",
-            exception.Message, exception.StackTrace);
+        _logger.LogError(exception, "Unhandled exception occurred: {Message}", exception.Message);
 
         var (statusCode, response) = exception switch
         {

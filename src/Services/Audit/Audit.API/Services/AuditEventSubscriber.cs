@@ -59,10 +59,15 @@ public sealed class AuditEventSubscriber : BackgroundService
                 RedisChannel.Literal(RedisEventPublisher.SessionChannel),
                 async (channel, message) => await HandleSessionEventAsync(message));
 
+            await subscriber.SubscribeAsync(
+                RedisChannel.Literal(RedisEventPublisher.ErrorChannel),
+                async (channel, message) => await HandleErrorEventAsync(message));
+
             _logger.LogInformation(
-                "AuditEventSubscriber subscribed to channels: {AuditChannel}, {SessionChannel}",
+                "AuditEventSubscriber subscribed to channels: {AuditChannel}, {SessionChannel}, {ErrorChannel}",
                 RedisEventPublisher.AuditChannel,
-                RedisEventPublisher.SessionChannel);
+                RedisEventPublisher.SessionChannel,
+                RedisEventPublisher.ErrorChannel);
 
             await Task.Delay(Timeout.Infinite, stoppingToken);
         }
@@ -247,5 +252,55 @@ public sealed class AuditEventSubscriber : BackgroundService
 
         _logger.LogInformation("Login session closed: {SessionId} for user {UserEmail}",
             logoutEvent.SessionId, logoutEvent.UserEmail);
+    }
+
+    private async Task HandleErrorEventAsync(RedisValue message)
+    {
+        if (message.IsNullOrEmpty)
+            return;
+
+        try
+        {
+            var errorEvent = JsonSerializer.Deserialize<ApplicationErrorEvent>(message.ToString(), JsonOptions);
+            if (errorEvent is null)
+                return;
+
+            if (_stateTracker.IsDatabaseAvailable)
+            {
+                await ProcessErrorEventDirectlyAsync(errorEvent);
+            }
+            else
+            {
+                _logger.LogDebug("Error event received but DB unavailable: {ServiceName} - {Message}",
+                    errorEvent.ServiceName, errorEvent.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing error event");
+        }
+    }
+
+    private async Task ProcessErrorEventDirectlyAsync(ApplicationErrorEvent errorEvent)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AuditDbContext>();
+
+        var applicationLog = ApplicationLog.Create(
+            errorEvent.ServiceName,
+            errorEvent.Level,
+            errorEvent.Message,
+            errorEvent.Exception,
+            errorEvent.ExceptionType,
+            errorEvent.Properties,
+            errorEvent.RequestPath,
+            errorEvent.UserId,
+            errorEvent.CorrelationId);
+
+        dbContext.ApplicationLogs.Add(applicationLog);
+        await dbContext.SaveChangesAsync();
+
+        _logger.LogDebug("Application error saved: {ServiceName} - {Level} - {Message}",
+            errorEvent.ServiceName, errorEvent.Level, errorEvent.Message);
     }
 }

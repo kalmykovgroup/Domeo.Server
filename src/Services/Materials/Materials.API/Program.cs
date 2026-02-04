@@ -1,5 +1,6 @@
 using Domeo.Shared.Auth;
 using Domeo.Shared.Infrastructure;
+using Domeo.Shared.Infrastructure.Logging;
 using Domeo.Shared.Infrastructure.Middleware;
 using Domeo.Shared.Infrastructure.Resilience;
 using Materials.API.Endpoints;
@@ -8,9 +9,11 @@ using Materials.API.Services;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Serilog;
+using Serilog.Events;
+using Serilog.Sinks.SystemConsole.Themes;
 
 Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
+    .WriteTo.Console(theme: AnsiConsoleTheme.Code)
     .CreateBootstrapLogger();
 
 try
@@ -19,13 +22,14 @@ try
 
     var builder = WebApplication.CreateBuilder(args);
 
-    // Serilog
+    // Serilog with Redis sink for Error/Fatal logs
     builder.Host.UseSerilog((context, services, configuration) => configuration
-        .ReadFrom.Configuration(context.Configuration)
-        .ReadFrom.Services(services)
+        .MinimumLevel.Information()
+        .MinimumLevel.Override("Microsoft.AspNetCore.Routing", LogEventLevel.Warning)
+        .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
         .Enrich.FromLogContext()
-        .WriteTo.Console()
-        .WriteTo.Seq(context.Configuration["Seq:ServerUrl"] ?? "http://localhost:5341"));
+        .WriteTo.Console(theme: AnsiConsoleTheme.Code)
+        .WriteTo.Redis(services, serviceName: "Materials.API"));
 
     // Database
     builder.Services.AddDbContext<MaterialsDbContext>(options =>
