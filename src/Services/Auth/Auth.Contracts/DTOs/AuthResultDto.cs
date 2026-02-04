@@ -1,3 +1,5 @@
+using Auth.Contracts;
+
 namespace Auth.Contracts.DTOs;
 
-public sealed record AuthResultDto(UserDto User, TokenDto Token);
+public sealed record AuthResultDto(User User, TokenDto Token);

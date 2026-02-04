@@ -1,6 +1,8 @@
 using MockSupplier.API.Endpoints;
 using MockSupplier.API.Services;
 
+Console.OutputEncoding = System.Text.Encoding.UTF8;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<DataStore>();

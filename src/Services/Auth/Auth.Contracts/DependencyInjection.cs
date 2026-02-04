@@ -4,7 +4,6 @@ using Auth.Contracts.Authorization;
 using Auth.Contracts.Routes;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -14,7 +13,6 @@ namespace Auth.Contracts;
 
 public static class DependencyInjection
 {
-
     /// <summary>
     /// Add authentication for microservices that trust API Gateway headers.
     /// Uses role-based authorization via [Authorize(Roles = "...")].
@@ -23,7 +21,6 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.AddSingleton<ICurrentUserAccessor, CurrentUserAccessor>();
         services.AddHttpContextAccessor();
 
         // Use header-based authentication (trust API Gateway)
@@ -45,12 +42,6 @@ public static class DependencyInjection
         services.AddSingleton<IAuthorizationHandler, InternalApiKeyHandler>();
 
         return services;
-    }
-
-    public static IApplicationBuilder UseCurrentUser(this IApplicationBuilder app)
-    {
-        app.UseMiddleware<CurrentUserMiddleware>();
-        return app;
     }
 }
 

@@ -72,7 +72,6 @@ try
     app.UseSerilogRequestLogging();
     app.UseAuthentication();
     app.UseAuthorization();
-    app.UseCurrentUser();
 
     // Endpoints
     app.MapHealthChecks("/health");

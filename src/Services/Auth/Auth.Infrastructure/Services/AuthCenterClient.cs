@@ -1,5 +1,7 @@
 using System.Net.Http.Json;
+using System.Text.Json;
 using Auth.Application.Services;
+using Auth.Contracts;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -105,6 +107,44 @@ public class AuthCenterClient : IAuthCenterClient
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Error revoking token at Auth Center");
+        }
+    }
+
+    public async Task<User?> GetUserAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var clientId = _configuration["AuthCenter:ClientId"] ?? "domeo";
+
+        try
+        {
+            var response = await _httpClient.GetAsync($"/users/{userId}?client_id={clientId}", cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Failed to get user info: {StatusCode}", response.StatusCode);
+                return null;
+            }
+
+            using var doc = await JsonDocument.ParseAsync(
+                await response.Content.ReadAsStreamAsync(cancellationToken),
+                cancellationToken: cancellationToken);
+
+            var root = doc.RootElement;
+
+            if (!root.TryGetProperty("id", out var idProp) || !Guid.TryParse(idProp.GetString(), out var id))
+                return null;
+
+            return new User
+            {
+                Id = id,
+                Role = root.TryGetProperty("role", out var roleProp) ? roleProp.GetString() ?? string.Empty : string.Empty,
+                Email = root.TryGetProperty("email", out var emailProp) ? emailProp.GetString() : null,
+                Name = root.TryGetProperty("name", out var nameProp) ? nameProp.GetString() : null
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting user info from Auth Center");
+            return null;
         }
     }
 }

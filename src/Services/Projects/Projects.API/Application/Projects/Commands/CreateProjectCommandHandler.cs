@@ -1,7 +1,8 @@
-using Auth.Contracts;
+using System.Security.Claims;
 using Domeo.Shared.Application;
 using Domeo.Shared.Exceptions;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Projects.Abstractions.Commands.Projects;
 using Projects.Abstractions.Entities;
 using Projects.Abstractions.Repositories;
@@ -12,29 +13,29 @@ public sealed class CreateProjectCommandHandler : IRequestHandler<CreateProjectC
 {
     private readonly IProjectRepository _projectRepository;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ICurrentUserAccessor _currentUserAccessor;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
     public CreateProjectCommandHandler(
         IProjectRepository projectRepository,
         IUnitOfWork unitOfWork,
-        ICurrentUserAccessor currentUserAccessor)
+        IHttpContextAccessor httpContextAccessor)
     {
         _projectRepository = projectRepository;
         _unitOfWork = unitOfWork;
-        _currentUserAccessor = currentUserAccessor;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<Guid> Handle(CreateProjectCommand request, CancellationToken cancellationToken)
     {
-        var userId = _currentUserAccessor.User?.Id;
-        if (userId is null)
+        var userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdClaim, out var userId))
             throw new UnauthorizedException();
 
         var project = Project.Create(
             request.Name,
             request.Type,
             request.ClientId,
-            userId.Value,
+            userId,
             request.Notes);
 
         _projectRepository.Add(project);

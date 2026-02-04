@@ -19,6 +19,9 @@ public static class AuthCenterEndpoints
         app.MapGet("/.well-known/jwks.json", HandleJwks);
         app.MapGet("/.well-known/openid-configuration", HandleOpenIdConfig);
 
+        // User info endpoint
+        app.MapGet("/users/{id}", HandleGetUser);
+
         // Logout
         app.MapPost("/logout", HandleLogout);
         app.MapGet("/logout", HandleLogoutGet);
@@ -203,6 +206,29 @@ public static class AuthCenterEndpoints
             token_endpoint_auth_methods_supported = new[] { "client_secret_post", "none" },
             subject_types_supported = new[] { "public" },
             id_token_signing_alg_values_supported = new[] { "RS256" }
+        });
+    }
+
+    private static IResult HandleGetUser(
+        string id,
+        UserStore userStore,
+        [FromQuery] string? client_id)
+    {
+        var user = userStore.FindById(id);
+        if (user == null)
+        {
+            return Results.NotFound(new { error = "user_not_found" });
+        }
+
+        var clientId = client_id ?? "domeo";
+        var role = userStore.GetRoleForProgram(user, clientId);
+
+        return Results.Ok(new
+        {
+            id = user.Id,
+            email = user.Email,
+            name = user.Name,
+            role = role
         });
     }
 

@@ -1,7 +1,8 @@
-using Auth.Contracts;
+using System.Security.Claims;
 using Domeo.Shared.Contracts;
 using Domeo.Shared.Exceptions;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Projects.Abstractions.Commands.Projects;
 using Projects.Abstractions.Entities;
 using Projects.Abstractions.Repositories;
@@ -12,20 +13,20 @@ namespace Projects.API.Application.Projects.Queries;
 public sealed class GetProjectsQueryHandler : IRequestHandler<GetProjectsQuery, PaginatedResponse<ProjectDto>>
 {
     private readonly IProjectRepository _projectRepository;
-    private readonly ICurrentUserAccessor _currentUserAccessor;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
     public GetProjectsQueryHandler(
         IProjectRepository projectRepository,
-        ICurrentUserAccessor currentUserAccessor)
+        IHttpContextAccessor httpContextAccessor)
     {
         _projectRepository = projectRepository;
-        _currentUserAccessor = currentUserAccessor;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<PaginatedResponse<ProjectDto>> Handle(GetProjectsQuery request, CancellationToken cancellationToken)
     {
-        var userId = _currentUserAccessor.User?.Id;
-        if (userId is null)
+        var userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdClaim, out var userId))
             throw new UnauthorizedException();
 
         ProjectStatus? status = null;
@@ -35,7 +36,7 @@ public sealed class GetProjectsQueryHandler : IRequestHandler<GetProjectsQuery, 
         var sortDesc = string.Equals(request.SortOrder, "desc", StringComparison.OrdinalIgnoreCase);
 
         var (items, total) = await _projectRepository.GetProjectsAsync(
-            userId.Value,
+            userId,
             request.ClientId,
             request.Search,
             status,

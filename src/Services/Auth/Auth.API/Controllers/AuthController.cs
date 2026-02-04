@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Auth.Application.Services;
 using Auth.Contracts;
 using Auth.Contracts.DTOs;
@@ -21,7 +22,6 @@ public class AuthController : ControllerBase
     private readonly IUnitOfWork _unitOfWork;
     private readonly IAuthCenterClient _authCenterClient;
     private readonly IEventPublisher _eventPublisher;
-    private readonly ICurrentUserAccessor _currentUserAccessor;
     private readonly IConfiguration _configuration;
     private readonly ILogger<AuthController> _logger;
 
@@ -30,7 +30,6 @@ public class AuthController : ControllerBase
         IUnitOfWork unitOfWork,
         IAuthCenterClient authCenterClient,
         IEventPublisher eventPublisher,
-        ICurrentUserAccessor currentUserAccessor,
         IConfiguration configuration,
         ILogger<AuthController> logger)
     {
@@ -38,7 +37,6 @@ public class AuthController : ControllerBase
         _unitOfWork = unitOfWork;
         _authCenterClient = authCenterClient;
         _eventPublisher = eventPublisher;
-        _currentUserAccessor = currentUserAccessor;
         _configuration = configuration;
         _logger = logger;
     }
@@ -198,10 +196,10 @@ public class AuthController : ControllerBase
                 DateTime.UtcNow.AddDays(7));
         }
 
-        var userDto = new UserDto(userGuid, tokenResponse.Role);
+        var user = new User { Id = userGuid, Role = tokenResponse.Role };
         var tokenDto = new TokenDto(tokenResponse.AccessToken, tokenResponse.RefreshToken, accessTokenExpiration);
 
-        return Ok(ApiResponse<AuthResultDto>.Ok(new AuthResultDto(userDto, tokenDto)));
+        return Ok(ApiResponse<AuthResultDto>.Ok(new AuthResultDto(user, tokenDto)));
     }
 
     /// <summary>
@@ -256,10 +254,10 @@ public class AuthController : ControllerBase
                 DateTime.UtcNow.AddDays(7));
         }
 
-        var userDto = new UserDto(storedToken.UserId, tokenResponse.Role);
+        var user = new User { Id = storedToken.UserId, Role = tokenResponse.Role };
         var tokenDto = new TokenDto(tokenResponse.AccessToken, tokenResponse.RefreshToken, accessTokenExpiration);
 
-        return Ok(ApiResponse<AuthResultDto>.Ok(new AuthResultDto(userDto, tokenDto)));
+        return Ok(ApiResponse<AuthResultDto>.Ok(new AuthResultDto(user, tokenDto)));
     }
 
     /// <summary>
@@ -271,11 +269,11 @@ public class AuthController : ControllerBase
         [FromBody] LogoutRequest? request,
         CancellationToken cancellationToken)
     {
-        var user = _currentUserAccessor.User;
-        if (user?.Id is null)
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdClaim, out var userId))
             return Ok(ApiResponse.Fail("Unauthorized"));
 
-        var userId = user.Id.Value;
+        var role = User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
 
         var refreshTokenValue = request?.RefreshToken;
         if (string.IsNullOrEmpty(refreshTokenValue))
@@ -305,7 +303,7 @@ public class AuthController : ControllerBase
             var logoutEvent = new UserLoggedOutEvent
             {
                 UserId = userId,
-                UserRole = user.Role,
+                UserRole = role,
                 IpAddress = GetClientIpAddress(),
                 UserAgent = Request.Headers.UserAgent.ToString(),
                 SessionId = loginSessionId.Value
@@ -319,17 +317,25 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Get current user info from JWT token
+    /// Get current user info
     /// </summary>
     [HttpGet(AuthRoutes.Controller.Me)]
     [Authorize]
-    public IActionResult GetCurrentUser()
+    public async Task<IActionResult> GetCurrentUser(CancellationToken cancellationToken)
     {
-        var user = _currentUserAccessor.User;
-        if (user is null)
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdClaim, out var userId))
             return Ok(ApiResponse.Fail("Unauthorized"));
 
-        return Ok(ApiResponse<UserDto>.Ok(new UserDto(user.Id!.Value, user.Role)));
+        var user = await _authCenterClient.GetUserAsync(userId, cancellationToken);
+        if (user is null)
+        {
+            // Fallback: return basic info from claims
+            var role = User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
+            user = new User { Id = userId, Role = role };
+        }
+
+        return Ok(ApiResponse<User>.Ok(user));
     }
 
     /// <summary>
