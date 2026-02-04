@@ -1,6 +1,6 @@
-using Domeo.Shared.Contracts.DTOs;
-using Domeo.Shared.Kernel.Application.Abstractions;
+using MediatR;
+using Modules.Abstractions.DTOs;
 
 namespace Modules.Abstractions.Queries.ModuleTypes;
 
-public sealed record GetModuleTypeByIdQuery(int Id) : IQuery<ModuleTypeDto>;
+public sealed record GetModuleTypeByIdQuery(int Id) : IRequest<ModuleTypeDto>;

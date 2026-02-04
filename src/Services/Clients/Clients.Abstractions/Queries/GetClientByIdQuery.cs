@@ -1,6 +1,6 @@
-using Domeo.Shared.Contracts.DTOs;
-using Domeo.Shared.Kernel.Application.Abstractions;
+using Clients.Abstractions.DTOs;
+using MediatR;
 
 namespace Clients.Abstractions.Queries;
 
-public sealed record GetClientByIdQuery(Guid Id) : IQuery<ClientDto>;
+public sealed record GetClientByIdQuery(Guid Id) : IRequest<ClientDto>;

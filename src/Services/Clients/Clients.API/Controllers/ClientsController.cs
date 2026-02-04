@@ -3,7 +3,6 @@ using Clients.Abstractions.DTOs;
 using Clients.Abstractions.Queries;
 using Clients.Abstractions.Routes;
 using Domeo.Shared.Contracts;
-using Domeo.Shared.Contracts.DTOs;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -29,9 +28,7 @@ public class ClientsController : ControllerBase
         [FromQuery] string? sortOrder)
     {
         var result = await _sender.Send(new GetClientsQuery(search, page, pageSize, sortBy, sortOrder));
-        return result.IsSuccess
-            ? Ok(ApiResponse<PaginatedResponse<ClientDto>>.Ok(result.Value))
-            : Ok(ApiResponse<PaginatedResponse<ClientDto>>.Fail(result.Error.Description));
+        return Ok(ApiResponse<PaginatedResponse<ClientDto>>.Ok(result));
     }
 
     [HttpGet(ClientsRoutes.Controller.ById)]
@@ -39,9 +36,7 @@ public class ClientsController : ControllerBase
     public async Task<IActionResult> GetClient(Guid id)
     {
         var result = await _sender.Send(new GetClientByIdQuery(id));
-        return result.IsSuccess
-            ? Ok(ApiResponse<ClientDto>.Ok(result.Value))
-            : Ok(ApiResponse<ClientDto>.Fail(result.Error.Description));
+        return Ok(ApiResponse<ClientDto>.Ok(result));
     }
 
     [HttpPost]
@@ -50,9 +45,7 @@ public class ClientsController : ControllerBase
     {
         var result = await _sender.Send(new CreateClientCommand(
             request.Name, request.Phone, request.Email, request.Address, request.Notes));
-        return result.IsSuccess
-            ? Ok(ApiResponse<ClientDto>.Ok(result.Value, "Client created successfully"))
-            : Ok(ApiResponse<ClientDto>.Fail(result.Error.Description));
+        return Ok(ApiResponse<ClientDto>.Ok(result, "Client created successfully"));
     }
 
     [HttpPut(ClientsRoutes.Controller.ById)]
@@ -61,9 +54,7 @@ public class ClientsController : ControllerBase
     {
         var result = await _sender.Send(new UpdateClientCommand(
             id, request.Name, request.Phone, request.Email, request.Address, request.Notes));
-        return result.IsSuccess
-            ? Ok(ApiResponse<ClientDto>.Ok(result.Value, "Client updated successfully"))
-            : Ok(ApiResponse<ClientDto>.Fail(result.Error.Description));
+        return Ok(ApiResponse<ClientDto>.Ok(result, "Client updated successfully"));
     }
 
     [HttpPost(ClientsRoutes.Controller.Restore)]
@@ -71,18 +62,14 @@ public class ClientsController : ControllerBase
     public async Task<IActionResult> RestoreClient(Guid id)
     {
         var result = await _sender.Send(new RestoreClientCommand(id));
-        return result.IsSuccess
-            ? Ok(ApiResponse<ClientDto>.Ok(result.Value, "Client restored successfully"))
-            : Ok(ApiResponse<ClientDto>.Fail(result.Error.Description));
+        return Ok(ApiResponse<ClientDto>.Ok(result, "Client restored successfully"));
     }
 
     [HttpDelete(ClientsRoutes.Controller.ById)]
     [Authorize(Roles = "designer,catalogAdmin,systemAdmin")]
     public async Task<IActionResult> DeleteClient(Guid id)
     {
-        var result = await _sender.Send(new DeleteClientCommand(id));
-        return result.IsSuccess
-            ? Ok(ApiResponse.Ok("Client deleted successfully"))
-            : Ok(ApiResponse.Fail(result.Error.Description));
+        await _sender.Send(new DeleteClientCommand(id));
+        return Ok(ApiResponse.Ok("Client deleted successfully"));
     }
 }

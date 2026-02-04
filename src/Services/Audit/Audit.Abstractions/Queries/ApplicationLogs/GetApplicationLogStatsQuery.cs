@@ -1,9 +1,8 @@
-using Audit.Abstractions.DTOs;
-using Domeo.Shared.Kernel.Application.Abstractions;
+using MediatR;
 
 namespace Audit.Abstractions.Queries.ApplicationLogs;
 
 public sealed record GetApplicationLogStatsQuery(
     string? GroupBy,
     DateTime? From,
-    DateTime? To) : IQuery<object>;
+    DateTime? To) : IRequest<object>;

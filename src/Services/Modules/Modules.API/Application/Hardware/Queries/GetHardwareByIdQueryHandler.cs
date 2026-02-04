@@ -1,27 +1,27 @@
-using Domeo.Shared.Contracts.DTOs;
-using Domeo.Shared.Kernel.Application.Abstractions;
-using Domeo.Shared.Kernel.Domain.Results;
+using Domeo.Shared.Exceptions;
+using MediatR;
+using Modules.Abstractions.DTOs;
 using Modules.Abstractions.Queries.Hardware;
 using Modules.Abstractions.Repositories;
 
 namespace Modules.API.Application.Hardware.Queries;
 
-public sealed class GetHardwareByIdQueryHandler : IQueryHandler<GetHardwareByIdQuery, HardwareDto>
+public sealed class GetHardwareByIdQueryHandler : IRequestHandler<GetHardwareByIdQuery, HardwareDto>
 {
     private readonly IHardwareRepository _repository;
 
     public GetHardwareByIdQueryHandler(IHardwareRepository repository)
         => _repository = repository;
 
-    public async Task<Result<HardwareDto>> Handle(
+    public async Task<HardwareDto> Handle(
         GetHardwareByIdQuery request, CancellationToken cancellationToken)
     {
         var hw = await _repository.GetByIdAsync(request.Id, cancellationToken);
 
         if (hw is null)
-            return Result.Failure<HardwareDto>(Error.NotFound("Hardware.NotFound", "Hardware not found"));
+            throw new NotFoundException("Hardware", request.Id);
 
-        return Result.Success(new HardwareDto(
+        return new HardwareDto(
             hw.Id,
             hw.Type,
             hw.Name,
@@ -29,6 +29,6 @@ public sealed class GetHardwareByIdQueryHandler : IQueryHandler<GetHardwareByIdQ
             hw.Model,
             hw.ModelUrl,
             hw.Params,
-            hw.IsActive));
+            hw.IsActive);
     }
 }

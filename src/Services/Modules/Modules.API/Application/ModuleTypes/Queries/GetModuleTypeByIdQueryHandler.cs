@@ -1,28 +1,28 @@
-using Domeo.Shared.Contracts.DTOs;
-using Domeo.Shared.Kernel.Application.Abstractions;
-using Domeo.Shared.Kernel.Domain.Results;
+using Domeo.Shared.Exceptions;
+using MediatR;
+using Modules.Abstractions.DTOs;
 using Modules.Abstractions.Entities;
 using Modules.Abstractions.Queries.ModuleTypes;
 using Modules.Abstractions.Repositories;
 
 namespace Modules.API.Application.ModuleTypes.Queries;
 
-public sealed class GetModuleTypeByIdQueryHandler : IQueryHandler<GetModuleTypeByIdQuery, ModuleTypeDto>
+public sealed class GetModuleTypeByIdQueryHandler : IRequestHandler<GetModuleTypeByIdQuery, ModuleTypeDto>
 {
     private readonly IModuleTypeRepository _repository;
 
     public GetModuleTypeByIdQueryHandler(IModuleTypeRepository repository)
         => _repository = repository;
 
-    public async Task<Result<ModuleTypeDto>> Handle(
+    public async Task<ModuleTypeDto> Handle(
         GetModuleTypeByIdQuery request, CancellationToken cancellationToken)
     {
         var moduleType = await _repository.GetByIdAsync(request.Id, cancellationToken);
 
         if (moduleType is null)
-            return Result.Failure<ModuleTypeDto>(Error.NotFound("ModuleType.NotFound", "Module type not found"));
+            throw new NotFoundException("ModuleType", request.Id);
 
-        return Result.Success(ToDto(moduleType));
+        return ToDto(moduleType);
     }
 
     private static ModuleTypeDto ToDto(ModuleType m) => new(

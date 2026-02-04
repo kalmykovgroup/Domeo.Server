@@ -1,0 +1,25 @@
+namespace Modules.Abstractions.DTOs;
+
+public sealed record ModuleTypeDto(
+    int Id,
+    string CategoryId,
+    string Type,
+    string Name,
+    int WidthDefault,
+    int WidthMin,
+    int WidthMax,
+    int HeightDefault,
+    int HeightMin,
+    int HeightMax,
+    int DepthDefault,
+    int DepthMin,
+    int DepthMax,
+    int PanelThickness,
+    int BackPanelThickness,
+    int FacadeThickness,
+    int FacadeGap,
+    int FacadeOffset,
+    int ShelfSideGap,
+    int ShelfRearInset,
+    int ShelfFrontInset,
+    bool IsActive);

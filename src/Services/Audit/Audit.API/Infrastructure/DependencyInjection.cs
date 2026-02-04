@@ -1,8 +1,7 @@
 using Audit.Abstractions.Repositories;
 using Audit.API.Infrastructure.Persistence;
 using Audit.API.Infrastructure.Persistence.Repositories;
-using Domeo.Shared.Kernel.Application.Abstractions;
-using Domeo.Shared.Kernel.Application.Behaviors;
+using Domeo.Shared.Application;
 using FluentValidation;
 using MediatR;
 

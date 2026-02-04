@@ -1,17 +1,15 @@
-using Auth.Abstractions.DTOs;
-using Auth.Abstractions.Entities;
-using Auth.Abstractions.Repositories;
-using Auth.Abstractions.Routes;
-using Auth.API.Services;
-using Domeo.Shared.Auth;
+using Auth.Application.Services;
+using Auth.Contracts;
+using Auth.Contracts.DTOs;
+using Auth.Contracts.Routes;
+using Auth.Domain.Entities;
+using Auth.Domain.Repositories;
+using Domeo.Shared.Application;
 using Domeo.Shared.Contracts;
-using Domeo.Shared.Contracts.DTOs;
-using Domeo.Shared.Contracts.Events;
-using Domeo.Shared.Infrastructure.Redis;
-using Domeo.Shared.Kernel.Application.Abstractions;
+using Domeo.Shared.Events;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
- 
+
 namespace Auth.API.Controllers;
 
 [ApiController]
@@ -19,9 +17,6 @@ namespace Auth.API.Controllers;
 [Tags("Auth")]
 public class AuthController : ControllerBase
 {
-    private const string AccessTokenCookieName = "access_token";
-    private const string RefreshTokenCookieName = "refresh_token";
-
     private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IAuthCenterClient _authCenterClient;
@@ -62,7 +57,7 @@ public class AuthController : ControllerBase
             System.Text.Encoding.UTF8.GetBytes(
                 System.Text.Json.JsonSerializer.Serialize(new { returnUrl = returnUrl ?? "/" })));
 
-        var authorizeUrl = $"{authCenterUrl}/authorize?" +
+        var authorizeUrl = $"{authCenterUrl}{AuthRoutes.External.AuthorizeEndpoint}?" +
             $"response_type=code&" +
             $"client_id={Uri.EscapeDataString(clientId)}&" +
             $"redirect_uri={Uri.EscapeDataString(callbackUrl)}&" +
@@ -103,16 +98,15 @@ public class AuthController : ControllerBase
         var tokenResponse = await _authCenterClient.ExchangeCodeAsync(code, callbackUrl, cancellationToken);
         if (tokenResponse is null)
         {
-            return Redirect($"{frontendUrl}/login?error=invalid_code");
+            return Redirect($"{frontendUrl}{AuthRoutes.External.FrontendLoginPath}?error=invalid_code");
         }
 
-        var user = tokenResponse.User;
-        if (string.IsNullOrEmpty(user.Id) || string.IsNullOrEmpty(user.Email))
+        if (string.IsNullOrEmpty(tokenResponse.UserId))
         {
-            return Redirect($"{frontendUrl}/login?error=invalid_token");
+            return Redirect($"{frontendUrl}{AuthRoutes.External.FrontendLoginPath}?error=invalid_token");
         }
 
-        var userGuid = Guid.Parse(user.Id);
+        var userGuid = Guid.Parse(tokenResponse.UserId);
 
         var ipAddress = GetClientIpAddress();
         var userAgent = Request.Headers.UserAgent.ToString();
@@ -121,9 +115,7 @@ public class AuthController : ControllerBase
         var loginEvent = new UserLoggedInEvent
         {
             UserId = userGuid,
-            UserEmail = user.Email,
-            UserName = user.Name,
-            UserRole = user.Role,
+            UserRole = tokenResponse.Role,
             IpAddress = ipAddress,
             UserAgent = userAgent,
             SessionId = loginSessionId
@@ -165,13 +157,12 @@ public class AuthController : ControllerBase
             return Ok(ApiResponse<AuthResultDto>.Fail("Invalid authorization code"));
         }
 
-        var user = tokenResponse.User;
-        if (string.IsNullOrEmpty(user.Id) || string.IsNullOrEmpty(user.Email))
+        if (string.IsNullOrEmpty(tokenResponse.UserId))
         {
             return Ok(ApiResponse<AuthResultDto>.Fail("Invalid token claims"));
         }
 
-        var userGuid = Guid.Parse(user.Id);
+        var userGuid = Guid.Parse(tokenResponse.UserId);
 
         var ipAddress = GetClientIpAddress();
         var userAgent = Request.Headers.UserAgent.ToString();
@@ -180,9 +171,7 @@ public class AuthController : ControllerBase
         var loginEvent = new UserLoggedInEvent
         {
             UserId = userGuid,
-            UserEmail = user.Email,
-            UserName = user.Name,
-            UserRole = user.Role,
+            UserRole = tokenResponse.Role,
             IpAddress = ipAddress,
             UserAgent = userAgent,
             SessionId = loginSessionId
@@ -209,7 +198,7 @@ public class AuthController : ControllerBase
                 DateTime.UtcNow.AddDays(7));
         }
 
-        var userDto = new UserDto(userGuid, user.Email, user.Name, user.Role);
+        var userDto = new UserDto(userGuid, tokenResponse.Role);
         var tokenDto = new TokenDto(tokenResponse.AccessToken, tokenResponse.RefreshToken, accessTokenExpiration);
 
         return Ok(ApiResponse<AuthResultDto>.Ok(new AuthResultDto(userDto, tokenDto)));
@@ -226,7 +215,7 @@ public class AuthController : ControllerBase
         var refreshTokenValue = request?.RefreshToken;
         if (string.IsNullOrEmpty(refreshTokenValue))
         {
-            Request.Cookies.TryGetValue(RefreshTokenCookieName, out refreshTokenValue);
+            Request.Cookies.TryGetValue(AuthRoutes.Cookies.RefreshToken, out refreshTokenValue);
         }
 
         if (string.IsNullOrEmpty(refreshTokenValue))
@@ -256,7 +245,6 @@ public class AuthController : ControllerBase
         _refreshTokenRepository.Add(newRefreshToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        var user = tokenResponse.User;
         var accessTokenExpiration = DateTime.UtcNow.AddSeconds(tokenResponse.ExpiresIn);
 
         if (IsBrowserClient())
@@ -268,12 +256,7 @@ public class AuthController : ControllerBase
                 DateTime.UtcNow.AddDays(7));
         }
 
-        var userDto = new UserDto(
-            Guid.Parse(user.Id),
-            user.Email,
-            user.Name,
-            user.Role);
-
+        var userDto = new UserDto(storedToken.UserId, tokenResponse.Role);
         var tokenDto = new TokenDto(tokenResponse.AccessToken, tokenResponse.RefreshToken, accessTokenExpiration);
 
         return Ok(ApiResponse<AuthResultDto>.Ok(new AuthResultDto(userDto, tokenDto)));
@@ -297,7 +280,7 @@ public class AuthController : ControllerBase
         var refreshTokenValue = request?.RefreshToken;
         if (string.IsNullOrEmpty(refreshTokenValue))
         {
-            Request.Cookies.TryGetValue(RefreshTokenCookieName, out refreshTokenValue);
+            Request.Cookies.TryGetValue(AuthRoutes.Cookies.RefreshToken, out refreshTokenValue);
         }
 
         Guid? loginSessionId = null;
@@ -322,8 +305,6 @@ public class AuthController : ControllerBase
             var logoutEvent = new UserLoggedOutEvent
             {
                 UserId = userId,
-                UserEmail = user.Email,
-                UserName = user.Name,
                 UserRole = user.Role,
                 IpAddress = GetClientIpAddress(),
                 UserAgent = Request.Headers.UserAgent.ToString(),
@@ -348,13 +329,7 @@ public class AuthController : ControllerBase
         if (user is null)
             return Ok(ApiResponse.Fail("Unauthorized"));
 
-        return Ok(ApiResponse<object>.Ok(new
-        {
-            user.Id,
-            user.Email,
-            user.Name,
-            user.Role
-        }));
+        return Ok(ApiResponse<UserDto>.Ok(new UserDto(user.Id!.Value, user.Role)));
     }
 
     /// <summary>
@@ -363,7 +338,7 @@ public class AuthController : ControllerBase
     [HttpGet(AuthRoutes.Controller.Token)]
     public IActionResult GetToken()
     {
-        if (Request.Cookies.TryGetValue(AccessTokenCookieName, out var token))
+        if (Request.Cookies.TryGetValue(AuthRoutes.Cookies.AccessToken, out var token))
         {
             return Ok(ApiResponse<object>.Ok(new { token }));
         }
@@ -406,8 +381,8 @@ public class AuthController : ControllerBase
             Expires = refreshTokenExpires
         };
 
-        Response.Cookies.Append(AccessTokenCookieName, accessToken, accessCookieOptions);
-        Response.Cookies.Append(RefreshTokenCookieName, refreshToken, refreshCookieOptions);
+        Response.Cookies.Append(AuthRoutes.Cookies.AccessToken, accessToken, accessCookieOptions);
+        Response.Cookies.Append(AuthRoutes.Cookies.RefreshToken, refreshToken, refreshCookieOptions);
     }
 
     private void ClearAuthCookies()
@@ -422,8 +397,8 @@ public class AuthController : ControllerBase
             Expires = DateTime.UtcNow.AddDays(-1)
         };
 
-        Response.Cookies.Delete(AccessTokenCookieName, cookieOptions);
-        Response.Cookies.Delete(RefreshTokenCookieName, cookieOptions);
+        Response.Cookies.Delete(AuthRoutes.Cookies.AccessToken, cookieOptions);
+        Response.Cookies.Delete(AuthRoutes.Cookies.RefreshToken, cookieOptions);
     }
 
     private string? GetClientIpAddress()

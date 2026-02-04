@@ -1,5 +1,6 @@
-using Domeo.Shared.Contracts.DTOs;
-using Domeo.Shared.Kernel.Application.Abstractions;
+using Domeo.Shared.Contracts;
+using MediatR;
+using Projects.Abstractions.DTOs;
 
 namespace Projects.Abstractions.Commands.Projects;
 
@@ -11,4 +12,4 @@ public sealed record GetProjectsQuery(
     int Page = 1,
     int PageSize = 20,
     string? SortBy = null,
-    string? SortOrder = null) : IQuery<PaginatedResponse<ProjectDto>>;
+    string? SortOrder = null) : IRequest<PaginatedResponse<ProjectDto>>;

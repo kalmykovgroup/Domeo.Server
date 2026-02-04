@@ -1,5 +1,5 @@
 using Domeo.Shared.Contracts;
-using Domeo.Shared.Contracts.DTOs;
+using Modules.Abstractions.DTOs;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,23 +19,19 @@ public class HardwareController : ControllerBase
 
     [HttpGet]
     [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
-    public async Task<IActionResult> GetHardware(
+    public async Task<ActionResult<ApiResponse<List<HardwareDto>>>> GetHardware(
         [FromQuery] string? type,
         [FromQuery] bool? activeOnly)
     {
         var result = await _sender.Send(new GetHardwareQuery(type, activeOnly));
-        return result.IsSuccess
-            ? Ok(ApiResponse<List<HardwareDto>>.Ok(result.Value))
-            : Ok(ApiResponse<List<HardwareDto>>.Fail(result.Error.Description));
+        return Ok(ApiResponse<List<HardwareDto>>.Ok(result));
     }
 
     [HttpGet(ModulesRoutes.Controller.HardwareById)]
     [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
-    public async Task<IActionResult> GetHardwareItem(int id)
+    public async Task<ActionResult<ApiResponse<HardwareDto>>> GetHardwareItem(int id)
     {
         var result = await _sender.Send(new GetHardwareByIdQuery(id));
-        return result.IsSuccess
-            ? Ok(ApiResponse<HardwareDto>.Ok(result.Value))
-            : Ok(ApiResponse<HardwareDto>.Fail(result.Error.Description));
+        return Ok(ApiResponse<HardwareDto>.Ok(result));
     }
 }

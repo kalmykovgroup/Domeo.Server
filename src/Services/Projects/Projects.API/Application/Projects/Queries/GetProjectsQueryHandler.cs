@@ -1,14 +1,15 @@
-using Domeo.Shared.Auth;
-using Domeo.Shared.Contracts.DTOs;
-using Domeo.Shared.Kernel.Application.Abstractions;
-using Domeo.Shared.Kernel.Domain.Results;
+using Auth.Contracts;
+using Domeo.Shared.Contracts;
+using Domeo.Shared.Exceptions;
+using MediatR;
 using Projects.Abstractions.Commands.Projects;
 using Projects.Abstractions.Entities;
 using Projects.Abstractions.Repositories;
+using ProjectDto = Projects.Abstractions.DTOs.ProjectDto;
 
 namespace Projects.API.Application.Projects.Queries;
 
-public sealed class GetProjectsQueryHandler : IQueryHandler<GetProjectsQuery, PaginatedResponse<ProjectDto>>
+public sealed class GetProjectsQueryHandler : IRequestHandler<GetProjectsQuery, PaginatedResponse<ProjectDto>>
 {
     private readonly IProjectRepository _projectRepository;
     private readonly ICurrentUserAccessor _currentUserAccessor;
@@ -21,11 +22,11 @@ public sealed class GetProjectsQueryHandler : IQueryHandler<GetProjectsQuery, Pa
         _currentUserAccessor = currentUserAccessor;
     }
 
-    public async Task<Result<PaginatedResponse<ProjectDto>>> Handle(GetProjectsQuery request, CancellationToken cancellationToken)
+    public async Task<PaginatedResponse<ProjectDto>> Handle(GetProjectsQuery request, CancellationToken cancellationToken)
     {
         var userId = _currentUserAccessor.User?.Id;
         if (userId is null)
-            return Result.Failure<PaginatedResponse<ProjectDto>>(Error.Failure("User.Unauthorized", "User not authenticated"));
+            throw new UnauthorizedException();
 
         ProjectStatus? status = null;
         if (!string.IsNullOrWhiteSpace(request.Status) && Enum.TryParse<ProjectStatus>(request.Status, true, out var statusEnum))
@@ -58,6 +59,6 @@ public sealed class GetProjectsQueryHandler : IQueryHandler<GetProjectsQuery, Pa
             p.UpdatedAt,
             p.DeletedAt)).ToList();
 
-        return Result.Success(new PaginatedResponse<ProjectDto>(total, request.Page, request.PageSize, dtos));
+        return new PaginatedResponse<ProjectDto>(total, request.Page, request.PageSize, dtos);
     }
 }

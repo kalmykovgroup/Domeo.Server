@@ -1,5 +1,5 @@
 using System.Security.Claims;
-using System.Web;
+using Auth.Contracts.Routes;
 
 namespace Domeo.ApiGateway.Auth;
 
@@ -11,12 +11,6 @@ public class ClaimsForwardingMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<ClaimsForwardingMiddleware> _logger;
-
-    // Header names for forwarding claims
-    public const string UserIdHeader = "X-User-Id";
-    public const string UserEmailHeader = "X-User-Email";
-    public const string UserNameHeader = "X-User-Name";
-    public const string UserRoleHeader = "X-User-Role";
 
     public ClaimsForwardingMiddleware(RequestDelegate next, ILogger<ClaimsForwardingMiddleware> logger)
     {
@@ -30,28 +24,16 @@ public class ClaimsForwardingMiddleware
         {
             var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
                       ?? context.User.FindFirst("sub")?.Value;
-            var email = context.User.FindFirst(ClaimTypes.Email)?.Value
-                     ?? context.User.FindFirst("email")?.Value;
-            var name = context.User.FindFirst(ClaimTypes.Name)?.Value
-                    ?? context.User.FindFirst("name")?.Value;
             var role = context.User.FindFirst(ClaimTypes.Role)?.Value
                     ?? context.User.FindFirst("role")?.Value;
 
-            // Add claims to headers for downstream services
-            // URL-encode values to handle non-ASCII characters (like Cyrillic names)
             if (!string.IsNullOrEmpty(userId))
-                context.Request.Headers[UserIdHeader] = userId;
-
-            if (!string.IsNullOrEmpty(email))
-                context.Request.Headers[UserEmailHeader] = email;
-
-            if (!string.IsNullOrEmpty(name))
-                context.Request.Headers[UserNameHeader] = HttpUtility.UrlEncode(name);
+                context.Request.Headers[AuthRoutes.Headers.UserId] = userId;
 
             if (!string.IsNullOrEmpty(role))
-                context.Request.Headers[UserRoleHeader] = role;
+                context.Request.Headers[AuthRoutes.Headers.UserRole] = role;
 
-            _logger.LogDebug("Forwarding claims for user {UserId} with role {Role}", userId, role);
+            _logger.LogDebug("Forwarding user {UserId} with role {Role}", userId, role);
         }
 
         await _next(context);

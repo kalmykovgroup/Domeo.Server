@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Audit.Abstractions.Entities;
 using Audit.API.Infrastructure.Persistence;
-using Domeo.Shared.Contracts.Events;
+using Domeo.Shared.Events;
 using Domeo.Shared.Infrastructure.Redis;
 using Domeo.Shared.Infrastructure.Resilience;
 using Microsoft.EntityFrameworkCore;
@@ -148,7 +148,7 @@ public sealed class AuditEventSubscriber : BackgroundService
                 if (loginEvent is not null)
                 {
                     await _buffer.EnqueueSessionAsync(loginEvent, wrapper.EventType);
-                    _logger.LogDebug("Login event buffered (DB unavailable): {UserEmail}", loginEvent.UserEmail);
+                    _logger.LogDebug("Login event buffered (DB unavailable): {UserId}", loginEvent.UserId);
                 }
                 break;
 
@@ -157,7 +157,7 @@ public sealed class AuditEventSubscriber : BackgroundService
                 if (logoutEvent is not null)
                 {
                     await _buffer.EnqueueSessionAsync(logoutEvent, wrapper.EventType);
-                    _logger.LogDebug("Logout event buffered (DB unavailable): {UserEmail}", logoutEvent.UserEmail);
+                    _logger.LogDebug("Logout event buffered (DB unavailable): {UserId}", logoutEvent.UserId);
                 }
                 break;
 
@@ -174,7 +174,6 @@ public sealed class AuditEventSubscriber : BackgroundService
 
         var auditLog = AuditLog.Create(
             auditEvent.UserId,
-            auditEvent.UserEmail,
             auditEvent.Action,
             auditEvent.EntityType,
             auditEvent.EntityId,
@@ -220,8 +219,6 @@ public sealed class AuditEventSubscriber : BackgroundService
         var session = LoginSession.Create(
             loginEvent.SessionId,
             loginEvent.UserId,
-            loginEvent.UserEmail,
-            loginEvent.UserName,
             loginEvent.UserRole,
             loginEvent.IpAddress,
             loginEvent.UserAgent);
@@ -229,8 +226,8 @@ public sealed class AuditEventSubscriber : BackgroundService
         dbContext.LoginSessions.Add(session);
         await dbContext.SaveChangesAsync();
 
-        _logger.LogInformation("Login session created: {SessionId} for user {UserEmail}",
-            loginEvent.SessionId, loginEvent.UserEmail);
+        _logger.LogInformation("Login session created: {SessionId} for user {UserId}",
+            loginEvent.SessionId, loginEvent.UserId);
     }
 
     private async Task ProcessLogoutEventAsync(UserLoggedOutEvent logoutEvent)
@@ -250,8 +247,8 @@ public sealed class AuditEventSubscriber : BackgroundService
         session.Logout();
         await dbContext.SaveChangesAsync();
 
-        _logger.LogInformation("Login session closed: {SessionId} for user {UserEmail}",
-            logoutEvent.SessionId, logoutEvent.UserEmail);
+        _logger.LogInformation("Login session closed: {SessionId} for user {UserId}",
+            logoutEvent.SessionId, logoutEvent.UserId);
     }
 
     private async Task HandleErrorEventAsync(RedisValue message)

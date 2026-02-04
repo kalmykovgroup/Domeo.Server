@@ -1,8 +1,7 @@
 using Clients.Abstractions.Repositories;
 using Clients.API.Infrastructure.Persistence;
 using Clients.API.Infrastructure.Persistence.Repositories;
-using Domeo.Shared.Kernel.Application.Abstractions;
-using Domeo.Shared.Kernel.Application.Behaviors;
+using Domeo.Shared.Application;
 using FluentValidation;
 using MediatR;
 

@@ -1,12 +1,11 @@
-using Domeo.Shared.Kernel.Application.Abstractions;
-using Domeo.Shared.Kernel.Domain.Results;
 using Materials.Abstractions.DTOs;
 using Materials.Abstractions.ExternalServices;
 using Materials.Abstractions.Queries.Categories;
+using MediatR;
 
 namespace Materials.API.Application.Categories.Queries;
 
-public sealed class GetCategoriesTreeQueryHandler : IQueryHandler<GetCategoriesTreeQuery, List<CategoryTreeNodeDto>>
+public sealed class GetCategoriesTreeQueryHandler : IRequestHandler<GetCategoriesTreeQuery, List<CategoryTreeNodeDto>>
 {
     private readonly ISupplierApiClient _supplierApiClient;
     private readonly ILogger<GetCategoriesTreeQueryHandler> _logger;
@@ -19,25 +18,16 @@ public sealed class GetCategoriesTreeQueryHandler : IQueryHandler<GetCategoriesT
         _logger = logger;
     }
 
-    public async Task<Result<List<CategoryTreeNodeDto>>> Handle(
+    public async Task<List<CategoryTreeNodeDto>> Handle(
         GetCategoriesTreeQuery request,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var externalTree = await _supplierApiClient.GetCategoriesTreeAsync(
-                request.ActiveOnly ?? true, cancellationToken);
+        var externalTree = await _supplierApiClient.GetCategoriesTreeAsync(
+            request.ActiveOnly ?? true, cancellationToken);
 
-            var tree = externalTree.Select(MapCategoryTreeNode).ToList();
+        var tree = externalTree.Select(MapCategoryTreeNode).ToList();
 
-            return Result.Success(tree);
-        }
-        catch (HttpRequestException ex)
-        {
-            _logger.LogWarning(ex, "Supplier service unavailable");
-            return Result.Failure<List<CategoryTreeNodeDto>>(
-                Error.ServiceUnavailable($"Supplier service unavailable: {ex.Message}"));
-        }
+        return tree;
     }
 
     private static CategoryTreeNodeDto MapCategoryTreeNode(ExternalCategoryTreeNode node)

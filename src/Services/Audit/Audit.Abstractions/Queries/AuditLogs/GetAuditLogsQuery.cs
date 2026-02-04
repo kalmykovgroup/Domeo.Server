@@ -1,6 +1,6 @@
 using Audit.Abstractions.DTOs;
-using Domeo.Shared.Contracts.DTOs;
-using Domeo.Shared.Kernel.Application.Abstractions;
+using Domeo.Shared.Contracts;
+using MediatR;
 
 namespace Audit.Abstractions.Queries.AuditLogs;
 
@@ -12,4 +12,4 @@ public sealed record GetAuditLogsQuery(
     DateTime? From,
     DateTime? To,
     int? Page,
-    int? PageSize) : IQuery<PaginatedResponse<AuditLogDto>>;
+    int? PageSize) : IRequest<PaginatedResponse<AuditLogDto>>;

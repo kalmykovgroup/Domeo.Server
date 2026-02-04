@@ -1,5 +1,6 @@
+using Domeo.Shared.Application;
+using Domeo.Shared.Domain;
 using Domeo.Shared.Infrastructure.Audit;
-using Domeo.Shared.Kernel.Application.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Projects.Abstractions.Entities;
 using Projects.API.Entities;
@@ -187,15 +188,15 @@ public sealed class ProjectsDbContext : DbContext, IUnitOfWork
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        foreach (var entry in ChangeTracker.Entries<Domeo.Shared.Kernel.Domain.Abstractions.IAuditableEntity>())
+        foreach (var entry in ChangeTracker.Entries<IAuditableEntity>())
         {
             if (entry.State == EntityState.Added)
             {
-                entry.Property(nameof(Domeo.Shared.Kernel.Domain.Abstractions.IAuditableEntity.CreatedAt)).CurrentValue = DateTime.UtcNow;
+                entry.Property(nameof(IAuditableEntity.CreatedAt)).CurrentValue = DateTime.UtcNow;
             }
             else if (entry.State == EntityState.Modified)
             {
-                entry.Property(nameof(Domeo.Shared.Kernel.Domain.Abstractions.IAuditableEntity.UpdatedAt)).CurrentValue = DateTime.UtcNow;
+                entry.Property(nameof(IAuditableEntity.UpdatedAt)).CurrentValue = DateTime.UtcNow;
             }
         }
 

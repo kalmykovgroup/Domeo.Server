@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Audit.Abstractions.Entities;
 using Audit.API.Infrastructure.Persistence;
-using Domeo.Shared.Contracts.Events;
+using Domeo.Shared.Events;
 using Domeo.Shared.Infrastructure.Resilience;
 
 namespace Audit.API.Services;
@@ -126,7 +126,6 @@ public sealed class AuditBufferFlushService : BackgroundService
     {
         var auditLog = AuditLog.Create(
             auditEvent.UserId,
-            auditEvent.UserEmail,
             auditEvent.Action,
             auditEvent.EntityType,
             auditEvent.EntityId,
@@ -144,8 +143,6 @@ public sealed class AuditBufferFlushService : BackgroundService
         var session = LoginSession.Create(
             loginEvent.SessionId,
             loginEvent.UserId,
-            loginEvent.UserEmail,
-            loginEvent.UserName,
             loginEvent.UserRole,
             loginEvent.IpAddress,
             loginEvent.UserAgent);

@@ -1,6 +1,6 @@
-using Domeo.Shared.Kernel.Application.Abstractions;
 using Materials.Abstractions.DTOs;
+using MediatR;
 
 namespace Materials.Abstractions.Queries.Suppliers;
 
-public sealed record GetSuppliersQuery(bool? ActiveOnly) : IQuery<List<SupplierDto>>;
+public sealed record GetSuppliersQuery(bool? ActiveOnly) : IRequest<List<SupplierDto>>;

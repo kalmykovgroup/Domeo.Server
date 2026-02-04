@@ -1,13 +1,14 @@
+using Auth.Contracts;
+using Clients.Abstractions.DTOs;
 using Clients.Abstractions.Queries;
 using Clients.Abstractions.Repositories;
-using Domeo.Shared.Auth;
-using Domeo.Shared.Contracts.DTOs;
-using Domeo.Shared.Kernel.Application.Abstractions;
-using Domeo.Shared.Kernel.Domain.Results;
+using Domeo.Shared.Contracts;
+using Domeo.Shared.Exceptions;
+using MediatR;
 
 namespace Clients.API.Application.Queries;
 
-public sealed class GetClientsQueryHandler : IQueryHandler<GetClientsQuery, PaginatedResponse<ClientDto>>
+public sealed class GetClientsQueryHandler : IRequestHandler<GetClientsQuery, PaginatedResponse<ClientDto>>
 {
     private readonly IClientRepository _repository;
     private readonly ICurrentUserAccessor _currentUserAccessor;
@@ -18,19 +19,17 @@ public sealed class GetClientsQueryHandler : IQueryHandler<GetClientsQuery, Pagi
         _currentUserAccessor = currentUserAccessor;
     }
 
-    public async Task<Result<PaginatedResponse<ClientDto>>> Handle(
+    public async Task<PaginatedResponse<ClientDto>> Handle(
         GetClientsQuery request, CancellationToken cancellationToken)
     {
-        var userId = _currentUserAccessor.User?.Id;
-        if (userId is null)
-            return Result.Failure<PaginatedResponse<ClientDto>>(
-                Error.Failure("Client.Unauthorized", "Unauthorized"));
+        var userId = _currentUserAccessor.User?.Id
+            ?? throw new UnauthorizedException();
 
         var page = request.Page ?? 1;
         var pageSize = request.PageSize ?? 20;
 
         var (items, total) = await _repository.GetClientsAsync(
-            userId.Value,
+            userId,
             request.Search,
             request.SortBy,
             request.SortOrder,
@@ -49,6 +48,6 @@ public sealed class GetClientsQueryHandler : IQueryHandler<GetClientsQuery, Pagi
             c.CreatedAt,
             c.DeletedAt)).ToList();
 
-        return Result.Success(new PaginatedResponse<ClientDto>(total, page, pageSize, dtos));
+        return new PaginatedResponse<ClientDto>(total, page, pageSize, dtos);
     }
 }

@@ -1,14 +1,15 @@
+using Auth.Contracts;
 using Clients.Abstractions.Commands;
+using Clients.Abstractions.DTOs;
 using Clients.Abstractions.Entities;
 using Clients.Abstractions.Repositories;
-using Domeo.Shared.Auth;
-using Domeo.Shared.Contracts.DTOs;
-using Domeo.Shared.Kernel.Application.Abstractions;
-using Domeo.Shared.Kernel.Domain.Results;
+using Domeo.Shared.Application;
+using Domeo.Shared.Exceptions;
+using MediatR;
 
 namespace Clients.API.Application.Commands;
 
-public sealed class CreateClientCommandHandler : ICommandHandler<CreateClientCommand, ClientDto>
+public sealed class CreateClientCommandHandler : IRequestHandler<CreateClientCommand, ClientDto>
 {
     private readonly IClientRepository _repository;
     private readonly IUnitOfWork _unitOfWork;
@@ -24,16 +25,15 @@ public sealed class CreateClientCommandHandler : ICommandHandler<CreateClientCom
         _currentUserAccessor = currentUserAccessor;
     }
 
-    public async Task<Result<ClientDto>> Handle(
+    public async Task<ClientDto> Handle(
         CreateClientCommand request, CancellationToken cancellationToken)
     {
-        var userId = _currentUserAccessor.User?.Id;
-        if (userId is null)
-            return Result.Failure<ClientDto>(Error.Failure("Client.Unauthorized", "Unauthorized"));
+        var userId = _currentUserAccessor.User?.Id
+            ?? throw new UnauthorizedException();
 
         var client = Client.Create(
             request.Name,
-            userId.Value,
+            userId,
             request.Phone,
             request.Email,
             request.Address,
@@ -42,7 +42,7 @@ public sealed class CreateClientCommandHandler : ICommandHandler<CreateClientCom
         _repository.Add(client);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return Result.Success(new ClientDto(
+        return new ClientDto(
             client.Id,
             client.Name,
             client.Phone,
@@ -51,6 +51,6 @@ public sealed class CreateClientCommandHandler : ICommandHandler<CreateClientCom
             client.Notes,
             client.UserId,
             client.CreatedAt,
-            client.DeletedAt));
+            client.DeletedAt);
     }
 }

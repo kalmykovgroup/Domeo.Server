@@ -22,14 +22,11 @@ public class CategoriesController : ControllerBase
     /// </summary>
     [HttpGet(MaterialsRoutes.Controller.Tree)]
     [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
-    public async Task<IActionResult> GetCategoriesTree(
+    public async Task<ActionResult<ApiResponse<List<CategoryTreeNodeDto>>>> GetCategoriesTree(
         [FromQuery] bool? activeOnly,
         CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetCategoriesTreeQuery(activeOnly), cancellationToken);
-
-        return result.IsSuccess
-            ? Ok(ApiResponse<List<CategoryTreeNodeDto>>.Ok(result.Value))
-            : Ok(ApiResponse<List<CategoryTreeNodeDto>>.Fail(result.Error.Description));
+        return Ok(ApiResponse<List<CategoryTreeNodeDto>>.Ok(result));
     }
 }

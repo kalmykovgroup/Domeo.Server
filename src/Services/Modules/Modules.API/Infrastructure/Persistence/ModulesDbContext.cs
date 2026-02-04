@@ -1,5 +1,5 @@
+using Domeo.Shared.Application;
 using Domeo.Shared.Infrastructure.Audit;
-using Domeo.Shared.Kernel.Application.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Modules.Abstractions.Entities;
 

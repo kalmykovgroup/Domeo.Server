@@ -1,10 +1,9 @@
-using Domeo.Shared.Auth;
+using Auth.Contracts;
 using Domeo.Shared.Infrastructure;
 using Domeo.Shared.Infrastructure.Logging;
 using Domeo.Shared.Infrastructure.Middleware;
 using Domeo.Shared.Infrastructure.Resilience;
 using Microsoft.EntityFrameworkCore;
-using Projects.API.Endpoints;
 using Projects.API.Infrastructure;
 using Projects.API.Infrastructure.Persistence;
 using Projects.API.Services;
@@ -39,7 +38,7 @@ try
             npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "projects")));
 
     // Auth & Infrastructure with resilience
-    builder.Services.AddSharedAuth(builder.Configuration);
+    builder.Services.AddAuthContracts(builder.Configuration);
     builder.Services.AddResilientInfrastructure<ProjectsDbContext>(builder.Configuration, "Projects.API");
 
     // Application & Infrastructure
@@ -82,9 +81,6 @@ try
     // Endpoints
     app.MapHealthChecks("/health");
     app.MapControllers();
-    app.MapProjectsEndpoints(); // Rooms, Vertices, Edges, Zones
-    app.MapCabinetsEndpoints();
-    app.MapCabinetHardwareOverrideEndpoints();
 
     await app.RunAsync();
 }

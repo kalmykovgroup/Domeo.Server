@@ -1,5 +1,5 @@
 using Domeo.Shared.Contracts;
-using Domeo.Shared.Contracts.DTOs;
+using Modules.Abstractions.DTOs;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -26,12 +26,7 @@ public class ModuleTypesController : ControllerBase
         [FromQuery] int? page,
         [FromQuery] int? limit)
     {
-        var result = await _sender.Send(new GetModuleTypesQuery(categoryId, activeOnly, search, page, limit));
-
-        if (!result.IsSuccess)
-            return Ok(ApiResponse<List<ModuleTypeDto>>.Fail(result.Error.Description));
-
-        var response = result.Value;
+        var response = await _sender.Send(new GetModuleTypesQuery(categoryId, activeOnly, search, page, limit));
 
         if (response.IsPaginated)
         {
@@ -48,24 +43,20 @@ public class ModuleTypesController : ControllerBase
 
     [HttpGet(ModulesRoutes.Controller.Count)]
     [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
-    public async Task<IActionResult> GetModuleTypesCount(
+    public async Task<ActionResult<ApiResponse<object>>> GetModuleTypesCount(
         [FromQuery] string? categoryId,
         [FromQuery] bool? activeOnly,
         [FromQuery] string? search)
     {
-        var result = await _sender.Send(new GetModuleTypesCountQuery(categoryId, activeOnly, search));
-        return result.IsSuccess
-            ? Ok(ApiResponse<object>.Ok(new { count = result.Value }))
-            : Ok(ApiResponse<object>.Fail(result.Error.Description));
+        var count = await _sender.Send(new GetModuleTypesCountQuery(categoryId, activeOnly, search));
+        return Ok(ApiResponse<object>.Ok(new { count }));
     }
 
     [HttpGet(ModulesRoutes.Controller.TypeById)]
     [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
-    public async Task<IActionResult> GetModuleType(int id)
+    public async Task<ActionResult<ApiResponse<ModuleTypeDto>>> GetModuleType(int id)
     {
         var result = await _sender.Send(new GetModuleTypeByIdQuery(id));
-        return result.IsSuccess
-            ? Ok(ApiResponse<ModuleTypeDto>.Ok(result.Value))
-            : Ok(ApiResponse<ModuleTypeDto>.Fail(result.Error.Description));
+        return Ok(ApiResponse<ModuleTypeDto>.Ok(result));
     }
 }

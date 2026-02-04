@@ -22,15 +22,12 @@ public class SuppliersController : ControllerBase
     /// </summary>
     [HttpGet]
     [Authorize(Roles = "catalogAdmin,systemAdmin")]
-    public async Task<IActionResult> GetSuppliers(
+    public async Task<ActionResult<ApiResponse<List<SupplierDto>>>> GetSuppliers(
         [FromQuery] bool? activeOnly,
         CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetSuppliersQuery(activeOnly), cancellationToken);
-
-        return result.IsSuccess
-            ? Ok(ApiResponse<List<SupplierDto>>.Ok(result.Value))
-            : Ok(ApiResponse<List<SupplierDto>>.Fail(result.Error.Description));
+        return Ok(ApiResponse<List<SupplierDto>>.Ok(result));
     }
 
     /// <summary>
@@ -38,14 +35,11 @@ public class SuppliersController : ControllerBase
     /// </summary>
     [HttpGet(MaterialsRoutes.Controller.SupplierById)]
     [Authorize(Roles = "catalogAdmin,systemAdmin")]
-    public async Task<IActionResult> GetSupplier(
+    public async Task<ActionResult<ApiResponse<SupplierDto>>> GetSupplier(
         string id,
         CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetSupplierByIdQuery(id), cancellationToken);
-
-        return result.IsSuccess
-            ? Ok(ApiResponse<SupplierDto>.Ok(result.Value))
-            : Ok(ApiResponse<SupplierDto>.Fail(result.Error.Description));
+        return Ok(ApiResponse<SupplierDto>.Ok(result));
     }
 }

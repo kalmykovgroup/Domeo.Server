@@ -1,19 +1,18 @@
-using Domeo.Shared.Contracts.DTOs;
-using Domeo.Shared.Kernel.Application.Abstractions;
-using Domeo.Shared.Kernel.Domain.Results;
+using MediatR;
+using Modules.Abstractions.DTOs;
 using Modules.Abstractions.Queries.Categories;
 using Modules.Abstractions.Repositories;
 
 namespace Modules.API.Application.Categories.Queries;
 
-public sealed class GetCategoriesTreeQueryHandler : IQueryHandler<GetCategoriesTreeQuery, List<ModuleCategoryTreeDto>>
+public sealed class GetCategoriesTreeQueryHandler : IRequestHandler<GetCategoriesTreeQuery, List<ModuleCategoryTreeDto>>
 {
     private readonly IModuleCategoryRepository _repository;
 
     public GetCategoriesTreeQueryHandler(IModuleCategoryRepository repository)
         => _repository = repository;
 
-    public async Task<Result<List<ModuleCategoryTreeDto>>> Handle(
+    public async Task<List<ModuleCategoryTreeDto>> Handle(
         GetCategoriesTreeQuery request, CancellationToken cancellationToken)
     {
         var allCategories = await _repository.GetCategoriesAsync(request.ActiveOnly, cancellationToken);
@@ -38,6 +37,6 @@ public sealed class GetCategoriesTreeQueryHandler : IQueryHandler<GetCategoriesT
             }
         }
 
-        return Result.Success(rootCategories);
+        return rootCategories;
     }
 }

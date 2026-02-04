@@ -1,21 +1,20 @@
 using Audit.Abstractions.DTOs;
 using Audit.Abstractions.Queries.ApplicationLogs;
 using Audit.Abstractions.Repositories;
-using Domeo.Shared.Contracts.DTOs;
-using Domeo.Shared.Kernel.Application.Abstractions;
-using Domeo.Shared.Kernel.Domain.Results;
+using Domeo.Shared.Contracts;
+using MediatR;
 
 namespace Audit.API.Application.ApplicationLogs.Queries;
 
 public sealed class GetApplicationLogsQueryHandler
-    : IQueryHandler<GetApplicationLogsQuery, PaginatedResponse<ApplicationLogDto>>
+    : IRequestHandler<GetApplicationLogsQuery, PaginatedResponse<ApplicationLogDto>>
 {
     private readonly IApplicationLogRepository _repository;
 
     public GetApplicationLogsQueryHandler(IApplicationLogRepository repository)
         => _repository = repository;
 
-    public async Task<Result<PaginatedResponse<ApplicationLogDto>>> Handle(
+    public async Task<PaginatedResponse<ApplicationLogDto>> Handle(
         GetApplicationLogsQuery request, CancellationToken cancellationToken)
     {
         var page = request.Page ?? 1;
@@ -44,6 +43,6 @@ public sealed class GetApplicationLogsQueryHandler
             l.CorrelationId,
             l.CreatedAt)).ToList();
 
-        return Result.Success(new PaginatedResponse<ApplicationLogDto>(total, page, pageSize, dtos));
+        return new PaginatedResponse<ApplicationLogDto>(total, page, pageSize, dtos);
     }
 }

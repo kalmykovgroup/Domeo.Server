@@ -1,29 +1,28 @@
 using Audit.Abstractions.DTOs;
 using Audit.Abstractions.Queries.ApplicationLogs;
 using Audit.Abstractions.Repositories;
-using Domeo.Shared.Kernel.Application.Abstractions;
-using Domeo.Shared.Kernel.Domain.Results;
+using Domeo.Shared.Exceptions;
+using MediatR;
 
 namespace Audit.API.Application.ApplicationLogs.Queries;
 
 public sealed class GetApplicationLogByIdQueryHandler
-    : IQueryHandler<GetApplicationLogByIdQuery, ApplicationLogDto>
+    : IRequestHandler<GetApplicationLogByIdQuery, ApplicationLogDto>
 {
     private readonly IApplicationLogRepository _repository;
 
     public GetApplicationLogByIdQueryHandler(IApplicationLogRepository repository)
         => _repository = repository;
 
-    public async Task<Result<ApplicationLogDto>> Handle(
+    public async Task<ApplicationLogDto> Handle(
         GetApplicationLogByIdQuery request, CancellationToken cancellationToken)
     {
         var log = await _repository.GetByIdAsync(request.Id, cancellationToken);
 
         if (log is null)
-            return Result.Failure<ApplicationLogDto>(
-                Error.Failure("ApplicationLog.NotFound", "Application log not found"));
+            throw new NotFoundException("ApplicationLog", request.Id);
 
-        var dto = new ApplicationLogDto(
+        return new ApplicationLogDto(
             log.Id,
             log.ServiceName,
             log.Level,
@@ -35,7 +34,5 @@ public sealed class GetApplicationLogByIdQueryHandler
             log.UserId,
             log.CorrelationId,
             log.CreatedAt);
-
-        return Result.Success(dto);
     }
 }

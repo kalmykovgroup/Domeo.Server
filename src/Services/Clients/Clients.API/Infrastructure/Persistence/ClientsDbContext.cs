@@ -1,7 +1,7 @@
 using Clients.Abstractions.Entities;
+using Domeo.Shared.Application;
+using Domeo.Shared.Domain;
 using Domeo.Shared.Infrastructure.Audit;
-using Domeo.Shared.Kernel.Application.Abstractions;
-using Domeo.Shared.Kernel.Domain.Abstractions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Clients.API.Infrastructure.Persistence;

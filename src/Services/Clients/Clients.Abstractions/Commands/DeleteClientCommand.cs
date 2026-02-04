@@ -1,5 +1,5 @@
-using Domeo.Shared.Kernel.Application.Abstractions;
+using MediatR;
 
 namespace Clients.Abstractions.Commands;
 
-public sealed record DeleteClientCommand(Guid Id) : ICommand;
+public sealed record DeleteClientCommand(Guid Id) : IRequest;

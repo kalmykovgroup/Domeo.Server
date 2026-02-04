@@ -1,12 +1,10 @@
 using Audit.Abstractions.DTOs;
-using Domeo.Shared.Kernel.Application.Abstractions;
+using MediatR;
 
 namespace Audit.Abstractions.Commands;
 
 public sealed record CreateLoginSessionCommand(
     Guid UserId,
-    string UserEmail,
-    string? UserName,
     string UserRole,
     string? IpAddress,
-    string? UserAgent) : ICommand<LoginSessionDto>;
+    string? UserAgent) : IRequest<LoginSessionDto>;

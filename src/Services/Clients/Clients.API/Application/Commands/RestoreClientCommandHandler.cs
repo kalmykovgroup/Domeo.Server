@@ -1,13 +1,14 @@
+using Auth.Contracts;
 using Clients.Abstractions.Commands;
+using Clients.Abstractions.DTOs;
 using Clients.Abstractions.Repositories;
-using Domeo.Shared.Auth;
-using Domeo.Shared.Contracts.DTOs;
-using Domeo.Shared.Kernel.Application.Abstractions;
-using Domeo.Shared.Kernel.Domain.Results;
+using Domeo.Shared.Application;
+using Domeo.Shared.Exceptions;
+using MediatR;
 
 namespace Clients.API.Application.Commands;
 
-public sealed class RestoreClientCommandHandler : ICommandHandler<RestoreClientCommand, ClientDto>
+public sealed class RestoreClientCommandHandler : IRequestHandler<RestoreClientCommand, ClientDto>
 {
     private readonly IClientRepository _repository;
     private readonly IUnitOfWork _unitOfWork;
@@ -23,27 +24,25 @@ public sealed class RestoreClientCommandHandler : ICommandHandler<RestoreClientC
         _currentUserAccessor = currentUserAccessor;
     }
 
-    public async Task<Result<ClientDto>> Handle(
+    public async Task<ClientDto> Handle(
         RestoreClientCommand request, CancellationToken cancellationToken)
     {
-        var userId = _currentUserAccessor.User?.Id;
-        if (userId is null)
-            return Result.Failure<ClientDto>(Error.Failure("Client.Unauthorized", "Unauthorized"));
+        var userId = _currentUserAccessor.User?.Id
+            ?? throw new UnauthorizedException();
 
-        var client = await _repository.GetByIdIncludingDeletedAsync(request.Id, cancellationToken);
-        if (client is null)
-            return Result.Failure<ClientDto>(Error.Failure("Client.NotFound", "Client not found"));
+        var client = await _repository.GetByIdIncludingDeletedAsync(request.Id, cancellationToken)
+            ?? throw new NotFoundException("Client", request.Id);
 
         if (client.UserId != userId)
-            return Result.Failure<ClientDto>(Error.Failure("Client.AccessDenied", "Access denied"));
+            throw new ForbiddenException("Access denied to this client");
 
         if (!client.IsDeleted)
-            return Result.Failure<ClientDto>(Error.Failure("Client.NotDeleted", "Client is not deleted"));
+            throw new ConflictException("Client", "Client is not deleted");
 
         client.Restore();
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return Result.Success(new ClientDto(
+        return new ClientDto(
             client.Id,
             client.Name,
             client.Phone,
@@ -52,6 +51,6 @@ public sealed class RestoreClientCommandHandler : ICommandHandler<RestoreClientC
             client.Notes,
             client.UserId,
             client.CreatedAt,
-            client.DeletedAt));
+            client.DeletedAt);
     }
 }

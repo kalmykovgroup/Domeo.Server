@@ -1,4 +1,4 @@
-using Domeo.Shared.Auth;
+using Auth.Contracts;
 using Domeo.Shared.Infrastructure;
 using Domeo.Shared.Infrastructure.Logging;
 using Domeo.Shared.Infrastructure.Middleware;
@@ -38,7 +38,7 @@ try
             npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "modules")));
 
     // Auth & Infrastructure with resilience
-    builder.Services.AddSharedAuth(builder.Configuration);
+    builder.Services.AddAuthContracts(builder.Configuration);
     builder.Services.AddResilientInfrastructure<ModulesDbContext>(builder.Configuration, "Modules.API");
 
     // Application & Infrastructure (MediatR, Repositories)

@@ -1,6 +1,6 @@
 using Audit.Abstractions.DTOs;
-using Domeo.Shared.Contracts.DTOs;
-using Domeo.Shared.Kernel.Application.Abstractions;
+using Domeo.Shared.Contracts;
+using MediatR;
 
 namespace Audit.Abstractions.Queries.ApplicationLogs;
 
@@ -11,4 +11,4 @@ public sealed record GetApplicationLogsQuery(
     DateTime? From,
     DateTime? To,
     int? Page,
-    int? PageSize) : IQuery<PaginatedResponse<ApplicationLogDto>>;
+    int? PageSize) : IRequest<PaginatedResponse<ApplicationLogDto>>;

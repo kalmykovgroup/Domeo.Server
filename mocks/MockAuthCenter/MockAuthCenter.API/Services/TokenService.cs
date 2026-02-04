@@ -24,21 +24,13 @@ public class TokenService
 
     public string GenerateAccessToken(TestUser user, string clientId)
     {
+        var role = _userStore.GetRoleForProgram(user, clientId);
+
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, user.Id),
-            new(JwtRegisteredClaimNames.Email, user.Email),
-            new(JwtRegisteredClaimNames.Name, user.Name),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new("client_id", clientId)
+            new("role", role ?? string.Empty)
         };
-
-        // Add role for the specific program/client
-        var role = _userStore.GetRoleForProgram(user, clientId);
-        if (role != null)
-        {
-            claims.Add(new Claim("role", role));
-        }
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
@@ -56,22 +48,16 @@ public class TokenService
 
     public TokenResponse CreateTokenResponse(TestUser user, string clientId, string refreshToken)
     {
-        var accessToken = GenerateAccessToken(user, clientId);
         var role = _userStore.GetRoleForProgram(user, clientId);
 
         return new TokenResponse
         {
-            AccessToken = accessToken,
+            AccessToken = GenerateAccessToken(user, clientId),
             TokenType = "Bearer",
             ExpiresIn = _accessTokenLifetimeMinutes * 60,
             RefreshToken = refreshToken,
-            User = new TokenUserInfo
-            {
-                Id = user.Id,
-                Email = user.Email,
-                Name = user.Name,
-                Role = role ?? string.Empty
-            }
+            UserId = user.Id,
+            Role = role ?? string.Empty
         };
     }
 }
@@ -90,20 +76,8 @@ public class TokenResponse
     [System.Text.Json.Serialization.JsonPropertyName("refresh_token")]
     public string RefreshToken { get; set; } = string.Empty;
 
-    [System.Text.Json.Serialization.JsonPropertyName("user")]
-    public TokenUserInfo User { get; set; } = new();
-}
-
-public class TokenUserInfo
-{
-    [System.Text.Json.Serialization.JsonPropertyName("id")]
-    public string Id { get; set; } = string.Empty;
-
-    [System.Text.Json.Serialization.JsonPropertyName("email")]
-    public string Email { get; set; } = string.Empty;
-
-    [System.Text.Json.Serialization.JsonPropertyName("name")]
-    public string Name { get; set; } = string.Empty;
+    [System.Text.Json.Serialization.JsonPropertyName("user_id")]
+    public string UserId { get; set; } = string.Empty;
 
     [System.Text.Json.Serialization.JsonPropertyName("role")]
     public string Role { get; set; } = string.Empty;

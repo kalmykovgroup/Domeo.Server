@@ -1,6 +1,6 @@
-using Domeo.Shared.Contracts.DTOs;
-using Domeo.Shared.Kernel.Application.Abstractions;
+using MediatR;
+using Modules.Abstractions.DTOs;
 
 namespace Modules.Abstractions.Queries.Hardware;
 
-public sealed record GetHardwareByIdQuery(int Id) : IQuery<HardwareDto>;
+public sealed record GetHardwareByIdQuery(int Id) : IRequest<HardwareDto>;

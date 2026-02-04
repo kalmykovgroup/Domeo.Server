@@ -1,12 +1,13 @@
-using Domeo.Shared.Kernel.Application.Abstractions;
-using Domeo.Shared.Kernel.Domain.Results;
+using Domeo.Shared.Application;
+using Domeo.Shared.Exceptions;
+using MediatR;
 using Projects.Abstractions.Commands.Projects;
 using Projects.Abstractions.Entities;
 using Projects.Abstractions.Repositories;
 
 namespace Projects.API.Application.Projects.Commands;
 
-public sealed class UpdateProjectStatusCommandHandler : ICommandHandler<UpdateProjectStatusCommand>
+public sealed class UpdateProjectStatusCommandHandler : IRequestHandler<UpdateProjectStatusCommand>
 {
     private readonly IProjectRepository _projectRepository;
     private readonly IUnitOfWork _unitOfWork;
@@ -19,18 +20,16 @@ public sealed class UpdateProjectStatusCommandHandler : ICommandHandler<UpdatePr
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Result> Handle(UpdateProjectStatusCommand request, CancellationToken cancellationToken)
+    public async Task Handle(UpdateProjectStatusCommand request, CancellationToken cancellationToken)
     {
         var project = await _projectRepository.GetByIdAsync(request.Id, cancellationToken);
         if (project is null)
-            return Result.Failure(Error.NotFound("Project", request.Id));
+            throw new NotFoundException("Project", request.Id);
 
         if (!Enum.TryParse<ProjectStatus>(request.Status, true, out var status))
-            return Result.Failure(Error.Validation("Project.InvalidStatus", "Invalid status"));
+            throw new DomeoValidationException("Status", "Invalid status");
 
         project.UpdateStatus(status);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        return Result.Success();
     }
 }

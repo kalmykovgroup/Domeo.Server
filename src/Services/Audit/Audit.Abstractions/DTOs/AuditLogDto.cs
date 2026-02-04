@@ -3,7 +3,6 @@ namespace Audit.Abstractions.DTOs;
 public sealed record AuditLogDto(
     Guid Id,
     Guid UserId,
-    string UserEmail,
     string Action,
     string EntityType,
     string EntityId,

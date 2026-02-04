@@ -1,8 +1,5 @@
-using Audit.Abstractions.DTOs;
 using Audit.Abstractions.Queries.AuditLogs;
 using Audit.Abstractions.Routes;
-using Domeo.Shared.Contracts;
-using Domeo.Shared.Contracts.DTOs;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,7 +17,7 @@ public class AuditLogsController : ControllerBase
 
     [HttpGet]
     [Authorize(Roles = "systemAdmin")]
-    public async Task<IActionResult> GetAuditLogs(
+    public async Task<ActionResult<object>> GetAuditLogs(
         [FromQuery] Guid? userId,
         [FromQuery] string? action,
         [FromQuery] string? entityType,
@@ -33,14 +30,12 @@ public class AuditLogsController : ControllerBase
         var result = await _sender.Send(new GetAuditLogsQuery(
             userId, action, entityType, serviceName, from, to, page, pageSize));
 
-        return result.IsSuccess
-            ? Ok(ApiResponse<PaginatedResponse<AuditLogDto>>.Ok(result.Value))
-            : Ok(ApiResponse<PaginatedResponse<AuditLogDto>>.Fail(result.Error.Description));
+        return Ok(result);
     }
 
     [HttpGet(AuditRoutes.Controller.EntityHistory)]
     [Authorize(Roles = "systemAdmin")]
-    public async Task<IActionResult> GetEntityHistory(
+    public async Task<ActionResult<object>> GetEntityHistory(
         string entityType,
         string entityId,
         [FromQuery] int? page,
@@ -49,8 +44,6 @@ public class AuditLogsController : ControllerBase
         var result = await _sender.Send(new GetEntityHistoryQuery(
             entityType, entityId, page, pageSize));
 
-        return result.IsSuccess
-            ? Ok(ApiResponse<PaginatedResponse<AuditLogDto>>.Ok(result.Value))
-            : Ok(ApiResponse<PaginatedResponse<AuditLogDto>>.Fail(result.Error.Description));
+        return Ok(result);
     }
 }

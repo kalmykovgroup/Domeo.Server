@@ -1,4 +1,4 @@
-using Domeo.Shared.Kernel.Application.Abstractions;
+using MediatR;
 
 namespace Projects.Abstractions.Commands.Projects;
 
@@ -6,4 +6,4 @@ public sealed record CreateProjectCommand(
     string Name,
     string Type,
     Guid ClientId,
-    string? Notes) : ICommand<Guid>;
+    string? Notes) : IRequest<Guid>;

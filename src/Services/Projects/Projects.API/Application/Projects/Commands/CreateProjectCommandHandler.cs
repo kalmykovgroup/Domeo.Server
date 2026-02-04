@@ -1,13 +1,14 @@
-using Domeo.Shared.Auth;
-using Domeo.Shared.Kernel.Application.Abstractions;
-using Domeo.Shared.Kernel.Domain.Results;
+using Auth.Contracts;
+using Domeo.Shared.Application;
+using Domeo.Shared.Exceptions;
+using MediatR;
 using Projects.Abstractions.Commands.Projects;
 using Projects.Abstractions.Entities;
 using Projects.Abstractions.Repositories;
 
 namespace Projects.API.Application.Projects.Commands;
 
-public sealed class CreateProjectCommandHandler : ICommandHandler<CreateProjectCommand, Guid>
+public sealed class CreateProjectCommandHandler : IRequestHandler<CreateProjectCommand, Guid>
 {
     private readonly IProjectRepository _projectRepository;
     private readonly IUnitOfWork _unitOfWork;
@@ -23,11 +24,11 @@ public sealed class CreateProjectCommandHandler : ICommandHandler<CreateProjectC
         _currentUserAccessor = currentUserAccessor;
     }
 
-    public async Task<Result<Guid>> Handle(CreateProjectCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> Handle(CreateProjectCommand request, CancellationToken cancellationToken)
     {
         var userId = _currentUserAccessor.User?.Id;
         if (userId is null)
-            return Result.Failure<Guid>(Error.Failure("User.Unauthorized", "User not authenticated"));
+            throw new UnauthorizedException();
 
         var project = Project.Create(
             request.Name,
@@ -39,6 +40,6 @@ public sealed class CreateProjectCommandHandler : ICommandHandler<CreateProjectC
         _projectRepository.Add(project);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return Result.Success(project.Id);
+        return project.Id;
     }
 }

@@ -1,12 +1,12 @@
-using Domeo.Shared.Contracts.DTOs;
-using Domeo.Shared.Kernel.Application.Abstractions;
-using Domeo.Shared.Kernel.Domain.Results;
+using Domeo.Shared.Exceptions;
+using MediatR;
 using Projects.Abstractions.Commands.Projects;
+using Projects.Abstractions.DTOs;
 using Projects.Abstractions.Repositories;
 
 namespace Projects.API.Application.Projects.Queries;
 
-public sealed class GetProjectByIdQueryHandler : IQueryHandler<GetProjectByIdQuery, ProjectDto>
+public sealed class GetProjectByIdQueryHandler : IRequestHandler<GetProjectByIdQuery, ProjectDto>
 {
     private readonly IProjectRepository _projectRepository;
 
@@ -15,13 +15,13 @@ public sealed class GetProjectByIdQueryHandler : IQueryHandler<GetProjectByIdQue
         _projectRepository = projectRepository;
     }
 
-    public async Task<Result<ProjectDto>> Handle(GetProjectByIdQuery request, CancellationToken cancellationToken)
+    public async Task<ProjectDto> Handle(GetProjectByIdQuery request, CancellationToken cancellationToken)
     {
         var project = await _projectRepository.GetByIdAsync(request.Id, cancellationToken);
         if (project is null)
-            return Result.Failure<ProjectDto>(Error.NotFound("Project", request.Id));
+            throw new NotFoundException("Project", request.Id);
 
-        var dto = new ProjectDto(
+        return new ProjectDto(
             project.Id,
             project.Name,
             project.Type,
@@ -33,7 +33,5 @@ public sealed class GetProjectByIdQueryHandler : IQueryHandler<GetProjectByIdQue
             project.CreatedAt,
             project.UpdatedAt,
             project.DeletedAt);
-
-        return Result.Success(dto);
     }
 }

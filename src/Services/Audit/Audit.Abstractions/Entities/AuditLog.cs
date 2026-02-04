@@ -1,11 +1,10 @@
-using Domeo.Shared.Kernel.Domain.Abstractions;
+using Domeo.Shared.Domain;
 
 namespace Audit.Abstractions.Entities;
 
 public sealed class AuditLog : Entity<Guid>
 {
     public Guid UserId { get; private set; }
-    public string UserEmail { get; private set; } = string.Empty;
     public string Action { get; private set; } = string.Empty;
     public string EntityType { get; private set; } = string.Empty;
     public string EntityId { get; private set; } = string.Empty;
@@ -19,7 +18,6 @@ public sealed class AuditLog : Entity<Guid>
 
     public static AuditLog Create(
         Guid userId,
-        string userEmail,
         string action,
         string entityType,
         string entityId,
@@ -32,7 +30,6 @@ public sealed class AuditLog : Entity<Guid>
         {
             Id = Guid.NewGuid(),
             UserId = userId,
-            UserEmail = userEmail,
             Action = action,
             EntityType = entityType,
             EntityId = entityId,

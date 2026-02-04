@@ -1,20 +1,19 @@
 using Audit.Abstractions.Queries.ApplicationLogs;
 using Audit.API.Infrastructure.Persistence;
-using Domeo.Shared.Kernel.Application.Abstractions;
-using Domeo.Shared.Kernel.Domain.Results;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Audit.API.Application.ApplicationLogs.Queries;
 
 public sealed class GetApplicationLogStatsQueryHandler
-    : IQueryHandler<GetApplicationLogStatsQuery, object>
+    : IRequestHandler<GetApplicationLogStatsQuery, object>
 {
     private readonly AuditDbContext _dbContext;
 
     public GetApplicationLogStatsQueryHandler(AuditDbContext dbContext)
         => _dbContext = dbContext;
 
-    public async Task<Result<object>> Handle(
+    public async Task<object> Handle(
         GetApplicationLogStatsQuery request, CancellationToken cancellationToken)
     {
         var query = _dbContext.ApplicationLogs.AsQueryable();
@@ -40,7 +39,7 @@ public sealed class GetApplicationLogStatsQueryHandler
                 })
                 .ToListAsync(cancellationToken);
 
-            return Result.Success<object>(stats);
+            return stats;
         }
 
         if (groupByFields.Contains("service"))
@@ -54,7 +53,7 @@ public sealed class GetApplicationLogStatsQueryHandler
                 })
                 .ToListAsync(cancellationToken);
 
-            return Result.Success<object>(stats);
+            return stats;
         }
 
         if (groupByFields.Contains("level"))
@@ -68,10 +67,10 @@ public sealed class GetApplicationLogStatsQueryHandler
                 })
                 .ToListAsync(cancellationToken);
 
-            return Result.Success<object>(stats);
+            return stats;
         }
 
         var totalCount = await query.CountAsync(cancellationToken);
-        return Result.Success<object>(new { Total = totalCount });
+        return new { Total = totalCount };
     }
 }

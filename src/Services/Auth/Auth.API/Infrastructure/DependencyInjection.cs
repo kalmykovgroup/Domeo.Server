@@ -1,7 +1,6 @@
-using Auth.Abstractions.Repositories;
-using Auth.API.Infrastructure.Persistence;
-using Auth.API.Infrastructure.Persistence.Repositories;
-using Domeo.Shared.Kernel.Application.Abstractions;
+using Auth.Domain.Repositories;
+using Auth.Infrastructure.Persistence;
+using Domeo.Shared.Application;
 
 namespace Auth.API.Infrastructure;
 

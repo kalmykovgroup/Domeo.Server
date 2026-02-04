@@ -1,7 +1,7 @@
 using Audit.API.Infrastructure;
 using Audit.API.Infrastructure.Persistence;
 using Audit.API.Services;
-using Domeo.Shared.Auth;
+using Auth.Contracts;
 using Domeo.Shared.Infrastructure;
 using Domeo.Shared.Infrastructure.Logging;
 using Domeo.Shared.Infrastructure.Middleware;
@@ -38,7 +38,7 @@ try
             npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "audit")));
 
     // Auth & Infrastructure with resilience
-    builder.Services.AddSharedAuth(builder.Configuration);
+    builder.Services.AddAuthContracts(builder.Configuration);
     builder.Services.AddResilientInfrastructure<AuditDbContext>(builder.Configuration, "Audit.API");
 
     // Application & Infrastructure (MediatR, Repositories)

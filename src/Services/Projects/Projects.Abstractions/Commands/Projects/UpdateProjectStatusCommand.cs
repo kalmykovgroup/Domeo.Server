@@ -1,7 +1,7 @@
-using Domeo.Shared.Kernel.Application.Abstractions;
+using MediatR;
 
 namespace Projects.Abstractions.Commands.Projects;
 
 public sealed record UpdateProjectStatusCommand(
     Guid Id,
-    string Status) : ICommand;
+    string Status) : IRequest;

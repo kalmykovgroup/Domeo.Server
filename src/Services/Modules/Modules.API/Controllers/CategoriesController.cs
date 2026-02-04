@@ -1,5 +1,5 @@
 using Domeo.Shared.Contracts;
-using Domeo.Shared.Contracts.DTOs;
+using Modules.Abstractions.DTOs;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,21 +19,17 @@ public class CategoriesController : ControllerBase
 
     [HttpGet]
     [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
-    public async Task<IActionResult> GetCategories([FromQuery] bool? activeOnly)
+    public async Task<ActionResult<ApiResponse<List<ModuleCategoryDto>>>> GetCategories([FromQuery] bool? activeOnly)
     {
         var result = await _sender.Send(new GetCategoriesQuery(activeOnly));
-        return result.IsSuccess
-            ? Ok(ApiResponse<List<ModuleCategoryDto>>.Ok(result.Value))
-            : Ok(ApiResponse<List<ModuleCategoryDto>>.Fail(result.Error.Description));
+        return Ok(ApiResponse<List<ModuleCategoryDto>>.Ok(result));
     }
 
     [HttpGet(ModulesRoutes.Controller.Tree)]
     [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
-    public async Task<IActionResult> GetCategoriesTree([FromQuery] bool? activeOnly)
+    public async Task<ActionResult<ApiResponse<List<ModuleCategoryTreeDto>>>> GetCategoriesTree([FromQuery] bool? activeOnly)
     {
         var result = await _sender.Send(new GetCategoriesTreeQuery(activeOnly));
-        return result.IsSuccess
-            ? Ok(ApiResponse<List<ModuleCategoryTreeDto>>.Ok(result.Value))
-            : Ok(ApiResponse<List<ModuleCategoryTreeDto>>.Fail(result.Error.Description));
+        return Ok(ApiResponse<List<ModuleCategoryTreeDto>>.Ok(result));
     }
 }

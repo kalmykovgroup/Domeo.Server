@@ -22,16 +22,13 @@ public class MaterialsController : ControllerBase
     /// </summary>
     [HttpGet]
     [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
-    public async Task<IActionResult> GetMaterials(
+    public async Task<ActionResult<ApiResponse<List<MaterialDto>>>> GetMaterials(
         [FromQuery] string? categoryId,
         [FromQuery] bool? activeOnly,
         CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetMaterialsQuery(categoryId, activeOnly), cancellationToken);
-
-        return result.IsSuccess
-            ? Ok(ApiResponse<List<MaterialDto>>.Ok(result.Value))
-            : Ok(ApiResponse<List<MaterialDto>>.Fail(result.Error.Description));
+        return Ok(ApiResponse<List<MaterialDto>>.Ok(result));
     }
 
     /// <summary>
@@ -39,15 +36,12 @@ public class MaterialsController : ControllerBase
     /// </summary>
     [HttpGet(MaterialsRoutes.Controller.ItemById)]
     [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
-    public async Task<IActionResult> GetMaterial(
+    public async Task<ActionResult<ApiResponse<MaterialDto>>> GetMaterial(
         string id,
         CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetMaterialByIdQuery(id), cancellationToken);
-
-        return result.IsSuccess
-            ? Ok(ApiResponse<MaterialDto>.Ok(result.Value))
-            : Ok(ApiResponse<MaterialDto>.Fail(result.Error.Description));
+        return Ok(ApiResponse<MaterialDto>.Ok(result));
     }
 
     /// <summary>
@@ -55,14 +49,11 @@ public class MaterialsController : ControllerBase
     /// </summary>
     [HttpGet(MaterialsRoutes.Controller.ItemOffers)]
     [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
-    public async Task<IActionResult> GetMaterialOffers(
+    public async Task<ActionResult<ApiResponse<MaterialOffersDto>>> GetMaterialOffers(
         string id,
         CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetMaterialOffersQuery(id), cancellationToken);
-
-        return result.IsSuccess
-            ? Ok(ApiResponse<MaterialOffersDto>.Ok(result.Value))
-            : Ok(ApiResponse<MaterialOffersDto>.Fail(result.Error.Description));
+        return Ok(ApiResponse<MaterialOffersDto>.Ok(result));
     }
 }

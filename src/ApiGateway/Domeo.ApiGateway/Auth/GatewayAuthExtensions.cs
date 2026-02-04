@@ -1,3 +1,4 @@
+using Auth.Contracts.Routes;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
@@ -41,7 +42,7 @@ public static class GatewayAuthExtensions
                 OnMessageReceived = context =>
                 {
                     // Try to get token from cookie
-                    if (context.Request.Cookies.TryGetValue("access_token", out var token))
+                    if (context.Request.Cookies.TryGetValue(AuthRoutes.Cookies.AccessToken, out var token))
                     {
                         context.Token = token;
                     }

@@ -1,6 +1,6 @@
 using System.Text.Json;
 using System.Threading.Channels;
-using Domeo.Shared.Contracts.Events;
+using Domeo.Shared.Events;
 
 namespace Audit.API.Services;
 

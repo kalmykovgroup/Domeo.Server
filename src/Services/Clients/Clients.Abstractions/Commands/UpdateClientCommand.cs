@@ -1,5 +1,5 @@
-using Domeo.Shared.Contracts.DTOs;
-using Domeo.Shared.Kernel.Application.Abstractions;
+using Clients.Abstractions.DTOs;
+using MediatR;
 
 namespace Clients.Abstractions.Commands;
 
@@ -9,4 +9,4 @@ public sealed record UpdateClientCommand(
     string? Phone,
     string? Email,
     string? Address,
-    string? Notes) : ICommand<ClientDto>;
+    string? Notes) : IRequest<ClientDto>;

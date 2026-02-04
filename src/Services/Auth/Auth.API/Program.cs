@@ -1,7 +1,8 @@
 using Auth.API.Infrastructure;
-using Auth.API.Infrastructure.Persistence;
-using Auth.API.Services;
-using Domeo.Shared.Auth;
+using Auth.Application.Services;
+using Auth.Contracts;
+using Auth.Infrastructure.Persistence;
+using Auth.Infrastructure.Services;
 using Domeo.Shared.Infrastructure;
 using Domeo.Shared.Infrastructure.Logging;
 using Domeo.Shared.Infrastructure.Middleware;
@@ -38,7 +39,7 @@ try
             npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "auth")));
 
     // Auth & Infrastructure with resilience
-    builder.Services.AddSharedAuth(builder.Configuration);
+    builder.Services.AddAuthContracts(builder.Configuration);
     builder.Services.AddResilientInfrastructure<AuthDbContext>(builder.Configuration, "Auth.API");
 
     // Application & Infrastructure (Services, Repositories)

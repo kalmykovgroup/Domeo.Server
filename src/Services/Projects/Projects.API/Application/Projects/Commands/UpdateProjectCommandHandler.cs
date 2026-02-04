@@ -1,11 +1,12 @@
-using Domeo.Shared.Kernel.Application.Abstractions;
-using Domeo.Shared.Kernel.Domain.Results;
+using Domeo.Shared.Application;
+using Domeo.Shared.Exceptions;
+using MediatR;
 using Projects.Abstractions.Commands.Projects;
 using Projects.Abstractions.Repositories;
 
 namespace Projects.API.Application.Projects.Commands;
 
-public sealed class UpdateProjectCommandHandler : ICommandHandler<UpdateProjectCommand>
+public sealed class UpdateProjectCommandHandler : IRequestHandler<UpdateProjectCommand>
 {
     private readonly IProjectRepository _projectRepository;
     private readonly IUnitOfWork _unitOfWork;
@@ -18,15 +19,13 @@ public sealed class UpdateProjectCommandHandler : ICommandHandler<UpdateProjectC
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Result> Handle(UpdateProjectCommand request, CancellationToken cancellationToken)
+    public async Task Handle(UpdateProjectCommand request, CancellationToken cancellationToken)
     {
         var project = await _projectRepository.GetByIdAsync(request.Id, cancellationToken);
         if (project is null)
-            return Result.Failure(Error.NotFound("Project", request.Id));
+            throw new NotFoundException("Project", request.Id);
 
         project.Update(request.Name, request.Notes);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        return Result.Success();
     }
 }

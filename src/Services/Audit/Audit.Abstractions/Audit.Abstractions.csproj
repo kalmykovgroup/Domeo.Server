@@ -7,8 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Shared\Domeo.Shared.Kernel\Domeo.Shared.Kernel.csproj" />
-    <ProjectReference Include="..\..\..\Shared\Domeo.Shared.Contracts\Domeo.Shared.Contracts.csproj" />
+    <PackageReference Include="MediatR" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\Domeo.Shared\Domeo.Shared.csproj" />
   </ItemGroup>
 
 </Project>

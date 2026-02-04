@@ -1,21 +1,20 @@
 using Audit.Abstractions.DTOs;
 using Audit.Abstractions.Queries.LoginSessions;
 using Audit.Abstractions.Repositories;
-using Domeo.Shared.Contracts.DTOs;
-using Domeo.Shared.Kernel.Application.Abstractions;
-using Domeo.Shared.Kernel.Domain.Results;
+using Domeo.Shared.Contracts;
+using MediatR;
 
 namespace Audit.API.Application.LoginSessions.Queries;
 
 public sealed class GetLoginSessionsQueryHandler
-    : IQueryHandler<GetLoginSessionsQuery, PaginatedResponse<LoginSessionDto>>
+    : IRequestHandler<GetLoginSessionsQuery, PaginatedResponse<LoginSessionDto>>
 {
     private readonly ILoginSessionRepository _repository;
 
     public GetLoginSessionsQueryHandler(ILoginSessionRepository repository)
         => _repository = repository;
 
-    public async Task<Result<PaginatedResponse<LoginSessionDto>>> Handle(
+    public async Task<PaginatedResponse<LoginSessionDto>> Handle(
         GetLoginSessionsQuery request, CancellationToken cancellationToken)
     {
         var page = request.Page ?? 1;
@@ -33,8 +32,6 @@ public sealed class GetLoginSessionsQueryHandler
         var dtos = items.Select(s => new LoginSessionDto(
             s.Id,
             s.UserId,
-            s.UserEmail,
-            s.UserName,
             s.UserRole,
             s.IpAddress,
             s.UserAgent,
@@ -42,6 +39,6 @@ public sealed class GetLoginSessionsQueryHandler
             s.LoggedOutAt,
             s.IsActive)).ToList();
 
-        return Result.Success(new PaginatedResponse<LoginSessionDto>(total, page, pageSize, dtos));
+        return new PaginatedResponse<LoginSessionDto>(total, page, pageSize, dtos);
     }
 }

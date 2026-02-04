@@ -1,6 +1,6 @@
 using Audit.Abstractions.DTOs;
-using Domeo.Shared.Kernel.Application.Abstractions;
+using MediatR;
 
 namespace Audit.Abstractions.Queries.LoginSessions;
 
-public sealed record GetLoginSessionByIdQuery(Guid Id) : IQuery<LoginSessionDto>;
+public sealed record GetLoginSessionByIdQuery(Guid Id) : IRequest<LoginSessionDto>;

@@ -2,21 +2,15 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Scalar.AspNetCore" />
     <PackageReference Include="Serilog.AspNetCore" />
     <PackageReference Include="Serilog.Sinks.Console" />
-    <PackageReference Include="Swashbuckle.AspNetCore" />
-    <PackageReference Include="AspNetCore.HealthChecks.NpgSql" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Auth.Abstractions\Auth.Abstractions.csproj" />
-    <ProjectReference Include="..\..\..\Shared\Domeo.Shared.Auth\Domeo.Shared.Auth.csproj" />
-    <ProjectReference Include="..\..\..\Shared\Domeo.Shared.Contracts\Domeo.Shared.Contracts.csproj" />
-    <ProjectReference Include="..\..\..\Shared\Domeo.Shared.Infrastructure\Domeo.Shared.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\..\Shared\Domeo.Shared.Kernel\Domeo.Shared.Kernel.csproj" />
+    <ProjectReference Include="..\Auth.Contracts\Auth.Contracts.csproj" />
+    <ProjectReference Include="..\Auth.Infrastructure\Auth.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Domeo.Shared\Domeo.Shared.csproj" />
   </ItemGroup>
 
 </Project>

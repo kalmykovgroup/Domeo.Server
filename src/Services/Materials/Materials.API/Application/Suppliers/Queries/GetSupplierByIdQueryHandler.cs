@@ -1,12 +1,12 @@
-using Domeo.Shared.Kernel.Application.Abstractions;
-using Domeo.Shared.Kernel.Domain.Results;
+using Domeo.Shared.Exceptions;
 using Materials.Abstractions.DTOs;
 using Materials.Abstractions.ExternalServices;
 using Materials.Abstractions.Queries.Suppliers;
+using MediatR;
 
 namespace Materials.API.Application.Suppliers.Queries;
 
-public sealed class GetSupplierByIdQueryHandler : IQueryHandler<GetSupplierByIdQuery, SupplierDto>
+public sealed class GetSupplierByIdQueryHandler : IRequestHandler<GetSupplierByIdQuery, SupplierDto>
 {
     private readonly ISupplierApiClient _supplierApiClient;
     private readonly ILogger<GetSupplierByIdQueryHandler> _logger;
@@ -19,35 +19,26 @@ public sealed class GetSupplierByIdQueryHandler : IQueryHandler<GetSupplierByIdQ
         _logger = logger;
     }
 
-    public async Task<Result<SupplierDto>> Handle(
+    public async Task<SupplierDto> Handle(
         GetSupplierByIdQuery request,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var externalSupplier = await _supplierApiClient.GetSupplierAsync(request.Id, cancellationToken);
+        var externalSupplier = await _supplierApiClient.GetSupplierAsync(request.Id, cancellationToken);
 
-            if (externalSupplier == null)
-                return Result.Failure<SupplierDto>(Error.NotFound("Supplier not found"));
+        if (externalSupplier == null)
+            throw new NotFoundException("Supplier", request.Id);
 
-            var supplier = new SupplierDto(
-                externalSupplier.Id,
-                externalSupplier.Company,
-                externalSupplier.ContactName,
-                externalSupplier.Email,
-                externalSupplier.Phone,
-                externalSupplier.Address,
-                externalSupplier.Website,
-                externalSupplier.Rating,
-                externalSupplier.IsActive);
+        var supplier = new SupplierDto(
+            externalSupplier.Id,
+            externalSupplier.Company,
+            externalSupplier.ContactName,
+            externalSupplier.Email,
+            externalSupplier.Phone,
+            externalSupplier.Address,
+            externalSupplier.Website,
+            externalSupplier.Rating,
+            externalSupplier.IsActive);
 
-            return Result.Success(supplier);
-        }
-        catch (HttpRequestException ex)
-        {
-            _logger.LogWarning(ex, "Supplier service unavailable");
-            return Result.Failure<SupplierDto>(
-                Error.ServiceUnavailable($"Supplier service unavailable: {ex.Message}"));
-        }
+        return supplier;
     }
 }

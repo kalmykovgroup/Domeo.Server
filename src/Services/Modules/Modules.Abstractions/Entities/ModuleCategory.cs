@@ -1,4 +1,4 @@
-using Domeo.Shared.Kernel.Domain.Abstractions;
+using Domeo.Shared.Domain;
 
 namespace Modules.Abstractions.Entities;
 

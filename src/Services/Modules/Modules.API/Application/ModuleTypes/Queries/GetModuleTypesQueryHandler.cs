@@ -1,20 +1,19 @@
-using Domeo.Shared.Contracts.DTOs;
-using Domeo.Shared.Kernel.Application.Abstractions;
-using Domeo.Shared.Kernel.Domain.Results;
+using MediatR;
+using Modules.Abstractions.DTOs;
 using Modules.Abstractions.Entities;
 using Modules.Abstractions.Queries.ModuleTypes;
 using Modules.Abstractions.Repositories;
 
 namespace Modules.API.Application.ModuleTypes.Queries;
 
-public sealed class GetModuleTypesQueryHandler : IQueryHandler<GetModuleTypesQuery, ModuleTypesResponse>
+public sealed class GetModuleTypesQueryHandler : IRequestHandler<GetModuleTypesQuery, ModuleTypesResponse>
 {
     private readonly IModuleTypeRepository _repository;
 
     public GetModuleTypesQueryHandler(IModuleTypeRepository repository)
         => _repository = repository;
 
-    public async Task<Result<ModuleTypesResponse>> Handle(
+    public async Task<ModuleTypesResponse> Handle(
         GetModuleTypesQuery request, CancellationToken cancellationToken)
     {
         var (items, total) = await _repository.GetModuleTypesAsync(
@@ -23,11 +22,9 @@ public sealed class GetModuleTypesQueryHandler : IQueryHandler<GetModuleTypesQue
 
         var dtos = items.Select(ToDto).ToList();
 
-        var response = request.Page.HasValue && request.Limit.HasValue
+        return request.Page.HasValue && request.Limit.HasValue
             ? new ModuleTypesResponse(dtos, total, request.Page, request.Limit)
             : new ModuleTypesResponse(dtos);
-
-        return Result.Success(response);
     }
 
     private static ModuleTypeDto ToDto(ModuleType m) => new(

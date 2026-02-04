@@ -1,5 +1,4 @@
-using Domeo.Shared.Kernel.Application.Abstractions;
-using Domeo.Shared.Kernel.Application.Behaviors;
+using Domeo.Shared.Application;
 using FluentValidation;
 using MediatR;
 using Projects.Abstractions.Repositories;

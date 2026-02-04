@@ -1,5 +1,4 @@
 using Domeo.Shared.Contracts;
-using Domeo.Shared.Contracts.DTOs;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -44,9 +43,7 @@ public class ProjectsController : ControllerBase
             sortOrder);
 
         var result = await _sender.Send(query, cancellationToken);
-        return result.IsSuccess
-            ? Ok(ApiResponse<PaginatedResponse<ProjectDto>>.Ok(result.Value))
-            : Ok(ApiResponse<PaginatedResponse<ProjectDto>>.Fail(result.Error.Description));
+        return Ok(ApiResponse<PaginatedResponse<ProjectDto>>.Ok(result));
     }
 
     [HttpGet(ProjectsRoutes.Controller.ById)]
@@ -54,9 +51,7 @@ public class ProjectsController : ControllerBase
     public async Task<IActionResult> GetProject(Guid id, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetProjectByIdQuery(id), cancellationToken);
-        return result.IsSuccess
-            ? Ok(ApiResponse<ProjectDto>.Ok(result.Value))
-            : Ok(ApiResponse<ProjectDto>.Fail(result.Error.Description));
+        return Ok(ApiResponse<ProjectDto>.Ok(result));
     }
 
     [HttpPost]
@@ -65,9 +60,7 @@ public class ProjectsController : ControllerBase
     {
         var command = new CreateProjectCommand(request.Name, request.Type, request.ClientId, request.Notes);
         var result = await _sender.Send(command, cancellationToken);
-        return result.IsSuccess
-            ? Ok(ApiResponse<IdResponse>.Ok(new IdResponse(result.Value), "Project created successfully"))
-            : Ok(ApiResponse<IdResponse>.Fail(result.Error.Description));
+        return Ok(ApiResponse<IdResponse>.Ok(new IdResponse(result), "Project created successfully"));
     }
 
     [HttpPut(ProjectsRoutes.Controller.ById)]
@@ -75,10 +68,8 @@ public class ProjectsController : ControllerBase
     public async Task<IActionResult> UpdateProject(Guid id, [FromBody] UpdateProjectRequest request, CancellationToken cancellationToken)
     {
         var command = new UpdateProjectCommand(id, request.Name, request.Notes);
-        var result = await _sender.Send(command, cancellationToken);
-        return result.IsSuccess
-            ? Ok(ApiResponse.Ok("Project updated successfully"))
-            : Ok(ApiResponse.Fail(result.Error.Description));
+        await _sender.Send(command, cancellationToken);
+        return Ok(ApiResponse.Ok("Project updated successfully"));
     }
 
     [HttpPut(ProjectsRoutes.Controller.Status)]
@@ -86,10 +77,8 @@ public class ProjectsController : ControllerBase
     public async Task<IActionResult> UpdateProjectStatus(Guid id, [FromBody] UpdateStatusRequest request, CancellationToken cancellationToken)
     {
         var command = new UpdateProjectStatusCommand(id, request.Status);
-        var result = await _sender.Send(command, cancellationToken);
-        return result.IsSuccess
-            ? Ok(ApiResponse.Ok("Status updated successfully"))
-            : Ok(ApiResponse.Fail(result.Error.Description));
+        await _sender.Send(command, cancellationToken);
+        return Ok(ApiResponse.Ok("Status updated successfully"));
     }
 
     [HttpPut(ProjectsRoutes.Controller.Questionnaire)]
@@ -97,19 +86,15 @@ public class ProjectsController : ControllerBase
     public async Task<IActionResult> UpdateQuestionnaire(Guid id, [FromBody] UpdateQuestionnaireRequest request, CancellationToken cancellationToken)
     {
         var command = new UpdateQuestionnaireCommand(id, request.QuestionnaireData);
-        var result = await _sender.Send(command, cancellationToken);
-        return result.IsSuccess
-            ? Ok(ApiResponse.Ok("Questionnaire updated successfully"))
-            : Ok(ApiResponse.Fail(result.Error.Description));
+        await _sender.Send(command, cancellationToken);
+        return Ok(ApiResponse.Ok("Questionnaire updated successfully"));
     }
 
     [HttpDelete(ProjectsRoutes.Controller.ById)]
     [Authorize(Roles = "designer,catalogAdmin,systemAdmin")]
     public async Task<IActionResult> DeleteProject(Guid id, CancellationToken cancellationToken)
     {
-        var result = await _sender.Send(new DeleteProjectCommand(id), cancellationToken);
-        return result.IsSuccess
-            ? Ok(ApiResponse.Ok("Project deleted successfully"))
-            : Ok(ApiResponse.Fail(result.Error.Description));
+        await _sender.Send(new DeleteProjectCommand(id), cancellationToken);
+        return Ok(ApiResponse.Ok("Project deleted successfully"));
     }
 }

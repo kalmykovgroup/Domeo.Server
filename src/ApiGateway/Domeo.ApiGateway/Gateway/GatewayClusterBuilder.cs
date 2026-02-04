@@ -1,4 +1,4 @@
-using Auth.Abstractions.Routes;
+using Auth.Contracts.Routes;
 using Audit.Abstractions.Routes;
 using Clients.Abstractions.Routes;
 using Materials.Abstractions.Routes;

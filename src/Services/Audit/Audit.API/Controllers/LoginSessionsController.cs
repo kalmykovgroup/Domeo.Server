@@ -2,8 +2,6 @@ using Audit.Abstractions.Commands;
 using Audit.Abstractions.DTOs;
 using Audit.Abstractions.Queries.LoginSessions;
 using Audit.Abstractions.Routes;
-using Domeo.Shared.Contracts;
-using Domeo.Shared.Contracts.DTOs;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -24,19 +22,15 @@ public class LoginSessionsController : ControllerBase
     /// </summary>
     [HttpPost]
     [Authorize(Policy = "InternalApi")]
-    public async Task<IActionResult> CreateLoginSession([FromBody] CreateLoginSessionRequest request)
+    public async Task<ActionResult<LoginSessionDto>> CreateLoginSession([FromBody] CreateLoginSessionRequest request)
     {
         var result = await _sender.Send(new CreateLoginSessionCommand(
             request.UserId,
-            request.UserEmail,
-            request.UserName,
             request.UserRole,
             request.IpAddress,
             request.UserAgent));
 
-        return result.IsSuccess
-            ? Ok(ApiResponse<LoginSessionDto>.Ok(result.Value, "Login session created"))
-            : Ok(ApiResponse<LoginSessionDto>.Fail(result.Error.Description));
+        return Ok(result);
     }
 
     /// <summary>
@@ -46,16 +40,13 @@ public class LoginSessionsController : ControllerBase
     [Authorize(Policy = "InternalApi")]
     public async Task<IActionResult> LogoutSession(Guid id)
     {
-        var result = await _sender.Send(new LogoutSessionCommand(id));
-
-        return result.IsSuccess
-            ? Ok(ApiResponse.Ok("Logout recorded"))
-            : Ok(ApiResponse.Fail(result.Error.Description));
+        await _sender.Send(new LogoutSessionCommand(id));
+        return NoContent();
     }
 
     [HttpGet]
     [Authorize(Roles = "systemAdmin")]
-    public async Task<IActionResult> GetLoginSessions(
+    public async Task<ActionResult<object>> GetLoginSessions(
         [FromQuery] Guid? userId,
         [FromQuery] bool? activeOnly,
         [FromQuery] DateTime? from,
@@ -66,25 +57,20 @@ public class LoginSessionsController : ControllerBase
         var result = await _sender.Send(new GetLoginSessionsQuery(
             userId, activeOnly, from, to, page, pageSize));
 
-        return result.IsSuccess
-            ? Ok(ApiResponse<PaginatedResponse<LoginSessionDto>>.Ok(result.Value))
-            : Ok(ApiResponse<PaginatedResponse<LoginSessionDto>>.Fail(result.Error.Description));
+        return Ok(result);
     }
 
     [HttpGet(AuditRoutes.Controller.ById)]
     [Authorize(Roles = "systemAdmin")]
-    public async Task<IActionResult> GetLoginSession(Guid id)
+    public async Task<ActionResult<LoginSessionDto>> GetLoginSession(Guid id)
     {
         var result = await _sender.Send(new GetLoginSessionByIdQuery(id));
-
-        return result.IsSuccess
-            ? Ok(ApiResponse<LoginSessionDto>.Ok(result.Value))
-            : Ok(ApiResponse<LoginSessionDto>.Fail(result.Error.Description));
+        return Ok(result);
     }
 
     [HttpGet(AuditRoutes.Controller.UserSessions)]
     [Authorize(Roles = "systemAdmin")]
-    public async Task<IActionResult> GetUserSessions(
+    public async Task<ActionResult<object>> GetUserSessions(
         Guid userId,
         [FromQuery] bool? activeOnly,
         [FromQuery] int? page,
@@ -93,8 +79,6 @@ public class LoginSessionsController : ControllerBase
         var result = await _sender.Send(new GetUserSessionsQuery(
             userId, activeOnly, page, pageSize));
 
-        return result.IsSuccess
-            ? Ok(ApiResponse<PaginatedResponse<LoginSessionDto>>.Ok(result.Value))
-            : Ok(ApiResponse<PaginatedResponse<LoginSessionDto>>.Fail(result.Error.Description));
+        return Ok(result);
     }
 }

@@ -1,21 +1,20 @@
 using Audit.Abstractions.DTOs;
 using Audit.Abstractions.Queries.AuditLogs;
 using Audit.Abstractions.Repositories;
-using Domeo.Shared.Contracts.DTOs;
-using Domeo.Shared.Kernel.Application.Abstractions;
-using Domeo.Shared.Kernel.Domain.Results;
+using Domeo.Shared.Contracts;
+using MediatR;
 
 namespace Audit.API.Application.AuditLogs.Queries;
 
 public sealed class GetEntityHistoryQueryHandler
-    : IQueryHandler<GetEntityHistoryQuery, PaginatedResponse<AuditLogDto>>
+    : IRequestHandler<GetEntityHistoryQuery, PaginatedResponse<AuditLogDto>>
 {
     private readonly IAuditLogRepository _repository;
 
     public GetEntityHistoryQueryHandler(IAuditLogRepository repository)
         => _repository = repository;
 
-    public async Task<Result<PaginatedResponse<AuditLogDto>>> Handle(
+    public async Task<PaginatedResponse<AuditLogDto>> Handle(
         GetEntityHistoryQuery request, CancellationToken cancellationToken)
     {
         var page = request.Page ?? 1;
@@ -31,7 +30,6 @@ public sealed class GetEntityHistoryQueryHandler
         var dtos = items.Select(l => new AuditLogDto(
             l.Id,
             l.UserId,
-            l.UserEmail,
             l.Action,
             l.EntityType,
             l.EntityId,
@@ -41,6 +39,6 @@ public sealed class GetEntityHistoryQueryHandler
             l.IpAddress,
             l.CreatedAt)).ToList();
 
-        return Result.Success(new PaginatedResponse<AuditLogDto>(total, page, pageSize, dtos));
+        return new PaginatedResponse<AuditLogDto>(total, page, pageSize, dtos);
     }
 }

@@ -1,5 +1,4 @@
-using Domeo.Shared.Kernel.Application.Abstractions;
-using Domeo.Shared.Kernel.Application.Behaviors;
+using Domeo.Shared.Application;
 using FluentValidation;
 using Materials.Abstractions.ExternalServices;
 using Materials.API.Infrastructure.ExternalServices;

@@ -1,8 +1,8 @@
-using Domeo.Shared.Kernel.Application.Abstractions;
+using MediatR;
 
 namespace Modules.Abstractions.Queries.ModuleTypes;
 
 public sealed record GetModuleTypesCountQuery(
     string? CategoryId,
     bool? ActiveOnly,
-    string? Search) : IQuery<int>;
+    string? Search) : IRequest<int>;

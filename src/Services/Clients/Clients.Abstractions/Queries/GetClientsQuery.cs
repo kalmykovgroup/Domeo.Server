@@ -1,5 +1,6 @@
-using Domeo.Shared.Contracts.DTOs;
-using Domeo.Shared.Kernel.Application.Abstractions;
+using Clients.Abstractions.DTOs;
+using Domeo.Shared.Contracts;
+using MediatR;
 
 namespace Clients.Abstractions.Queries;
 
@@ -8,4 +9,4 @@ public sealed record GetClientsQuery(
     int? Page,
     int? PageSize,
     string? SortBy,
-    string? SortOrder) : IQuery<PaginatedResponse<ClientDto>>;
+    string? SortOrder) : IRequest<PaginatedResponse<ClientDto>>;

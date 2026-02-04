@@ -1,5 +1,5 @@
 using Audit.Abstractions.Entities;
-using Domeo.Shared.Kernel.Application.Abstractions;
+using Domeo.Shared.Application;
 using Microsoft.EntityFrameworkCore;
 
 namespace Audit.API.Infrastructure.Persistence;
@@ -24,8 +24,6 @@ public sealed class AuditDbContext : DbContext, IUnitOfWork
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Id).HasColumnName("id");
             builder.Property(x => x.UserId).HasColumnName("user_id").IsRequired();
-            builder.Property(x => x.UserEmail).HasColumnName("user_email").HasMaxLength(255).IsRequired();
-            builder.Property(x => x.UserName).HasColumnName("user_name").HasMaxLength(200);
             builder.Property(x => x.UserRole).HasColumnName("user_role").HasMaxLength(50).IsRequired();
             builder.Property(x => x.IpAddress).HasColumnName("ip_address").HasMaxLength(50);
             builder.Property(x => x.UserAgent).HasColumnName("user_agent").HasMaxLength(500);
@@ -43,7 +41,6 @@ public sealed class AuditDbContext : DbContext, IUnitOfWork
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Id).HasColumnName("id");
             builder.Property(x => x.UserId).HasColumnName("user_id").IsRequired();
-            builder.Property(x => x.UserEmail).HasColumnName("user_email").HasMaxLength(255).IsRequired();
             builder.Property(x => x.Action).HasColumnName("action").HasMaxLength(50).IsRequired();
             builder.Property(x => x.EntityType).HasColumnName("entity_type").HasMaxLength(100).IsRequired();
             builder.Property(x => x.EntityId).HasColumnName("entity_id").HasMaxLength(100).IsRequired();

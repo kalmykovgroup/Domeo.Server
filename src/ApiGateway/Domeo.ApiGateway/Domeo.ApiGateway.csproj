@@ -8,13 +8,11 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Serilog.AspNetCore" />
     <PackageReference Include="Serilog.Sinks.Console" />
-    <PackageReference Include="Swashbuckle.AspNetCore" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Shared\Domeo.Shared.Auth\Domeo.Shared.Auth.csproj" />
-    <ProjectReference Include="..\..\Shared\Domeo.Shared.Infrastructure\Domeo.Shared.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\Services\Auth\Auth.Abstractions\Auth.Abstractions.csproj" />
+    <ProjectReference Include="..\..\Services\Auth\Auth.Contracts\Auth.Contracts.csproj" />
+    <ProjectReference Include="..\..\Shared\Domeo.Shared\Domeo.Shared.csproj" />
     <ProjectReference Include="..\..\Services\Clients\Clients.Abstractions\Clients.Abstractions.csproj" />
     <ProjectReference Include="..\..\Services\Audit\Audit.Abstractions\Audit.Abstractions.csproj" />
     <ProjectReference Include="..\..\Services\Projects\Projects.Abstractions\Projects.Abstractions.csproj" />

@@ -1,13 +1,13 @@
+using Auth.Contracts;
+using Clients.Abstractions.DTOs;
 using Clients.Abstractions.Queries;
 using Clients.Abstractions.Repositories;
-using Domeo.Shared.Auth;
-using Domeo.Shared.Contracts.DTOs;
-using Domeo.Shared.Kernel.Application.Abstractions;
-using Domeo.Shared.Kernel.Domain.Results;
+using Domeo.Shared.Exceptions;
+using MediatR;
 
 namespace Clients.API.Application.Queries;
 
-public sealed class GetClientByIdQueryHandler : IQueryHandler<GetClientByIdQuery, ClientDto>
+public sealed class GetClientByIdQueryHandler : IRequestHandler<GetClientByIdQuery, ClientDto>
 {
     private readonly IClientRepository _repository;
     private readonly ICurrentUserAccessor _currentUserAccessor;
@@ -18,21 +18,19 @@ public sealed class GetClientByIdQueryHandler : IQueryHandler<GetClientByIdQuery
         _currentUserAccessor = currentUserAccessor;
     }
 
-    public async Task<Result<ClientDto>> Handle(
+    public async Task<ClientDto> Handle(
         GetClientByIdQuery request, CancellationToken cancellationToken)
     {
-        var userId = _currentUserAccessor.User?.Id;
-        if (userId is null)
-            return Result.Failure<ClientDto>(Error.Failure("Client.Unauthorized", "Unauthorized"));
+        var userId = _currentUserAccessor.User?.Id
+            ?? throw new UnauthorizedException();
 
-        var client = await _repository.GetByIdAsync(request.Id, cancellationToken);
-        if (client is null)
-            return Result.Failure<ClientDto>(Error.Failure("Client.NotFound", "Client not found"));
+        var client = await _repository.GetByIdAsync(request.Id, cancellationToken)
+            ?? throw new NotFoundException("Client", request.Id);
 
         if (client.UserId != userId)
-            return Result.Failure<ClientDto>(Error.Failure("Client.AccessDenied", "Access denied"));
+            throw new ForbiddenException("Access denied to this client");
 
-        return Result.Success(new ClientDto(
+        return new ClientDto(
             client.Id,
             client.Name,
             client.Phone,
@@ -41,6 +39,6 @@ public sealed class GetClientByIdQueryHandler : IQueryHandler<GetClientByIdQuery
             client.Notes,
             client.UserId,
             client.CreatedAt,
-            client.DeletedAt));
+            client.DeletedAt);
     }
 }

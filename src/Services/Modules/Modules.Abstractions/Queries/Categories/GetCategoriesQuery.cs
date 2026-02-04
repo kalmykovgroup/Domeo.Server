@@ -1,6 +1,6 @@
-using Domeo.Shared.Contracts.DTOs;
-using Domeo.Shared.Kernel.Application.Abstractions;
+using MediatR;
+using Modules.Abstractions.DTOs;
 
 namespace Modules.Abstractions.Queries.Categories;
 
-public sealed record GetCategoriesQuery(bool? ActiveOnly) : IQuery<List<ModuleCategoryDto>>;
+public sealed record GetCategoriesQuery(bool? ActiveOnly) : IRequest<List<ModuleCategoryDto>>;

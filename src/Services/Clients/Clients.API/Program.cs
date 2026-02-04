@@ -1,6 +1,6 @@
 using Clients.API.Infrastructure;
 using Clients.API.Infrastructure.Persistence;
-using Domeo.Shared.Auth;
+using Auth.Contracts;
 using Domeo.Shared.Infrastructure;
 using Domeo.Shared.Infrastructure.Logging;
 using Domeo.Shared.Infrastructure.Middleware;
@@ -37,7 +37,7 @@ try
             npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "clients")));
 
     // Auth & Infrastructure with resilience
-    builder.Services.AddSharedAuth(builder.Configuration);
+    builder.Services.AddAuthContracts(builder.Configuration);
     builder.Services.AddResilientInfrastructure<ClientsDbContext>(builder.Configuration, "Clients.API");
 
     // Application & Infrastructure (MediatR, Repositories)
