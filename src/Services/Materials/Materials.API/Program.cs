@@ -4,6 +4,7 @@ using Domeo.Shared.Infrastructure.Logging;
 using Domeo.Shared.Infrastructure.Middleware;
 using Domeo.Shared.Infrastructure.Resilience;
 using Materials.API.Endpoints;
+using Materials.API.ExternalServices;
 using Materials.API.Persistence;
 using Materials.API.Services;
 using Microsoft.EntityFrameworkCore;
@@ -43,6 +44,9 @@ try
 
     // Services
     builder.Services.AddScoped<MaterialsSeeder>();
+
+    // External Supplier API Client
+    builder.Services.AddSupplierApiClient(builder.Configuration);
 
     // OpenAPI
     builder.Services.AddOpenApi();

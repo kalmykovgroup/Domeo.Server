@@ -75,6 +75,7 @@ try
     app.MapHealthChecks("/health");
     app.MapProjectsEndpoints();
     app.MapCabinetsEndpoints();
+    app.MapCabinetHardwareOverrideEndpoints();
 
     await app.RunAsync();
 }

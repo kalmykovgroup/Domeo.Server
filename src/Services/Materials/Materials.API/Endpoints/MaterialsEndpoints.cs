@@ -1,10 +1,7 @@
 using Domeo.Shared.Contracts;
-using Domeo.Shared.Contracts.DTOs;
 using Materials.API.Contracts;
-using Materials.API.Entities;
-using Materials.API.Persistence;
+using Materials.API.ExternalServices;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace Materials.API.Endpoints;
 
@@ -13,108 +10,114 @@ public static class MaterialsEndpoints
     public static void MapMaterialsEndpoints(this IEndpointRouteBuilder app)
     {
         // Categories
-        var categories = app.MapGroup("/categories").WithTags("Material Categories");
-        categories.MapGet("/", GetCategories).RequireAuthorization("Permission:catalog:read");
+        var categories = app.MapGroup("/categories").WithTags("Categories");
         categories.MapGet("/tree", GetCategoriesTree).RequireAuthorization("Permission:catalog:read");
-
-        // Items (Materials)
-        var items = app.MapGroup("/items").WithTags("Materials");
-        items.MapGet("/", GetMaterials).RequireAuthorization("Permission:catalog:read");
-        items.MapGet("/{id:guid}", GetMaterial).RequireAuthorization("Permission:catalog:read");
-        items.MapPost("/", CreateMaterial).RequireAuthorization("Permission:catalog:write");
-        items.MapPut("/{id:guid}", UpdateMaterial).RequireAuthorization("Permission:catalog:write");
-        items.MapDelete("/{id:guid}", DeleteMaterial).RequireAuthorization("Permission:catalog:delete");
 
         // Suppliers
         var suppliers = app.MapGroup("/suppliers").WithTags("Suppliers");
         suppliers.MapGet("/", GetSuppliers).RequireAuthorization("Permission:suppliers:read");
-        suppliers.MapGet("/{id:guid}", GetSupplier).RequireAuthorization("Permission:suppliers:read");
-        suppliers.MapPost("/", CreateSupplier).RequireAuthorization("Permission:suppliers:write");
-        suppliers.MapPut("/{id:guid}", UpdateSupplier).RequireAuthorization("Permission:suppliers:write");
-        suppliers.MapDelete("/{id:guid}", DeleteSupplier).RequireAuthorization("Permission:suppliers:delete");
+        suppliers.MapGet("/{id}", GetSupplier).RequireAuthorization("Permission:suppliers:read");
+
+        // Items (Materials)
+        var items = app.MapGroup("/items").WithTags("Materials");
+        items.MapGet("/", GetMaterials).RequireAuthorization("Permission:catalog:read");
+        items.MapGet("/{id}", GetMaterial).RequireAuthorization("Permission:catalog:read");
+        items.MapGet("/{id}/offers", GetMaterialOffers).RequireAuthorization("Permission:catalog:read");
     }
 
-    // Categories
-    private static async Task<IResult> GetCategories(
-        [FromQuery] bool? activeOnly,
-        MaterialsDbContext dbContext,
-        CancellationToken cancellationToken)
-    {
-        var query = dbContext.MaterialCategories.AsQueryable();
-
-        if (activeOnly == true)
-            query = query.Where(c => c.IsActive);
-
-        var categories = await query
-            .OrderBy(c => c.Level)
-            .ThenBy(c => c.OrderIndex)
-            .Select(c => new MaterialCategoryDto(
-                c.Id,
-                c.ParentId,
-                c.Name,
-                c.Level,
-                c.OrderIndex,
-                c.IsActive))
-            .ToListAsync(cancellationToken);
-
-        return Results.Ok(ApiResponse<List<MaterialCategoryDto>>.Ok(categories));
-    }
-
+    // GET /categories/tree - Дерево категорий с supplierIds
     private static async Task<IResult> GetCategoriesTree(
         [FromQuery] bool? activeOnly,
-        MaterialsDbContext dbContext,
-        CancellationToken cancellationToken)
+        ISupplierApiClient supplierApi,
+        CancellationToken ct)
     {
-        var query = dbContext.MaterialCategories.AsQueryable();
-
-        if (activeOnly == true)
-            query = query.Where(c => c.IsActive);
-
-        var allCategories = await query
-            .OrderBy(c => c.Level)
-            .ThenBy(c => c.OrderIndex)
-            .ToListAsync(cancellationToken);
-
-        var categoryDict = allCategories.ToDictionary(
-            c => c.Id,
-            c => new MaterialCategoryTreeDto(c.Id, c.ParentId, c.Name, c.Level, c.OrderIndex, c.IsActive));
-
-        var rootCategories = new List<MaterialCategoryTreeDto>();
-
-        foreach (var category in allCategories)
+        try
         {
-            var treeNode = categoryDict[category.Id];
+            var externalTree = await supplierApi.GetCategoriesTreeAsync(activeOnly ?? true, ct);
 
-            if (category.ParentId.HasValue && categoryDict.TryGetValue(category.ParentId.Value, out var parent))
-            {
-                parent.Children.Add(treeNode);
-            }
-            else
-            {
-                rootCategories.Add(treeNode);
-            }
+            var tree = externalTree.Select(MapCategoryTreeNode).ToList();
+
+            return Results.Ok(ApiResponse<List<CategoryTreeNodeDto>>.Ok(tree));
         }
-
-        return Results.Ok(ApiResponse<List<MaterialCategoryTreeDto>>.Ok(rootCategories));
+        catch (HttpRequestException ex)
+        {
+            return Results.Ok(ApiResponse<List<CategoryTreeNodeDto>>.Fail($"Supplier service unavailable: {ex.Message}"));
+        }
     }
 
-    // Materials
-    private static async Task<IResult> GetMaterials(
-        [FromQuery] Guid? categoryId,
+    // GET /suppliers - Справочник поставщиков
+    private static async Task<IResult> GetSuppliers(
         [FromQuery] bool? activeOnly,
-        MaterialsDbContext dbContext,
-        CancellationToken cancellationToken)
+        ISupplierApiClient supplierApi,
+        CancellationToken ct)
     {
-        var query = dbContext.Materials.AsQueryable();
+        try
+        {
+            var externalSuppliers = await supplierApi.GetSuppliersAsync(activeOnly ?? true, ct);
 
-        if (categoryId.HasValue)
-            query = query.Where(m => m.CategoryId == categoryId.Value);
+            var suppliers = externalSuppliers.Select(s => new SupplierResponseDto(
+                s.Id,
+                s.Company,
+                s.ContactName,
+                s.Email,
+                s.Phone,
+                s.Address,
+                s.Website,
+                s.Rating,
+                s.IsActive)).ToList();
 
-        if (activeOnly == true)
-            query = query.Where(m => m.IsActive);
+            return Results.Ok(ApiResponse<List<SupplierResponseDto>>.Ok(suppliers));
+        }
+        catch (HttpRequestException ex)
+        {
+            return Results.Ok(ApiResponse<List<SupplierResponseDto>>.Fail($"Supplier service unavailable: {ex.Message}"));
+        }
+    }
 
-        var materials = await query
-            .Select(m => new MaterialDto(
+    // GET /suppliers/{id} - Поставщик по ID
+    private static async Task<IResult> GetSupplier(
+        string id,
+        ISupplierApiClient supplierApi,
+        CancellationToken ct)
+    {
+        try
+        {
+            var externalSupplier = await supplierApi.GetSupplierAsync(id, ct);
+
+            if (externalSupplier == null)
+                return Results.Ok(ApiResponse<SupplierResponseDto>.Fail("Supplier not found"));
+
+            var supplier = new SupplierResponseDto(
+                externalSupplier.Id,
+                externalSupplier.Company,
+                externalSupplier.ContactName,
+                externalSupplier.Email,
+                externalSupplier.Phone,
+                externalSupplier.Address,
+                externalSupplier.Website,
+                externalSupplier.Rating,
+                externalSupplier.IsActive);
+
+            return Results.Ok(ApiResponse<SupplierResponseDto>.Ok(supplier));
+        }
+        catch (HttpRequestException ex)
+        {
+            return Results.Ok(ApiResponse<SupplierResponseDto>.Fail($"Supplier service unavailable: {ex.Message}"));
+        }
+    }
+
+    // GET /items?categoryId=X - Список материалов
+    private static async Task<IResult> GetMaterials(
+        [FromQuery] string? categoryId,
+        [FromQuery] bool? activeOnly,
+        ISupplierApiClient supplierApi,
+        CancellationToken ct)
+    {
+        try
+        {
+            var externalMaterials = await supplierApi.GetMaterialsAsync(categoryId, activeOnly ?? true, ct);
+
+            var materials = externalMaterials.Select(m => new MaterialResponseDto(
                 m.Id,
                 m.CategoryId,
                 m.Name,
@@ -122,195 +125,108 @@ public static class MaterialsEndpoints
                 m.Unit,
                 m.Color,
                 m.TextureUrl,
-                m.IsActive))
-            .ToListAsync(cancellationToken);
+                m.IsActive)).ToList();
 
-        return Results.Ok(ApiResponse<List<MaterialDto>>.Ok(materials));
+            return Results.Ok(ApiResponse<List<MaterialResponseDto>>.Ok(materials));
+        }
+        catch (HttpRequestException ex)
+        {
+            return Results.Ok(ApiResponse<List<MaterialResponseDto>>.Fail($"Supplier service unavailable: {ex.Message}"));
+        }
     }
 
+    // GET /items/{id} - Материал по ID
     private static async Task<IResult> GetMaterial(
-        Guid id,
-        MaterialsDbContext dbContext,
-        CancellationToken cancellationToken)
+        string id,
+        ISupplierApiClient supplierApi,
+        CancellationToken ct)
     {
-        var material = await dbContext.Materials.FindAsync([id], cancellationToken);
-        if (material is null)
-            return Results.Ok(ApiResponse<MaterialDto>.Fail("Material not found"));
+        try
+        {
+            var externalMaterial = await supplierApi.GetMaterialAsync(id, ct);
 
-        return Results.Ok(ApiResponse<MaterialDto>.Ok(new MaterialDto(
-            material.Id,
-            material.CategoryId,
-            material.Name,
-            material.Description,
-            material.Unit,
-            material.Color,
-            material.TextureUrl,
-            material.IsActive)));
+            if (externalMaterial == null)
+                return Results.Ok(ApiResponse<MaterialResponseDto>.Fail("Material not found"));
+
+            var material = new MaterialResponseDto(
+                externalMaterial.Id,
+                externalMaterial.CategoryId,
+                externalMaterial.Name,
+                externalMaterial.Description,
+                externalMaterial.Unit,
+                externalMaterial.Color,
+                externalMaterial.TextureUrl,
+                externalMaterial.IsActive);
+
+            return Results.Ok(ApiResponse<MaterialResponseDto>.Ok(material));
+        }
+        catch (HttpRequestException ex)
+        {
+            return Results.Ok(ApiResponse<MaterialResponseDto>.Fail($"Supplier service unavailable: {ex.Message}"));
+        }
     }
 
-    private static async Task<IResult> CreateMaterial(
-        [FromBody] CreateMaterialRequest request,
-        MaterialsDbContext dbContext,
-        CancellationToken cancellationToken)
+    // GET /items/{id}/offers - Предложения для материала
+    private static async Task<IResult> GetMaterialOffers(
+        string id,
+        ISupplierApiClient supplierApi,
+        CancellationToken ct)
     {
-        var material = Material.Create(
-            Guid.NewGuid(),
-            request.CategoryId,
-            request.Name,
-            request.Description,
-            request.Unit,
-            request.Color,
-            request.TextureUrl);
+        try
+        {
+            var externalOffers = await supplierApi.GetOffersAsync(id, ct);
 
-        dbContext.Materials.Add(material);
-        await dbContext.SaveChangesAsync(cancellationToken);
+            if (externalOffers == null)
+                return Results.Ok(ApiResponse<MaterialOffersResponseDto>.Fail("Material not found"));
 
-        return Results.Ok(ApiResponse<IdResponse>.Ok(new IdResponse(material.Id), "Material created successfully"));
+            var response = new MaterialOffersResponseDto
+            {
+                Material = new MaterialBriefDto(
+                    externalOffers.Material.Id,
+                    externalOffers.Material.Name,
+                    externalOffers.Material.Unit,
+                    externalOffers.Material.Description),
+                Offers = externalOffers.Offers.Select(o => new OfferDto(
+                    o.OfferId,
+                    o.MaterialId,
+                    o.Price,
+                    o.Currency,
+                    o.MinOrderQty,
+                    o.LeadTimeDays,
+                    o.InStock,
+                    o.Sku,
+                    o.Notes,
+                    o.UpdatedAt,
+                    new OfferSupplierDto(
+                        o.Supplier.Id,
+                        o.Supplier.Company,
+                        o.Supplier.ContactName,
+                        o.Supplier.Phone,
+                        o.Supplier.Email,
+                        o.Supplier.Rating))).ToList(),
+                TotalOffers = externalOffers.TotalOffers
+            };
+
+            return Results.Ok(ApiResponse<MaterialOffersResponseDto>.Ok(response));
+        }
+        catch (HttpRequestException ex)
+        {
+            return Results.Ok(ApiResponse<MaterialOffersResponseDto>.Fail($"Supplier service unavailable: {ex.Message}"));
+        }
     }
 
-    private static async Task<IResult> UpdateMaterial(
-        Guid id,
-        [FromBody] UpdateMaterialRequest request,
-        MaterialsDbContext dbContext,
-        CancellationToken cancellationToken)
+    private static CategoryTreeNodeDto MapCategoryTreeNode(ExternalCategoryTreeNode node)
     {
-        var material = await dbContext.Materials.FindAsync([id], cancellationToken);
-        if (material is null)
-            return Results.Ok(ApiResponse.Fail("Material not found"));
-
-        material.Update(request.Name, request.Description, request.Color, request.TextureUrl);
-
-        if (request.IsActive)
-            material.Activate();
-        else
-            material.Deactivate();
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Results.Ok(ApiResponse.Ok("Material updated successfully"));
-    }
-
-    private static async Task<IResult> DeleteMaterial(
-        Guid id,
-        MaterialsDbContext dbContext,
-        CancellationToken cancellationToken)
-    {
-        var material = await dbContext.Materials.FindAsync([id], cancellationToken);
-        if (material is null)
-            return Results.Ok(ApiResponse.Fail("Material not found"));
-
-        dbContext.Materials.Remove(material);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Results.Ok(ApiResponse.Ok("Material deleted successfully"));
-    }
-
-    // Suppliers
-    private static async Task<IResult> GetSuppliers(
-        [FromQuery] bool? activeOnly,
-        MaterialsDbContext dbContext,
-        CancellationToken cancellationToken)
-    {
-        var query = dbContext.Suppliers.AsQueryable();
-
-        if (activeOnly == true)
-            query = query.Where(s => s.IsActive);
-
-        var suppliers = await query
-            .Select(s => new SupplierDto(
-                s.Id,
-                s.Company,
-                s.ContactFirstName,
-                s.ContactLastName,
-                s.Email,
-                s.Phone,
-                s.Address,
-                s.IsActive))
-            .ToListAsync(cancellationToken);
-
-        return Results.Ok(ApiResponse<List<SupplierDto>>.Ok(suppliers));
-    }
-
-    private static async Task<IResult> GetSupplier(
-        Guid id,
-        MaterialsDbContext dbContext,
-        CancellationToken cancellationToken)
-    {
-        var supplier = await dbContext.Suppliers.FindAsync([id], cancellationToken);
-        if (supplier is null)
-            return Results.Ok(ApiResponse<SupplierDto>.Fail("Supplier not found"));
-
-        return Results.Ok(ApiResponse<SupplierDto>.Ok(new SupplierDto(
-            supplier.Id,
-            supplier.Company,
-            supplier.ContactFirstName,
-            supplier.ContactLastName,
-            supplier.Email,
-            supplier.Phone,
-            supplier.Address,
-            supplier.IsActive)));
-    }
-
-    private static async Task<IResult> CreateSupplier(
-        [FromBody] CreateSupplierRequest request,
-        MaterialsDbContext dbContext,
-        CancellationToken cancellationToken)
-    {
-        var supplier = Supplier.Create(
-            Guid.NewGuid(),
-            request.Company,
-            request.ContactFirstName,
-            request.ContactLastName,
-            request.Email,
-            request.Phone,
-            request.Address);
-
-        dbContext.Suppliers.Add(supplier);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Results.Ok(ApiResponse<IdResponse>.Ok(new IdResponse(supplier.Id), "Supplier created successfully"));
-    }
-
-    private static async Task<IResult> UpdateSupplier(
-        Guid id,
-        [FromBody] UpdateSupplierRequest request,
-        MaterialsDbContext dbContext,
-        CancellationToken cancellationToken)
-    {
-        var supplier = await dbContext.Suppliers.FindAsync([id], cancellationToken);
-        if (supplier is null)
-            return Results.Ok(ApiResponse.Fail("Supplier not found"));
-
-        supplier.Update(
-            request.Company,
-            request.ContactFirstName,
-            request.ContactLastName,
-            request.Email,
-            request.Phone,
-            request.Address);
-
-        if (request.IsActive)
-            supplier.Activate();
-        else
-            supplier.Deactivate();
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Results.Ok(ApiResponse.Ok("Supplier updated successfully"));
-    }
-
-    private static async Task<IResult> DeleteSupplier(
-        Guid id,
-        MaterialsDbContext dbContext,
-        CancellationToken cancellationToken)
-    {
-        var supplier = await dbContext.Suppliers.FindAsync([id], cancellationToken);
-        if (supplier is null)
-            return Results.Ok(ApiResponse.Fail("Supplier not found"));
-
-        dbContext.Suppliers.Remove(supplier);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Results.Ok(ApiResponse.Ok("Supplier deleted successfully"));
+        return new CategoryTreeNodeDto
+        {
+            Id = node.Id,
+            ParentId = node.ParentId,
+            Name = node.Name,
+            Level = node.Level,
+            OrderIndex = node.OrderIndex,
+            IsActive = node.IsActive,
+            SupplierIds = node.SupplierIds,
+            Children = node.Children.Select(MapCategoryTreeNode).ToList()
+        };
     }
 }

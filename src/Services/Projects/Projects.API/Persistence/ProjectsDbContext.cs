@@ -26,6 +26,7 @@ public sealed class ProjectsDbContext : DbContext
     public DbSet<Zone> Zones => Set<Zone>();
     public DbSet<Cabinet> Cabinets => Set<Cabinet>();
     public DbSet<CabinetMaterial> CabinetMaterials => Set<CabinetMaterial>();
+    public DbSet<CabinetHardwareOverride> CabinetHardwareOverrides => Set<CabinetHardwareOverride>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -156,6 +157,29 @@ public sealed class ProjectsDbContext : DbContext
 
             builder.HasIndex(x => x.CabinetId);
             builder.HasIndex(x => new { x.CabinetId, x.MaterialType }).IsUnique();
+        });
+
+        modelBuilder.Entity<CabinetHardwareOverride>(builder =>
+        {
+            builder.ToTable("cabinet_hardware_overrides");
+            builder.HasKey(x => x.Id);
+            builder.Property(x => x.Id).HasColumnName("id");
+            builder.Property(x => x.CabinetId).HasColumnName("cabinet_id").IsRequired();
+            builder.Property(x => x.ModuleHardwareId).HasColumnName("module_hardware_id").IsRequired();
+            builder.Property(x => x.HardwareId).HasColumnName("hardware_id");
+            builder.Property(x => x.Role).HasColumnName("role").HasMaxLength(50);
+            builder.Property(x => x.QuantityFormula).HasColumnName("quantity_formula").HasMaxLength(255);
+            builder.Property(x => x.PositionXFormula).HasColumnName("position_x_formula").HasMaxLength(255);
+            builder.Property(x => x.PositionYFormula).HasColumnName("position_y_formula").HasMaxLength(255);
+            builder.Property(x => x.PositionZFormula).HasColumnName("position_z_formula").HasMaxLength(255);
+            builder.Property(x => x.IsEnabled).HasColumnName("is_enabled").IsRequired().HasDefaultValue(true);
+            builder.Property(x => x.MaterialId).HasColumnName("material_id").HasMaxLength(100);
+            builder.Property(x => x.CreatedAt).HasColumnName("created_at").IsRequired();
+            builder.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+
+            builder.HasIndex(x => x.CabinetId);
+            builder.HasIndex(x => x.ModuleHardwareId);
+            builder.HasIndex(x => new { x.CabinetId, x.ModuleHardwareId }).IsUnique();
         });
     }
 
