@@ -26,18 +26,9 @@ public sealed class CurrentUserMiddleware
                 ?? context.User.FindFirst("email")?.Value;
             var name = context.User.FindFirst(ClaimTypes.Name)?.Value
                 ?? context.User.FindFirst("name")?.Value;
-
-            // Extract role from claims
             var role = context.User.FindFirst(ClaimTypes.Role)?.Value
                 ?? context.User.FindFirst("role")?.Value
                 ?? string.Empty;
-
-            // Extract all roles from claims
-            var roles = context.User.FindAll(ClaimTypes.Role)
-                .Concat(context.User.FindAll("role"))
-                .Select(c => c.Value)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
 
             Guid? parsedUserId = Guid.TryParse(userId, out var uid) ? uid : null;
 
@@ -48,13 +39,6 @@ public sealed class CurrentUserMiddleware
                 Name = name ?? string.Empty,
                 Role = role
             };
-
-            // Set roles using the setter
-            if (currentUserAccessor is CurrentUserAccessor accessor)
-            {
-                accessor.Roles = roles;
-                accessor.Permissions = [];
-            }
 
             if (parsedUserId.HasValue)
             {

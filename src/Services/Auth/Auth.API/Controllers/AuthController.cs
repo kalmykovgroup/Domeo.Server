@@ -384,8 +384,7 @@ public class AuthController : ControllerBase
             user.Id,
             user.Email,
             user.Name,
-            user.Role,
-            Roles = _currentUserAccessor.Roles
+            user.Role
         }));
     }
 
