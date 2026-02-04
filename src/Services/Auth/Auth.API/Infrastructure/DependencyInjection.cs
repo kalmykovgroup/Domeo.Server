@@ -1,7 +1,6 @@
 using Auth.Abstractions.Repositories;
 using Auth.API.Infrastructure.Persistence;
 using Auth.API.Infrastructure.Persistence.Repositories;
-using Auth.API.Services;
 using Domeo.Shared.Kernel.Application.Abstractions;
 
 namespace Auth.API.Infrastructure;
@@ -10,10 +9,6 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
-        // Auth services
-        services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
-        services.AddScoped<IPasswordHasher, PasswordHasher>();
-
         return services;
     }
 

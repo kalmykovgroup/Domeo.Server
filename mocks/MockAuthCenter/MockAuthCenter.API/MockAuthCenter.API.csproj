@@ -11,8 +11,4 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\Shared\Domeo.Shared.Auth\Domeo.Shared.Auth.csproj" />
-  </ItemGroup>
-
 </Project>

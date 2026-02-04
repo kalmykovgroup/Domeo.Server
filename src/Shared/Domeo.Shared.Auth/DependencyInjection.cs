@@ -1,18 +1,14 @@
 using System.Security.Claims;
-using System.Text;
 using System.Text.Encodings.Web;
 using System.Web;
 using Domeo.Shared.Auth.Authorization;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 
 namespace Domeo.Shared.Auth;
 
@@ -25,7 +21,8 @@ public static class DependencyInjection
     public const string UserRoleHeader = "X-User-Role";
 
     /// <summary>
-    /// Add authentication for microservices that trust API Gateway headers
+    /// Add authentication for microservices that trust API Gateway headers.
+    /// Uses role-based authorization via [Authorize(Roles = "...")].
     /// </summary>
     public static IServiceCollection AddSharedAuth(
         this IServiceCollection services,
@@ -49,72 +46,7 @@ public static class DependencyInjection
                 policy.Requirements.Add(new InternalApiKeyRequirement()));
         });
 
-        // Register permission-based authorization
-        services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
-        services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
-        services.AddSingleton<IAuthorizationHandler, InternalApiKeyHandler>();
-
-        return services;
-    }
-
-    /// <summary>
-    /// Legacy: Add JWT authentication with symmetric key (for services that validate tokens directly)
-    /// </summary>
-    public static IServiceCollection AddSharedAuthWithJwt(
-        this IServiceCollection services,
-        IConfiguration configuration)
-    {
-        var jwtSettings = new JwtSettings();
-        configuration.GetSection(JwtSettings.SectionName).Bind(jwtSettings);
-        services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
-
-        services.AddSingleton<ICurrentUserAccessor, CurrentUserAccessor>();
-
-        services.AddAuthentication(options =>
-        {
-            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        })
-        .AddJwtBearer(options =>
-        {
-            options.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                ValidIssuer = jwtSettings.Issuer,
-                ValidAudience = jwtSettings.Audience,
-                IssuerSigningKey = new SymmetricSecurityKey(
-                    Encoding.UTF8.GetBytes(jwtSettings.Secret)),
-                ClockSkew = TimeSpan.Zero
-            };
-
-            // Extract token from cookie if not in header
-            options.Events = new JwtBearerEvents
-            {
-                OnMessageReceived = context =>
-                {
-                    if (context.Request.Cookies.TryGetValue("access_token", out var token))
-                    {
-                        context.Token = token;
-                    }
-                    return Task.CompletedTask;
-                }
-            };
-        });
-
-        services.AddHttpContextAccessor();
-
-        services.AddAuthorization(options =>
-        {
-            options.AddPolicy("InternalApi", policy =>
-                policy.Requirements.Add(new InternalApiKeyRequirement()));
-        });
-
-        // Register permission-based authorization
-        services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
-        services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+        // Register internal API key handler
         services.AddSingleton<IAuthorizationHandler, InternalApiKeyHandler>();
 
         return services;

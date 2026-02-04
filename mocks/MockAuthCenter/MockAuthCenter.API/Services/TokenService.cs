@@ -1,6 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using Domeo.Shared.Auth;
 using Microsoft.IdentityModel.Tokens;
 
 namespace MockAuthCenter.API.Services;
@@ -39,13 +38,6 @@ public class TokenService
         if (role != null)
         {
             claims.Add(new Claim("role", role));
-
-            // Add all role permissions to JWT for authorization
-            var permissions = RolePermissions.GetPermissions(role);
-            if (permissions.Count > 0)
-            {
-                claims.Add(new Claim("permissions", string.Join(",", permissions)));
-            }
         }
 
         var tokenDescriptor = new SecurityTokenDescriptor

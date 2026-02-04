@@ -1,5 +1,8 @@
-namespace Domeo.Shared.Auth;
+namespace MockAuthCenter.API.Models;
 
+/// <summary>
+/// Predefined roles for the application
+/// </summary>
 public static class Roles
 {
     public const string Sales = "sales";
@@ -8,4 +11,6 @@ public static class Roles
     public const string SystemAdmin = "systemAdmin";
 
     public static readonly string[] All = [Sales, Designer, CatalogAdmin, SystemAdmin];
+
+    public static bool IsValid(string role) => All.Contains(role);
 }
