@@ -1,6 +1,6 @@
 using System.Text.Json;
-using Audit.API.Entities;
-using Audit.API.Persistence;
+using Audit.Abstractions.Entities;
+using Audit.API.Infrastructure.Persistence;
 using Domeo.Shared.Contracts.Events;
 using Domeo.Shared.Infrastructure.Resilience;
 

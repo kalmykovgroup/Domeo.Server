@@ -1,6 +1,6 @@
 using Domeo.Shared.Kernel.Domain.Abstractions;
 
-namespace Audit.API.Entities;
+namespace Audit.Abstractions.Entities;
 
 public sealed class LoginSession : Entity<Guid>
 {

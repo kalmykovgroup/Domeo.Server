@@ -1,5 +1,5 @@
-using Audit.API.Endpoints;
-using Audit.API.Persistence;
+using Audit.API.Infrastructure;
+using Audit.API.Infrastructure.Persistence;
 using Audit.API.Services;
 using Domeo.Shared.Auth;
 using Domeo.Shared.Infrastructure;
@@ -41,12 +41,19 @@ try
     builder.Services.AddSharedAuth(builder.Configuration);
     builder.Services.AddResilientInfrastructure<AuditDbContext>(builder.Configuration, "Audit.API");
 
+    // Application & Infrastructure (MediatR, Repositories)
+    builder.Services.AddApplication();
+    builder.Services.AddInfrastructure();
+
     // Audit event buffer (outbox pattern for graceful degradation)
     builder.Services.AddSingleton<IAuditEventBuffer, AuditEventBuffer>();
 
     // Background services
     builder.Services.AddHostedService<AuditEventSubscriber>();
     builder.Services.AddHostedService<AuditBufferFlushService>();
+
+    // Controllers
+    builder.Services.AddControllers();
 
     // OpenAPI
     builder.Services.AddOpenApi();
@@ -77,9 +84,7 @@ try
 
     // Endpoints
     app.MapHealthChecks("/health");
-    app.MapLoginSessionEndpoints();
-    app.MapAuditEndpoints();
-    app.MapApplicationLogEndpoints();
+    app.MapControllers();
 
     await app.RunAsync();
 }

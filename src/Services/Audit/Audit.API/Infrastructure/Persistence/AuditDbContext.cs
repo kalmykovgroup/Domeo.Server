@@ -1,9 +1,10 @@
-using Audit.API.Entities;
+using Audit.Abstractions.Entities;
+using Domeo.Shared.Kernel.Application.Abstractions;
 using Microsoft.EntityFrameworkCore;
 
-namespace Audit.API.Persistence;
+namespace Audit.API.Infrastructure.Persistence;
 
-public sealed class AuditDbContext : DbContext
+public sealed class AuditDbContext : DbContext, IUnitOfWork
 {
     public AuditDbContext(DbContextOptions<AuditDbContext> options) : base(options)
     {

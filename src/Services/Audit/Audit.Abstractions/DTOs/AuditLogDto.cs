@@ -1,6 +1,6 @@
-namespace Audit.API.Contracts;
+namespace Audit.Abstractions.DTOs;
 
-public sealed record AuditLogResponse(
+public sealed record AuditLogDto(
     Guid Id,
     Guid UserId,
     string UserEmail,
