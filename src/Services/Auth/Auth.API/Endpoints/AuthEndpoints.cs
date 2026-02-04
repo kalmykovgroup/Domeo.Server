@@ -6,6 +6,8 @@ using Auth.API.Services;
 using Domeo.Shared.Auth;
 using Domeo.Shared.Contracts;
 using Domeo.Shared.Contracts.DTOs;
+using Domeo.Shared.Contracts.Events;
+using Domeo.Shared.Infrastructure.Redis;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,87 +22,87 @@ public static class AuthEndpoints
     {
         var group = app.MapGroup("/auth").WithTags("Auth");
 
-        // OAuth callback (primary auth method)
-        group.MapPost("/callback", Callback);
+        // OAuth flow (browser-based)
+        group.MapGet("/login", Login);
+        group.MapGet("/callback", CallbackGet);
 
-        // Legacy direct auth (for mobile/testing)
-        group.MapPost("/register", Register);
-        group.MapPost("/login", Login);
+        // OAuth callback - API version for SPA/mobile
+        group.MapPost("/callback", Callback);
 
         // Token management
         group.MapPost("/refresh", RefreshTokenEndpoint);
         group.MapPost("/logout", Logout).RequireAuthorization();
         group.MapGet("/me", GetCurrentUser).RequireAuthorization();
-        group.MapPut("/me/password", ChangePassword).RequireAuthorization();
         group.MapGet("/token", GetToken);
     }
 
-    private static bool IsBrowserClient(HttpRequest request)
+    /// <summary>
+    /// Initiate OAuth login - redirects to Auth Center
+    /// </summary>
+    private static IResult Login(
+        HttpContext httpContext,
+        IConfiguration configuration,
+        [FromQuery] string? returnUrl)
     {
-        var userAgent = request.Headers.UserAgent.ToString();
-        var clientType = request.Headers["X-Client-Type"].ToString().ToLower();
+        var authCenterUrl = configuration["AuthCenter:BaseUrl"] ?? "http://localhost:5100";
+        var clientId = configuration["AuthCenter:ClientId"] ?? "domeo";
+        var callbackUrl = configuration["AuthCenter:CallbackUrl"] ?? "http://localhost:5000/api/auth/callback";
 
-        // Если клиент явно указал тип "mobile", это не браузер
-        if (clientType == "mobile")
-            return false;
+        // Generate state for CSRF protection (store returnUrl in state)
+        var state = Convert.ToBase64String(
+            System.Text.Encoding.UTF8.GetBytes(
+                System.Text.Json.JsonSerializer.Serialize(new { returnUrl = returnUrl ?? "/" })));
 
-        // Проверяем User-Agent на признаки браузера
-        return userAgent.Contains("Mozilla") || userAgent.Contains("Chrome") || userAgent.Contains("Safari");
-    }
+        var authorizeUrl = $"{authCenterUrl}/authorize?" +
+            $"response_type=code&" +
+            $"client_id={Uri.EscapeDataString(clientId)}&" +
+            $"redirect_uri={Uri.EscapeDataString(callbackUrl)}&" +
+            $"state={Uri.EscapeDataString(state)}";
 
-    private static void SetAuthCookies(HttpResponse response, string accessToken, string refreshToken, DateTime accessTokenExpires, DateTime refreshTokenExpires)
-    {
-        var accessCookieOptions = new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.None,
-            Expires = accessTokenExpires
-        };
-
-        var refreshCookieOptions = new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.None,
-            Expires = refreshTokenExpires
-        };
-
-        response.Cookies.Append(AccessTokenCookieName, accessToken, accessCookieOptions);
-        response.Cookies.Append(RefreshTokenCookieName, refreshToken, refreshCookieOptions);
-    }
-
-    private static void ClearAuthCookies(HttpResponse response)
-    {
-        var cookieOptions = new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.None,
-            Expires = DateTime.UtcNow.AddDays(-1)
-        };
-
-        response.Cookies.Delete(AccessTokenCookieName, cookieOptions);
-        response.Cookies.Delete(RefreshTokenCookieName, cookieOptions);
+        return Results.Redirect(authorizeUrl);
     }
 
     /// <summary>
-    /// OAuth callback - exchange authorization code for tokens
+    /// OAuth callback (GET) - receives code from Auth Center, exchanges for tokens, redirects to frontend
     /// </summary>
-    private static async Task<IResult> Callback(
+    private static async Task<IResult> CallbackGet(
         HttpContext httpContext,
-        [FromBody] CallbackRequest request,
+        [FromQuery] string code,
+        [FromQuery] string? state,
         IAuthCenterClient authCenterClient,
-        IHttpClientFactory httpClientFactory,
-        IPasswordHasher passwordHasher,
+        IEventPublisher eventPublisher,
+        IConfiguration configuration,
+        ILoggerFactory loggerFactory,
         AuthDbContext dbContext,
         CancellationToken cancellationToken)
     {
+        var frontendUrl = configuration["Frontend:BaseUrl"] ?? "http://localhost:5173";
+        var postLoginRedirect = configuration["Frontend:PostLoginRedirect"] ?? "/";
+        var callbackUrl = configuration["AuthCenter:CallbackUrl"] ?? "http://localhost:5000/api/auth/callback";
+
+        var logger = loggerFactory.CreateLogger("AuthEndpoints");
+        logger.LogInformation("CallbackGet: code={Code}, frontendUrl={FrontendUrl}, callbackUrl={CallbackUrl}",
+            code, frontendUrl, callbackUrl);
+
+        // Parse returnUrl from state
+        var returnUrl = postLoginRedirect;
+        if (!string.IsNullOrEmpty(state))
+        {
+            try
+            {
+                var stateJson = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(state));
+                var stateObj = System.Text.Json.JsonSerializer.Deserialize<StatePayload>(stateJson);
+                if (!string.IsNullOrEmpty(stateObj?.returnUrl))
+                    returnUrl = stateObj.returnUrl;
+            }
+            catch { /* ignore invalid state */ }
+        }
+
         // Exchange code for tokens at Auth Center
-        var tokenResponse = await authCenterClient.ExchangeCodeAsync(request.Code, request.RedirectUri, cancellationToken);
+        var tokenResponse = await authCenterClient.ExchangeCodeAsync(code, callbackUrl, cancellationToken);
         if (tokenResponse is null)
         {
-            return Results.Ok(ApiResponse<AuthResultDto>.Fail("Invalid authorization code"));
+            return Results.Redirect($"{frontendUrl}/login?error=invalid_code");
         }
 
         // Parse JWT to extract user info
@@ -114,56 +116,176 @@ public static class AuthEndpoints
 
         if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(email))
         {
-            return Results.Ok(ApiResponse<AuthResultDto>.Fail("Invalid token claims"));
+            return Results.Redirect($"{frontendUrl}/login?error=invalid_token");
         }
 
-        // Find or create user in Users.API
-        var client = httpClientFactory.CreateClient("UsersApi");
-        var checkResponse = await client.GetAsync($"/users/by-email/{Uri.EscapeDataString(email)}", cancellationToken);
+        var userGuid = Guid.Parse(userId);
 
-        UserDto? user;
-        if (checkResponse.IsSuccessStatusCode)
+        // Generate login session ID and publish event to Redis
+        var ipAddress = GetClientIpAddress(httpContext);
+        var userAgent = httpContext.Request.Headers.UserAgent.ToString();
+        var loginSessionId = Guid.NewGuid();
+
+        var loginEvent = new UserLoggedInEvent
         {
-            var existingUser = await checkResponse.Content.ReadFromJsonAsync<ApiResponse<UserDto>>(cancellationToken);
-            user = existingUser?.Data;
-        }
-        else
-        {
-            // Create user - split name into first/last
-            var nameParts = (name ?? email.Split('@')[0]).Split(' ', 2);
-            var firstName = nameParts[0];
-            var lastName = nameParts.Length > 1 ? nameParts[1] : "";
+            UserId = userGuid,
+            UserEmail = email,
+            UserName = name,
+            UserRole = role,
+            IpAddress = ipAddress,
+            UserAgent = userAgent,
+            SessionId = loginSessionId
+        };
+        await eventPublisher.PublishSessionAsync(loginEvent, cancellationToken);
 
-            var createUserRequest = new
-            {
-                Email = email,
-                PasswordHash = passwordHasher.Hash(Guid.NewGuid().ToString()), // Random password for SSO users
-                FirstName = firstName,
-                LastName = lastName,
-                Role = role,
-                ExternalId = userId
-            };
-
-            var createResponse = await client.PostAsJsonAsync("/users", createUserRequest, cancellationToken);
-            if (!createResponse.IsSuccessStatusCode)
-            {
-                return Results.Ok(ApiResponse<AuthResultDto>.Fail("Failed to create user"));
-            }
-
-            var userResponse = await createResponse.Content.ReadFromJsonAsync<ApiResponse<UserDto>>(cancellationToken);
-            user = userResponse?.Data;
-        }
-
-        if (user is null)
-        {
-            return Results.Ok(ApiResponse<AuthResultDto>.Fail("Failed to get user"));
-        }
-
-        // Store Auth Center refresh token in our DB for later use
+        // Store Auth Center refresh token in our DB
         var refreshToken = RefreshToken.Create(
-            user.Id,
+            userGuid,
             tokenResponse.RefreshToken,
-            TimeSpan.FromDays(7));
+            TimeSpan.FromDays(7),
+            loginSessionId);
+
+        dbContext.RefreshTokens.Add(refreshToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        // Set cookies
+        var accessTokenExpiration = DateTime.UtcNow.AddSeconds(tokenResponse.ExpiresIn);
+        SetAuthCookies(
+            httpContext,
+            tokenResponse.AccessToken,
+            tokenResponse.RefreshToken,
+            accessTokenExpiration,
+            DateTime.UtcNow.AddDays(7));
+
+        // Redirect to frontend
+        var redirectTo = $"{frontendUrl}{returnUrl}";
+        logger.LogInformation("CallbackGet: SUCCESS! Redirecting to {RedirectTo}", redirectTo);
+        return Results.Redirect(redirectTo);
+    }
+
+    private sealed record StatePayload(string? returnUrl);
+
+    private static bool IsBrowserClient(HttpRequest request)
+    {
+        var userAgent = request.Headers.UserAgent.ToString();
+        var clientType = request.Headers["X-Client-Type"].ToString().ToLower();
+
+        if (clientType == "mobile")
+            return false;
+
+        return userAgent.Contains("Mozilla") || userAgent.Contains("Chrome") || userAgent.Contains("Safari");
+    }
+
+    private static void SetAuthCookies(HttpContext httpContext, string accessToken, string refreshToken, DateTime accessTokenExpires, DateTime refreshTokenExpires)
+    {
+        // In development (HTTP), use Lax + non-Secure
+        // In production (HTTPS), use None + Secure for cross-origin
+        var isHttps = httpContext.Request.IsHttps ||
+                      httpContext.Request.Headers["X-Forwarded-Proto"] == "https";
+
+        var accessCookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = isHttps,
+            SameSite = isHttps ? SameSiteMode.None : SameSiteMode.Lax,
+            Expires = accessTokenExpires
+        };
+
+        var refreshCookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = isHttps,
+            SameSite = isHttps ? SameSiteMode.None : SameSiteMode.Lax,
+            Expires = refreshTokenExpires
+        };
+
+        httpContext.Response.Cookies.Append(AccessTokenCookieName, accessToken, accessCookieOptions);
+        httpContext.Response.Cookies.Append(RefreshTokenCookieName, refreshToken, refreshCookieOptions);
+    }
+
+    private static void ClearAuthCookies(HttpContext httpContext)
+    {
+        var isHttps = httpContext.Request.IsHttps ||
+                      httpContext.Request.Headers["X-Forwarded-Proto"] == "https";
+
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = isHttps,
+            SameSite = isHttps ? SameSiteMode.None : SameSiteMode.Lax,
+            Expires = DateTime.UtcNow.AddDays(-1)
+        };
+
+        httpContext.Response.Cookies.Delete(AccessTokenCookieName, cookieOptions);
+        httpContext.Response.Cookies.Delete(RefreshTokenCookieName, cookieOptions);
+    }
+
+    private static string? GetClientIpAddress(HttpContext httpContext)
+    {
+        var forwardedFor = httpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+        if (!string.IsNullOrEmpty(forwardedFor))
+            return forwardedFor.Split(',')[0].Trim();
+
+        return httpContext.Connection.RemoteIpAddress?.ToString();
+    }
+
+    /// <summary>
+    /// OAuth callback - exchange authorization code for tokens from external Auth Center
+    /// </summary>
+    private static async Task<IResult> Callback(
+        HttpContext httpContext,
+        [FromBody] CallbackRequest request,
+        IAuthCenterClient authCenterClient,
+        IEventPublisher eventPublisher,
+        AuthDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        // Exchange code for tokens at Auth Center
+        var tokenResponse = await authCenterClient.ExchangeCodeAsync(request.Code, request.RedirectUri, cancellationToken);
+        if (tokenResponse is null)
+        {
+            return Results.Ok(ApiResponse<SsoAuthResultDto>.Fail("Invalid authorization code"));
+        }
+
+        // Parse JWT to extract user info
+        var handler = new JwtSecurityTokenHandler();
+        var jwt = handler.ReadJwtToken(tokenResponse.AccessToken);
+
+        var userId = jwt.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+        var email = jwt.Claims.FirstOrDefault(c => c.Type == "email")?.Value;
+        var name = jwt.Claims.FirstOrDefault(c => c.Type == "name")?.Value;
+        var role = jwt.Claims.FirstOrDefault(c => c.Type == "role")?.Value ?? "viewer";
+
+        if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(email))
+        {
+            return Results.Ok(ApiResponse<SsoAuthResultDto>.Fail("Invalid token claims"));
+        }
+
+        var userGuid = Guid.Parse(userId);
+
+        // Generate login session ID and publish event to Redis
+        var ipAddress = GetClientIpAddress(httpContext);
+        var userAgent = httpContext.Request.Headers.UserAgent.ToString();
+        var loginSessionId = Guid.NewGuid();
+
+        var loginEvent = new UserLoggedInEvent
+        {
+            UserId = userGuid,
+            UserEmail = email,
+            UserName = name,
+            UserRole = role,
+            IpAddress = ipAddress,
+            UserAgent = userAgent,
+            SessionId = loginSessionId
+        };
+        await eventPublisher.PublishSessionAsync(loginEvent, cancellationToken);
+
+        // Store Auth Center refresh token in our DB for token refresh
+        var refreshToken = RefreshToken.Create(
+            userGuid,
+            tokenResponse.RefreshToken,
+            TimeSpan.FromDays(7),
+            loginSessionId);
 
         dbContext.RefreshTokens.Add(refreshToken);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -174,178 +296,35 @@ public static class AuthEndpoints
         if (IsBrowserClient(httpContext.Request))
         {
             SetAuthCookies(
-                httpContext.Response,
+                httpContext,
                 tokenResponse.AccessToken,
                 tokenResponse.RefreshToken,
                 accessTokenExpiration,
                 DateTime.UtcNow.AddDays(7));
         }
 
+        // Build user info from JWT claims
+        var nameParts = (name ?? email.Split('@')[0]).Split(' ', 2);
+        var user = new SsoUserDto(
+            userGuid,
+            email,
+            nameParts[0],
+            nameParts.Length > 1 ? nameParts[1] : "",
+            role);
+
         var tokenDto = new TokenDto(tokenResponse.AccessToken, tokenResponse.RefreshToken, accessTokenExpiration);
 
-        return Results.Ok(ApiResponse<AuthResultDto>.Ok(new AuthResultDto(user, tokenDto)));
+        return Results.Ok(ApiResponse<SsoAuthResultDto>.Ok(new SsoAuthResultDto(user, tokenDto)));
     }
 
-    private static async Task<IResult> Register(
-        HttpContext httpContext,
-        [FromBody] RegisterRequest request,
-        IPasswordHasher passwordHasher,
-        IJwtTokenGenerator jwtGenerator,
-        AuthDbContext dbContext,
-        IHttpClientFactory httpClientFactory,
-        CancellationToken cancellationToken)
-    {
-        // Check if user already exists
-        var client = httpClientFactory.CreateClient("UsersApi");
-        var checkResponse = await client.GetAsync($"/users/by-email/{Uri.EscapeDataString(request.Email)}", cancellationToken);
-
-        if (checkResponse.IsSuccessStatusCode)
-        {
-            var existingUser = await checkResponse.Content.ReadFromJsonAsync<ApiResponse<UserWithPasswordDto>>(cancellationToken);
-            if (existingUser?.Success == true && existingUser.Data is not null)
-                return Results.Ok(ApiResponse<AuthResultDto>.Fail("User with this email already exists"));
-        }
-
-        // Create user in Users.API
-        var passwordHash = passwordHasher.Hash(request.Password);
-        var createUserRequest = new
-        {
-            Email = request.Email,
-            PasswordHash = passwordHash,
-            FirstName = request.FirstName,
-            LastName = request.LastName
-        };
-
-        var createResponse = await client.PostAsJsonAsync("/users", createUserRequest, cancellationToken);
-        if (!createResponse.IsSuccessStatusCode)
-            return Results.Ok(ApiResponse<AuthResultDto>.Fail("Failed to create user"));
-
-        var userResponse = await createResponse.Content.ReadFromJsonAsync<ApiResponse<UserDto>>(cancellationToken);
-        if (userResponse?.Data is null)
-            return Results.Ok(ApiResponse<AuthResultDto>.Fail("Failed to create user"));
-
-        var user = userResponse.Data;
-
-        // Generate tokens
-        var accessToken = jwtGenerator.GenerateAccessToken(
-            user.Id,
-            user.Email,
-            $"{user.FirstName} {user.LastName}".Trim(),
-            user.Role);
-
-        var refreshTokenValue = jwtGenerator.GenerateRefreshToken();
-        var refreshTokenLifetime = jwtGenerator.GetRefreshTokenLifetime();
-
-        // Store refresh token
-        var refreshToken = RefreshToken.Create(
-            user.Id,
-            refreshTokenValue,
-            refreshTokenLifetime);
-
-        dbContext.RefreshTokens.Add(refreshToken);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        var accessTokenExpiration = jwtGenerator.GetAccessTokenExpiration();
-
-        // Set cookies for browser clients
-        if (IsBrowserClient(httpContext.Request))
-        {
-            SetAuthCookies(
-                httpContext.Response,
-                accessToken,
-                refreshTokenValue,
-                accessTokenExpiration,
-                DateTime.UtcNow.Add(refreshTokenLifetime));
-        }
-
-        // Build response (token also returned for WebSocket/mobile)
-        var tokenDto = new TokenDto(accessToken, refreshTokenValue, accessTokenExpiration);
-
-        return Results.Ok(ApiResponse<AuthResultDto>.Ok(new AuthResultDto(user, tokenDto)));
-    }
-
-    private static async Task<IResult> Login(
-        HttpContext httpContext,
-        [FromBody] LoginRequest request,
-        IPasswordHasher passwordHasher,
-        IJwtTokenGenerator jwtGenerator,
-        AuthDbContext dbContext,
-        IHttpClientFactory httpClientFactory,
-        CancellationToken cancellationToken)
-    {
-        // Get user from Users.API
-        var client = httpClientFactory.CreateClient("UsersApi");
-        var response = await client.GetAsync($"/users/by-email/{Uri.EscapeDataString(request.Email)}", cancellationToken);
-
-        if (!response.IsSuccessStatusCode)
-            return Results.Ok(ApiResponse<AuthResultDto>.Fail("Invalid credentials"));
-
-        var userResponse = await response.Content.ReadFromJsonAsync<ApiResponse<UserWithPasswordDto>>(cancellationToken);
-        if (userResponse?.Data is null)
-            return Results.Ok(ApiResponse<AuthResultDto>.Fail("Invalid credentials"));
-
-        var user = userResponse.Data;
-
-        // Verify password
-        if (!passwordHasher.Verify(request.Password, user.PasswordHash))
-            return Results.Ok(ApiResponse<AuthResultDto>.Fail("Invalid credentials"));
-
-        // Check if user is active
-        if (!user.IsActive)
-            return Results.Ok(ApiResponse<AuthResultDto>.Fail("Account is deactivated"));
-
-        // Generate tokens
-        var accessToken = jwtGenerator.GenerateAccessToken(
-            user.Id,
-            user.Email,
-            $"{user.FirstName} {user.LastName}".Trim(),
-            user.Role);
-
-        var refreshTokenValue = jwtGenerator.GenerateRefreshToken();
-        var refreshTokenLifetime = jwtGenerator.GetRefreshTokenLifetime();
-
-        // Store refresh token
-        var refreshToken = RefreshToken.Create(
-            user.Id,
-            refreshTokenValue,
-            refreshTokenLifetime);
-
-        dbContext.RefreshTokens.Add(refreshToken);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        var accessTokenExpiration = jwtGenerator.GetAccessTokenExpiration();
-
-        // Set cookies for browser clients
-        if (IsBrowserClient(httpContext.Request))
-        {
-            SetAuthCookies(
-                httpContext.Response,
-                accessToken,
-                refreshTokenValue,
-                accessTokenExpiration,
-                DateTime.UtcNow.Add(refreshTokenLifetime));
-        }
-
-        // Build response (token also returned for WebSocket/mobile)
-        var tokenDto = new TokenDto(accessToken, refreshTokenValue, accessTokenExpiration);
-        var userDto = new UserDto(
-            user.Id,
-            user.Email,
-            user.FirstName,
-            user.LastName,
-            user.Role,
-            user.IsActive,
-            user.CreatedAt);
-
-        return Results.Ok(ApiResponse<AuthResultDto>.Ok(new AuthResultDto(userDto, tokenDto)));
-    }
-
+    /// <summary>
+    /// Refresh access token using Auth Center
+    /// </summary>
     private static async Task<IResult> RefreshTokenEndpoint(
         HttpContext httpContext,
         [FromBody] RefreshTokenRequest? request,
-        IJwtTokenGenerator jwtGenerator,
+        IAuthCenterClient authCenterClient,
         AuthDbContext dbContext,
-        IHttpClientFactory httpClientFactory,
         CancellationToken cancellationToken)
     {
         // Try to get refresh token from request body or cookie
@@ -356,78 +335,89 @@ public static class AuthEndpoints
         }
 
         if (string.IsNullOrEmpty(refreshTokenValue))
-            return Results.Ok(ApiResponse<AuthResultDto>.Fail("Refresh token is required"));
+            return Results.Ok(ApiResponse<SsoAuthResultDto>.Fail("Refresh token is required"));
 
-        var refreshToken = await dbContext.RefreshTokens
+        // Verify token exists in our DB
+        var storedToken = await dbContext.RefreshTokens
             .FirstOrDefaultAsync(x => x.Token == refreshTokenValue, cancellationToken);
 
-        if (refreshToken is null || !refreshToken.IsActive)
-            return Results.Ok(ApiResponse<AuthResultDto>.Fail("Invalid or expired refresh token"));
+        if (storedToken is null || !storedToken.IsActive)
+            return Results.Ok(ApiResponse<SsoAuthResultDto>.Fail("Invalid or expired refresh token"));
 
-        // Get user info
-        var client = httpClientFactory.CreateClient("UsersApi");
-        var response = await client.GetAsync($"/users/{refreshToken.UserId}", cancellationToken);
+        // Refresh token at Auth Center
+        var tokenResponse = await authCenterClient.RefreshTokenAsync(refreshTokenValue, cancellationToken);
+        if (tokenResponse is null)
+        {
+            // Token was rejected by Auth Center, revoke locally
+            storedToken.Revoke();
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return Results.Ok(ApiResponse<SsoAuthResultDto>.Fail("Failed to refresh token"));
+        }
 
-        if (!response.IsSuccessStatusCode)
-            return Results.Ok(ApiResponse<AuthResultDto>.Fail("User not found"));
+        // Revoke old token and store new one (preserve login session)
+        storedToken.Revoke();
 
-        var userResponse = await response.Content.ReadFromJsonAsync<ApiResponse<UserDto>>(cancellationToken);
-        if (userResponse?.Data is null)
-            return Results.Ok(ApiResponse<AuthResultDto>.Fail("User not found"));
-
-        var user = userResponse.Data;
-
-        if (!user.IsActive)
-            return Results.Ok(ApiResponse<AuthResultDto>.Fail("Account is deactivated"));
-
-        // Revoke old token
-        refreshToken.Revoke();
-
-        // Create new tokens
-        var newRefreshTokenValue = jwtGenerator.GenerateRefreshToken();
-        var refreshTokenLifetime = jwtGenerator.GetRefreshTokenLifetime();
         var newRefreshToken = RefreshToken.Create(
-            user.Id,
-            newRefreshTokenValue,
-            refreshTokenLifetime);
+            storedToken.UserId,
+            tokenResponse.RefreshToken,
+            TimeSpan.FromDays(7),
+            storedToken.LoginSessionId);
 
         dbContext.RefreshTokens.Add(newRefreshToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        var accessToken = jwtGenerator.GenerateAccessToken(
-            user.Id,
-            user.Email,
-            $"{user.FirstName} {user.LastName}".Trim(),
-            user.Role);
+        // Parse new JWT for user info
+        var handler = new JwtSecurityTokenHandler();
+        var jwt = handler.ReadJwtToken(tokenResponse.AccessToken);
 
-        var accessTokenExpiration = jwtGenerator.GetAccessTokenExpiration();
+        var userId = jwt.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+        var email = jwt.Claims.FirstOrDefault(c => c.Type == "email")?.Value;
+        var name = jwt.Claims.FirstOrDefault(c => c.Type == "name")?.Value;
+        var role = jwt.Claims.FirstOrDefault(c => c.Type == "role")?.Value ?? "viewer";
+
+        var accessTokenExpiration = DateTime.UtcNow.AddSeconds(tokenResponse.ExpiresIn);
 
         // Set cookies for browser clients
         if (IsBrowserClient(httpContext.Request))
         {
             SetAuthCookies(
-                httpContext.Response,
-                accessToken,
-                newRefreshTokenValue,
+                httpContext,
+                tokenResponse.AccessToken,
+                tokenResponse.RefreshToken,
                 accessTokenExpiration,
-                DateTime.UtcNow.Add(refreshTokenLifetime));
+                DateTime.UtcNow.AddDays(7));
         }
 
-        var tokenDto = new TokenDto(accessToken, newRefreshTokenValue, accessTokenExpiration);
+        var nameParts = (name ?? email?.Split('@')[0] ?? "").Split(' ', 2);
+        var user = new SsoUserDto(
+            Guid.Parse(userId ?? Guid.Empty.ToString()),
+            email ?? "",
+            nameParts[0],
+            nameParts.Length > 1 ? nameParts[1] : "",
+            role);
 
-        return Results.Ok(ApiResponse<AuthResultDto>.Ok(new AuthResultDto(user, tokenDto)));
+        var tokenDto = new TokenDto(tokenResponse.AccessToken, tokenResponse.RefreshToken, accessTokenExpiration);
+
+        return Results.Ok(ApiResponse<SsoAuthResultDto>.Ok(new SsoAuthResultDto(user, tokenDto)));
     }
 
+    /// <summary>
+    /// Logout - revoke refresh token and record logout in audit
+    /// </summary>
     private static async Task<IResult> Logout(
         HttpContext httpContext,
         [FromBody] LogoutRequest? request,
         ICurrentUserAccessor currentUserAccessor,
+        IAuthCenterClient authCenterClient,
+        IEventPublisher eventPublisher,
         AuthDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserAccessor.User?.Id;
-        if (userId is null)
+        var user = currentUserAccessor.User;
+        if (user?.Id is null)
             return Results.Ok(ApiResponse.Fail("Unauthorized"));
+
+        var userId = user.Id.Value;
 
         // Try to get refresh token from request body or cookie
         var refreshTokenValue = request?.RefreshToken;
@@ -436,24 +426,50 @@ public static class AuthEndpoints
             httpContext.Request.Cookies.TryGetValue(RefreshTokenCookieName, out refreshTokenValue);
         }
 
+        Guid? loginSessionId = null;
+
         if (!string.IsNullOrEmpty(refreshTokenValue))
         {
+            // Revoke at Auth Center
+            await authCenterClient.RevokeTokenAsync(refreshTokenValue, cancellationToken);
+
+            // Revoke locally
             var refreshToken = await dbContext.RefreshTokens
                 .FirstOrDefaultAsync(x => x.Token == refreshTokenValue && x.UserId == userId, cancellationToken);
 
             if (refreshToken is not null)
             {
+                loginSessionId = refreshToken.LoginSessionId;
                 refreshToken.Revoke();
                 await dbContext.SaveChangesAsync(cancellationToken);
             }
         }
 
+        // Publish logout event to Redis
+        if (loginSessionId.HasValue)
+        {
+            var logoutEvent = new UserLoggedOutEvent
+            {
+                UserId = userId,
+                UserEmail = user.Email,
+                UserName = user.Name,
+                UserRole = user.Role,
+                IpAddress = GetClientIpAddress(httpContext),
+                UserAgent = httpContext.Request.Headers.UserAgent.ToString(),
+                SessionId = loginSessionId.Value
+            };
+            await eventPublisher.PublishSessionAsync(logoutEvent, cancellationToken);
+        }
+
         // Clear cookies
-        ClearAuthCookies(httpContext.Response);
+        ClearAuthCookies(httpContext);
 
         return Results.Ok(ApiResponse.Ok("Logged out successfully"));
     }
 
+    /// <summary>
+    /// Get current user info from JWT token
+    /// </summary>
     private static IResult GetCurrentUser(ICurrentUserAccessor currentUserAccessor)
     {
         var user = currentUserAccessor.User;
@@ -470,48 +486,8 @@ public static class AuthEndpoints
         }));
     }
 
-    private static async Task<IResult> ChangePassword(
-        [FromBody] ChangePasswordRequest request,
-        ICurrentUserAccessor currentUserAccessor,
-        IPasswordHasher passwordHasher,
-        IHttpClientFactory httpClientFactory,
-        CancellationToken cancellationToken)
-    {
-        var userId = currentUserAccessor.User?.Id;
-        if (userId is null)
-            return Results.Ok(ApiResponse.Fail("Unauthorized"));
-
-        // Get current user with password
-        var client = httpClientFactory.CreateClient("UsersApi");
-        var response = await client.GetAsync($"/users/{userId}/with-password", cancellationToken);
-
-        if (!response.IsSuccessStatusCode)
-            return Results.Ok(ApiResponse.Fail("User not found"));
-
-        var userResponse = await response.Content.ReadFromJsonAsync<ApiResponse<UserWithPasswordDto>>(cancellationToken);
-        if (userResponse?.Data is null)
-            return Results.Ok(ApiResponse.Fail("User not found"));
-
-        // Verify current password
-        if (!passwordHasher.Verify(request.CurrentPassword, userResponse.Data.PasswordHash))
-            return Results.Ok(ApiResponse.Fail("Current password is incorrect"));
-
-        // Update password
-        var newPasswordHash = passwordHasher.Hash(request.NewPassword);
-        var updateResponse = await client.PutAsJsonAsync(
-            $"/users/{userId}/password",
-            new { PasswordHash = newPasswordHash },
-            cancellationToken);
-
-        if (!updateResponse.IsSuccessStatusCode)
-            return Results.Ok(ApiResponse.Fail("Failed to update password"));
-
-        return Results.Ok(ApiResponse.Ok("Password changed successfully"));
-    }
-
     /// <summary>
     /// Get JWT token from HttpOnly cookie for WebSocket authentication
-    /// Uses In-Band Authentication pattern
     /// </summary>
     private static IResult GetToken(HttpContext httpContext)
     {
@@ -524,16 +500,19 @@ public static class AuthEndpoints
     }
 }
 
-internal sealed record UserWithPasswordDto(
+/// <summary>
+/// User info extracted from SSO JWT token
+/// </summary>
+public sealed record SsoUserDto(
     Guid Id,
     string Email,
     string FirstName,
     string LastName,
-    string Role,
-    bool IsActive,
-    string PasswordHash,
-    DateTime CreatedAt)
-{
-    [System.Text.Json.Serialization.JsonConstructor]
-    public UserWithPasswordDto() : this(Guid.Empty, "", "", "", "", false, "", DateTime.MinValue) { }
-}
+    string Role);
+
+/// <summary>
+/// Auth result for SSO authentication
+/// </summary>
+public sealed record SsoAuthResultDto(
+    SsoUserDto User,
+    TokenDto Token);

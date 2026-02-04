@@ -26,6 +26,7 @@ public sealed class AuthDbContext : DbContext
             builder.Property(x => x.CreatedAt).HasColumnName("created_at").IsRequired();
             builder.Property(x => x.IsRevoked).HasColumnName("is_revoked").IsRequired();
             builder.Property(x => x.RevokedAt).HasColumnName("revoked_at");
+            builder.Property(x => x.LoginSessionId).HasColumnName("login_session_id");
 
             builder.HasIndex(x => x.Token).IsUnique();
             builder.HasIndex(x => x.UserId);

@@ -8,4 +8,6 @@ public interface IEventPublisher
         where TEvent : IntegrationEvent;
 
     Task PublishAuditAsync(AuditEvent auditEvent, CancellationToken cancellationToken = default);
+
+    Task PublishSessionAsync(SessionEvent sessionEvent, CancellationToken cancellationToken = default);
 }

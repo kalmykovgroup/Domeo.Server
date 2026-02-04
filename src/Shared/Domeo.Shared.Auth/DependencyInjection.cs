@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
+using System.Web;
 using Domeo.Shared.Auth.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -150,7 +151,9 @@ public class GatewayHeadersAuthenticationHandler : AuthenticationHandler<Authent
 
         var userId = userIdValues.First()!;
         var email = Request.Headers[DependencyInjection.UserEmailHeader].FirstOrDefault() ?? "";
-        var name = Request.Headers[DependencyInjection.UserNameHeader].FirstOrDefault() ?? "";
+        // URL-decode name (may contain non-ASCII characters like Cyrillic)
+        var nameRaw = Request.Headers[DependencyInjection.UserNameHeader].FirstOrDefault() ?? "";
+        var name = HttpUtility.UrlDecode(nameRaw);
         var role = Request.Headers[DependencyInjection.UserRoleHeader].FirstOrDefault() ?? "";
 
         var claims = new List<Claim>

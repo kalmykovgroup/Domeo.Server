@@ -7,7 +7,9 @@ namespace Domeo.Shared.Infrastructure.Redis;
 public sealed class RedisEventPublisher : IEventPublisher
 {
     private readonly IConnectionMultiplexer _redis;
-    private const string AuditChannel = "domeo:audit:events";
+
+    public const string AuditChannel = "domeo:audit:entities";
+    public const string SessionChannel = "domeo:audit:sessions";
 
     public RedisEventPublisher(IConnectionMultiplexer redis)
     {
@@ -31,4 +33,24 @@ public sealed class RedisEventPublisher : IEventPublisher
 
         await subscriber.PublishAsync(RedisChannel.Literal(AuditChannel), message);
     }
+
+    public async Task PublishSessionAsync(SessionEvent sessionEvent, CancellationToken cancellationToken = default)
+    {
+        var subscriber = _redis.GetSubscriber();
+        var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+        var wrapper = new SessionEventWrapper
+        {
+            EventType = sessionEvent.GetType().Name,
+            Payload = JsonSerializer.Serialize(sessionEvent, sessionEvent.GetType(), options)
+        };
+        var message = JsonSerializer.Serialize(wrapper, options);
+
+        await subscriber.PublishAsync(RedisChannel.Literal(SessionChannel), message);
+    }
+}
+
+public sealed class SessionEventWrapper
+{
+    public required string EventType { get; init; }
+    public required string Payload { get; init; }
 }

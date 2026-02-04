@@ -10,10 +10,11 @@ public sealed class RefreshToken : Entity<Guid>
     public DateTime CreatedAt { get; private set; }
     public bool IsRevoked { get; private set; }
     public DateTime? RevokedAt { get; private set; }
+    public Guid? LoginSessionId { get; private set; }
 
     private RefreshToken() { }
 
-    public static RefreshToken Create(Guid userId, string token, TimeSpan lifetime)
+    public static RefreshToken Create(Guid userId, string token, TimeSpan lifetime, Guid? loginSessionId = null)
     {
         return new RefreshToken
         {
@@ -22,7 +23,8 @@ public sealed class RefreshToken : Entity<Guid>
             Token = token,
             CreatedAt = DateTime.UtcNow,
             ExpiresAt = DateTime.UtcNow.Add(lifetime),
-            IsRevoked = false
+            IsRevoked = false,
+            LoginSessionId = loginSessionId
         };
     }
 

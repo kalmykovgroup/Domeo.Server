@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Web;
 
 namespace Domeo.ApiGateway.Auth;
 
@@ -37,6 +38,7 @@ public class ClaimsForwardingMiddleware
                     ?? context.User.FindFirst("role")?.Value;
 
             // Add claims to headers for downstream services
+            // URL-encode values to handle non-ASCII characters (like Cyrillic names)
             if (!string.IsNullOrEmpty(userId))
                 context.Request.Headers[UserIdHeader] = userId;
 
@@ -44,7 +46,7 @@ public class ClaimsForwardingMiddleware
                 context.Request.Headers[UserEmailHeader] = email;
 
             if (!string.IsNullOrEmpty(name))
-                context.Request.Headers[UserNameHeader] = name;
+                context.Request.Headers[UserNameHeader] = HttpUtility.UrlEncode(name);
 
             if (!string.IsNullOrEmpty(role))
                 context.Request.Headers[UserRoleHeader] = role;

@@ -1,0 +1,60 @@
+using Audit.API.Entities;
+using Microsoft.EntityFrameworkCore;
+
+namespace Audit.API.Persistence;
+
+public sealed class AuditDbContext : DbContext
+{
+    public AuditDbContext(DbContextOptions<AuditDbContext> options) : base(options)
+    {
+    }
+
+    public DbSet<LoginSession> LoginSessions => Set<LoginSession>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.HasDefaultSchema("audit");
+
+        modelBuilder.Entity<LoginSession>(builder =>
+        {
+            builder.ToTable("login_sessions");
+            builder.HasKey(x => x.Id);
+            builder.Property(x => x.Id).HasColumnName("id");
+            builder.Property(x => x.UserId).HasColumnName("user_id").IsRequired();
+            builder.Property(x => x.UserEmail).HasColumnName("user_email").HasMaxLength(255).IsRequired();
+            builder.Property(x => x.UserName).HasColumnName("user_name").HasMaxLength(200);
+            builder.Property(x => x.UserRole).HasColumnName("user_role").HasMaxLength(50).IsRequired();
+            builder.Property(x => x.IpAddress).HasColumnName("ip_address").HasMaxLength(50);
+            builder.Property(x => x.UserAgent).HasColumnName("user_agent").HasMaxLength(500);
+            builder.Property(x => x.LoggedInAt).HasColumnName("logged_in_at").IsRequired();
+            builder.Property(x => x.LoggedOutAt).HasColumnName("logged_out_at");
+
+            builder.HasIndex(x => x.UserId);
+            builder.HasIndex(x => x.LoggedInAt);
+            builder.Ignore(x => x.IsActive);
+        });
+
+        modelBuilder.Entity<AuditLog>(builder =>
+        {
+            builder.ToTable("audit_logs");
+            builder.HasKey(x => x.Id);
+            builder.Property(x => x.Id).HasColumnName("id");
+            builder.Property(x => x.UserId).HasColumnName("user_id").IsRequired();
+            builder.Property(x => x.UserEmail).HasColumnName("user_email").HasMaxLength(255).IsRequired();
+            builder.Property(x => x.Action).HasColumnName("action").HasMaxLength(50).IsRequired();
+            builder.Property(x => x.EntityType).HasColumnName("entity_type").HasMaxLength(100).IsRequired();
+            builder.Property(x => x.EntityId).HasColumnName("entity_id").HasMaxLength(100).IsRequired();
+            builder.Property(x => x.ServiceName).HasColumnName("service_name").HasMaxLength(100).IsRequired();
+            builder.Property(x => x.OldValue).HasColumnName("old_value").HasColumnType("jsonb");
+            builder.Property(x => x.NewValue).HasColumnName("new_value").HasColumnType("jsonb");
+            builder.Property(x => x.IpAddress).HasColumnName("ip_address").HasMaxLength(50);
+            builder.Property(x => x.CreatedAt).HasColumnName("created_at").IsRequired();
+
+            builder.HasIndex(x => x.UserId);
+            builder.HasIndex(x => x.EntityType);
+            builder.HasIndex(x => new { x.EntityType, x.EntityId });
+            builder.HasIndex(x => x.CreatedAt);
+        });
+    }
+}

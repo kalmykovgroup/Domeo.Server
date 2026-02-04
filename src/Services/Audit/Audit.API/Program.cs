@@ -1,6 +1,6 @@
-using Auth.API.Endpoints;
-using Auth.API.Persistence;
-using Auth.API.Services;
+using Audit.API.Endpoints;
+using Audit.API.Persistence;
+using Audit.API.Services;
 using Domeo.Shared.Auth;
 using Domeo.Shared.Infrastructure;
 using Domeo.Shared.Infrastructure.Middleware;
@@ -14,7 +14,7 @@ Log.Logger = new LoggerConfiguration()
 
 try
 {
-    Log.Information("Starting Auth.API");
+    Log.Information("Starting Audit.API");
 
     var builder = WebApplication.CreateBuilder(args);
 
@@ -27,34 +27,24 @@ try
         .WriteTo.Seq(context.Configuration["Seq:ServerUrl"] ?? "http://localhost:5341"));
 
     // Database
-    builder.Services.AddDbContext<AuthDbContext>(options =>
+    builder.Services.AddDbContext<AuditDbContext>(options =>
         options.UseNpgsql(
-            builder.Configuration.GetConnectionString("AuthDb"),
-            npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "auth")));
+            builder.Configuration.GetConnectionString("AuditDb"),
+            npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "audit")));
 
     // Auth & Infrastructure
     builder.Services.AddSharedAuth(builder.Configuration);
-    builder.Services.AddSharedInfrastructure(builder.Configuration, "Auth.API");
+    builder.Services.AddSharedInfrastructure(builder.Configuration, "Audit.API");
 
-    // Services
-    builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
-    builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
-
-    // HTTP Clients
-    builder.Services.AddTransient<InternalApiKeyDelegatingHandler>();
-
-    // Auth Center Client
-    builder.Services.AddHttpClient<IAuthCenterClient, AuthCenterClient>(client =>
-    {
-        client.BaseAddress = new Uri(builder.Configuration["AuthCenter:BaseUrl"] ?? "http://localhost:5100");
-    });
+    // Background service for Redis subscription
+    builder.Services.AddHostedService<AuditEventSubscriber>();
 
     // OpenAPI
     builder.Services.AddOpenApi();
 
     // Health Checks
     builder.Services.AddHealthChecks()
-        .AddNpgSql(builder.Configuration.GetConnectionString("AuthDb")!);
+        .AddNpgSql(builder.Configuration.GetConnectionString("AuditDb")!);
 
     var app = builder.Build();
 
@@ -72,7 +62,7 @@ try
     try
     {
         using var scope = app.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<AuditDbContext>();
 
         if (app.Environment.IsDevelopment())
         {
@@ -102,7 +92,8 @@ try
 
     // Endpoints
     app.MapHealthChecks("/health");
-    app.MapAuthEndpoints();
+    app.MapLoginSessionEndpoints();
+    app.MapAuditEndpoints();
 
     await app.RunAsync();
 }

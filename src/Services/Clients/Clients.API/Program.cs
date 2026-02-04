@@ -1,6 +1,5 @@
-using Auth.API.Endpoints;
-using Auth.API.Persistence;
-using Auth.API.Services;
+using Clients.API.Endpoints;
+using Clients.API.Persistence;
 using Domeo.Shared.Auth;
 using Domeo.Shared.Infrastructure;
 using Domeo.Shared.Infrastructure.Middleware;
@@ -14,7 +13,7 @@ Log.Logger = new LoggerConfiguration()
 
 try
 {
-    Log.Information("Starting Auth.API");
+    Log.Information("Starting Clients.API");
 
     var builder = WebApplication.CreateBuilder(args);
 
@@ -27,34 +26,21 @@ try
         .WriteTo.Seq(context.Configuration["Seq:ServerUrl"] ?? "http://localhost:5341"));
 
     // Database
-    builder.Services.AddDbContext<AuthDbContext>(options =>
+    builder.Services.AddDbContext<ClientsDbContext>(options =>
         options.UseNpgsql(
-            builder.Configuration.GetConnectionString("AuthDb"),
-            npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "auth")));
+            builder.Configuration.GetConnectionString("ClientsDb"),
+            npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "clients")));
 
     // Auth & Infrastructure
     builder.Services.AddSharedAuth(builder.Configuration);
-    builder.Services.AddSharedInfrastructure(builder.Configuration, "Auth.API");
-
-    // Services
-    builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
-    builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
-
-    // HTTP Clients
-    builder.Services.AddTransient<InternalApiKeyDelegatingHandler>();
-
-    // Auth Center Client
-    builder.Services.AddHttpClient<IAuthCenterClient, AuthCenterClient>(client =>
-    {
-        client.BaseAddress = new Uri(builder.Configuration["AuthCenter:BaseUrl"] ?? "http://localhost:5100");
-    });
+    builder.Services.AddSharedInfrastructure(builder.Configuration, "Clients.API");
 
     // OpenAPI
     builder.Services.AddOpenApi();
 
     // Health Checks
     builder.Services.AddHealthChecks()
-        .AddNpgSql(builder.Configuration.GetConnectionString("AuthDb")!);
+        .AddNpgSql(builder.Configuration.GetConnectionString("ClientsDb")!);
 
     var app = builder.Build();
 
@@ -72,7 +58,7 @@ try
     try
     {
         using var scope = app.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<ClientsDbContext>();
 
         if (app.Environment.IsDevelopment())
         {
@@ -102,7 +88,7 @@ try
 
     // Endpoints
     app.MapHealthChecks("/health");
-    app.MapAuthEndpoints();
+    app.MapClientsEndpoints();
 
     await app.RunAsync();
 }
