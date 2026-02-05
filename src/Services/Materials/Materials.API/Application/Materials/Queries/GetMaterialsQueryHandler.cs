@@ -23,11 +23,18 @@ public sealed class GetMaterialsQueryHandler : IRequestHandler<GetMaterialsQuery
         CancellationToken cancellationToken)
     {
         var externalMaterials = await _supplierApiClient.GetMaterialsAsync(
-            request.CategoryId, request.ActiveOnly ?? true, cancellationToken);
+            request.CategoryId,
+            request.ActiveOnly ?? true,
+            request.BrandId,
+            request.SupplierId,
+            request.Attributes,
+            cancellationToken);
 
         var materials = externalMaterials.Select(m => new MaterialDto(
             m.Id,
             m.CategoryId,
+            m.BrandId,
+            m.BrandName,
             m.Name,
             m.Description,
             m.Unit,

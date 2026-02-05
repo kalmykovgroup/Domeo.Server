@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Projects.Abstractions.Entities;
 using Projects.API.Entities;
 using Projects.API.Infrastructure.Persistence;
@@ -17,6 +18,13 @@ public sealed class ProjectsSeeder
 
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
+        // Check if already seeded
+        if (await _dbContext.Projects.AnyAsync(cancellationToken))
+        {
+            _logger.LogInformation("Projects database already seeded, skipping");
+            return;
+        }
+
         _logger.LogInformation("Seeding projects database...");
 
         // Note: We use fixed GUIDs that match the Users seeder for foreign keys

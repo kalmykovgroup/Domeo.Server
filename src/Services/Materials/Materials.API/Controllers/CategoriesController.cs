@@ -29,4 +29,17 @@ public class CategoriesController : ControllerBase
         var result = await _sender.Send(new GetCategoriesTreeQuery(activeOnly), cancellationToken);
         return Ok(ApiResponse<List<CategoryTreeNodeDto>>.Ok(result));
     }
+
+    /// <summary>
+    /// Get attributes for a category
+    /// </summary>
+    [HttpGet(MaterialsRoutes.Controller.CategoryAttributes)]
+    [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
+    public async Task<ActionResult<ApiResponse<List<CategoryAttributeDto>>>> GetCategoryAttributes(
+        string id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _sender.Send(new GetCategoryAttributesQuery(id), cancellationToken);
+        return Ok(ApiResponse<List<CategoryAttributeDto>>.Ok(result));
+    }
 }

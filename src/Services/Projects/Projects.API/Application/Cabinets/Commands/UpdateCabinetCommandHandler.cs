@@ -26,7 +26,7 @@ public sealed class UpdateCabinetCommandHandler : IRequestHandler<UpdateCabinetC
         cabinet.SetName(request.Name);
         cabinet.SetEdge(request.EdgeId);
         cabinet.SetZone(request.ZoneId);
-        cabinet.SetModuleType(request.ModuleTypeId);
+        cabinet.SetAssembly(request.AssemblyId);
         cabinet.SetFacadeType(request.FacadeType);
         cabinet.SetCalculatedPrice(request.CalculatedPrice);
 

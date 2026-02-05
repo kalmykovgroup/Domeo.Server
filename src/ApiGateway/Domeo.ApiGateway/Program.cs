@@ -14,9 +14,9 @@ Log.Logger = new LoggerConfiguration()
 
 try
 {
-    Log.Information("Starting Domeo API Gateway");
-
     var builder = WebApplication.CreateBuilder(args);
+
+    Log.Information("Starting Domeo.ApiGateway in {Environment} mode", builder.Environment.EnvironmentName);
 
     // Minimal infrastructure for logging to Redis
     builder.Services.AddMinimalInfrastructure(builder.Configuration);
@@ -25,6 +25,7 @@ try
     builder.Host.UseSerilog((context, services, configuration) => configuration
         .MinimumLevel.Information()
         .MinimumLevel.Override("Microsoft.AspNetCore.Routing", LogEventLevel.Warning)
+        .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Warning)
         .MinimumLevel.Override("Yarp", LogEventLevel.Warning)
         .Enrich.FromLogContext()
         .WriteTo.Console(theme: AnsiConsoleTheme.Code)

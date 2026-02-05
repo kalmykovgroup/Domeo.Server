@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Materials.Abstractions.ExternalServices;
@@ -65,6 +66,44 @@ public sealed class ExternalCategoryTreeNode
     public List<ExternalCategoryTreeNode> Children { get; set; } = [];
 }
 
+// Brand from external API
+public sealed class ExternalBrand
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("logoUrl")]
+    public string? LogoUrl { get; set; }
+
+    [JsonPropertyName("isActive")]
+    public bool IsActive { get; set; }
+}
+
+// Category attribute from external API
+public sealed class ExternalCategoryAttribute
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("categoryId")]
+    public string CategoryId { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("type")]
+    public string Type { get; set; } = "string";
+
+    [JsonPropertyName("unit")]
+    public string? Unit { get; set; }
+
+    [JsonPropertyName("enumValues")]
+    public List<string>? EnumValues { get; set; }
+}
+
 // Material from external API
 public sealed class ExternalMaterial
 {
@@ -73,6 +112,12 @@ public sealed class ExternalMaterial
 
     [JsonPropertyName("categoryId")]
     public string CategoryId { get; set; } = string.Empty;
+
+    [JsonPropertyName("brandId")]
+    public string? BrandId { get; set; }
+
+    [JsonPropertyName("brandName")]
+    public string? BrandName { get; set; }
 
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
@@ -209,4 +254,20 @@ public sealed class ExternalMaterialBrief
 
     [JsonPropertyName("description")]
     public string? Description { get; set; }
+}
+
+// Search suggestion from external API
+public sealed class ExternalSearchSuggestion
+{
+    [JsonPropertyName("type")]
+    public string Type { get; set; } = "";
+
+    [JsonPropertyName("text")]
+    public string Text { get; set; } = "";
+
+    [JsonPropertyName("score")]
+    public double Score { get; set; }
+
+    [JsonPropertyName("metadata")]
+    public Dictionary<string, JsonElement> Metadata { get; set; } = new();
 }

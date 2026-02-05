@@ -13,6 +13,6 @@ public sealed record CreateCabinetCommand(
     string? Name,
     Guid? EdgeId,
     Guid? ZoneId,
-    int? ModuleTypeId,
+    Guid? AssemblyId,
     string? FacadeType,
     double Rotation) : IRequest<Guid>;

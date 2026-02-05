@@ -19,15 +19,16 @@ Log.Logger = new LoggerConfiguration()
 
 try
 {
-    Log.Information("Starting Auth.API");
-
     var builder = WebApplication.CreateBuilder(args);
+
+    Log.Information("Starting Auth.API in {Environment} mode", builder.Environment.EnvironmentName);
 
     // Serilog with Redis sink for Error/Fatal logs
     builder.Host.UseSerilog((context, services, configuration) => configuration
         .MinimumLevel.Information()
         .MinimumLevel.Override("Microsoft.AspNetCore.Routing", LogEventLevel.Warning)
         .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
+        .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Warning)
         .Enrich.FromLogContext()
         .WriteTo.Console(theme: AnsiConsoleTheme.Code)
         .WriteTo.Redis(services, serviceName: "Auth.API"));
@@ -36,7 +37,11 @@ try
     builder.Services.AddDbContext<AuthDbContext>(options =>
         options.UseNpgsql(
             builder.Configuration.GetConnectionString("AuthDb"),
-            npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "auth")));
+            npgsql =>
+            {
+                npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "auth");
+                npgsql.MigrationsAssembly("Auth.API");
+            }));
 
     // Auth & Infrastructure with resilience
     builder.Services.AddAuthContracts(builder.Configuration);
@@ -130,18 +135,8 @@ async Task InitializeDatabaseAsync(WebApplication app)
             return;
         }
 
-        if (app.Environment.IsDevelopment())
-        {
-            Log.Information("Development mode: Recreating database...");
-            await db.Database.EnsureDeletedAsync(cts.Token);
-            await db.Database.EnsureCreatedAsync(cts.Token);
-            Log.Information("Database recreated successfully");
-        }
-        else
-        {
-            await db.Database.MigrateAsync(cts.Token);
-            Log.Information("Database migrations applied successfully");
-        }
+        await db.Database.MigrateAsync(cts.Token);
+        Log.Information("Database migrations applied successfully");
 
         stateTracker.SetDatabaseAvailable(true);
     }

@@ -11,6 +11,6 @@ public sealed record CreateCabinetRequest(
     string? Name,
     Guid? EdgeId,
     Guid? ZoneId,
-    int? ModuleTypeId,
+    Guid? AssemblyId,
     string? FacadeType,
     double Rotation = 0);

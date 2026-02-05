@@ -1,9 +1,9 @@
 namespace Projects.Abstractions.DTOs;
 
 public sealed record CreateCabinetHardwareOverrideRequest(
-    int ModuleHardwareId,
+    Guid AssemblyPartId,
     bool IsEnabled = true,
-    int? HardwareId = null,
+    Guid? ComponentId = null,
     string? Role = null,
     string? QuantityFormula = null,
     string? PositionXFormula = null,

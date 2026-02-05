@@ -19,7 +19,8 @@ public sealed class AuditEventSubscriber : BackgroundService
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true
     };
 
     public AuditEventSubscriber(
@@ -272,9 +273,16 @@ public sealed class AuditEventSubscriber : BackgroundService
                     errorEvent.ServiceName, errorEvent.Message);
             }
         }
+        catch (JsonException ex)
+        {
+            // Log as Warning to avoid infinite loop (Error level would trigger RedisSink -> publish -> handle -> error)
+            _logger.LogWarning("Failed to deserialize error event: {Error}. Message: {Message}",
+                ex.Message, message.ToString().Length > 200 ? message.ToString()[..200] + "..." : message.ToString());
+        }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing error event");
+            // Log as Warning to avoid infinite loop
+            _logger.LogWarning(ex, "Error processing error event");
         }
     }
 

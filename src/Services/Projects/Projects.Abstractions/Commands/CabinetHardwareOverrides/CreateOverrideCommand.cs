@@ -4,9 +4,9 @@ namespace Projects.Abstractions.Commands.CabinetHardwareOverrides;
 
 public sealed record CreateOverrideCommand(
     Guid CabinetId,
-    int ModuleHardwareId,
+    Guid AssemblyPartId,
     bool IsEnabled,
-    int? HardwareId,
+    Guid? ComponentId,
     string? Role,
     string? QuantityFormula,
     string? PositionXFormula,

@@ -1,6 +1,6 @@
-using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Modules.Abstractions.Entities;
+using Modules.Abstractions.Entities.Shared;
 using Modules.API.Infrastructure.Persistence;
 
 namespace Modules.API.Services;
@@ -9,43 +9,20 @@ public sealed class ModulesSeeder
 {
     private readonly ModulesDbContext _dbContext;
     private readonly ILogger<ModulesSeeder> _logger;
-    private readonly IWebHostEnvironment _environment;
 
-    public ModulesSeeder(ModulesDbContext dbContext, ILogger<ModulesSeeder> logger, IWebHostEnvironment environment)
+    public ModulesSeeder(ModulesDbContext dbContext, ILogger<ModulesSeeder> logger)
     {
         _dbContext = dbContext;
         _logger = logger;
-        _environment = environment;
     }
 
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
-        var seedDataPath = Path.Combine(_environment.ContentRootPath, "seed-data", "db.json");
-
-        if (!File.Exists(seedDataPath))
-        {
-            _logger.LogWarning("Seed data file not found at {Path}", seedDataPath);
-            return;
-        }
-
         try
         {
-            var json = await File.ReadAllTextAsync(seedDataPath, cancellationToken);
-            var seedData = JsonSerializer.Deserialize<SeedData>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-
-            if (seedData is null)
-            {
-                _logger.LogWarning("Failed to deserialize seed data");
-                return;
-            }
-
-            await SeedModuleCategoriesAsync(seedData.ModuleTypes, cancellationToken);
-            await SeedModuleTypesAsync(seedData.ModuleTypes, cancellationToken);
-            await SeedHardwareAsync(seedData.Hardware, cancellationToken);
-            await SeedModuleHardwareAsync(seedData.ModuleHardware, cancellationToken);
+            await SeedCategoriesAsync(cancellationToken);
+            await SeedComponentsAsync(cancellationToken);
+            await SeedAssembliesAsync(cancellationToken);
 
             _logger.LogInformation("Modules seeding completed");
         }
@@ -56,191 +33,182 @@ public sealed class ModulesSeeder
         }
     }
 
-    private async Task SeedModuleCategoriesAsync(List<ModuleTypeSeed>? moduleTypes, CancellationToken cancellationToken)
+    private async Task SeedCategoriesAsync(CancellationToken ct)
     {
-        if (moduleTypes is null || !moduleTypes.Any())
-            return;
+        if (await _dbContext.ModuleCategories.AnyAsync(ct)) return;
 
-        var categories = moduleTypes
-            .Select(m => m.CategoryId)
-            .Where(c => !string.IsNullOrEmpty(c))
-            .Distinct()
-            .Select((categoryId, index) => ModuleCategory.Create(
-                categoryId!,
-                FormatCategoryName(categoryId!),
-                null,
-                null,
-                index
-            ))
-            .ToList();
+        var categories = new List<ModuleCategory>
+        {
+            ModuleCategory.Create("base", "Нижние шкафы", description: "Шкафы для нижней зоны кухни", orderIndex: 1),
+            ModuleCategory.Create("base_single_door", "Однодверный", "base", "Шкаф с одной распашной дверью", 1),
+            ModuleCategory.Create("base_double_door", "Двудверный", "base", "Шкаф с двумя распашными дверями", 2),
+            ModuleCategory.Create("base_triple_door", "Трёхдверный", "base", "Шкаф с тремя распашными дверями", 3),
+            ModuleCategory.Create("base_with_drawers", "С ящиками", "base", "Шкаф с выдвижными ящиками", 4),
+            ModuleCategory.Create("base_corner", "Угловой", "base", "Угловой шкаф (L-образный, диагональный, глухой)", 5),
+            ModuleCategory.Create("base_for_appliance", "Под технику", "base", "Шкаф под встроенную технику", 6),
+
+            ModuleCategory.Create("wall", "Верхние шкафы", description: "Шкафы для верхней зоны кухни", orderIndex: 2),
+            ModuleCategory.Create("wall_single_door", "Однодверный", "wall", "Шкаф с одной распашной дверью", 1),
+            ModuleCategory.Create("wall_double_door", "Двудверный", "wall", "Шкаф с двумя распашными дверями", 2),
+            ModuleCategory.Create("wall_open", "Открытый", "wall", "Шкаф без дверей (открытые полки)", 3),
+            ModuleCategory.Create("wall_corner", "Угловой", "wall", "Угловой верхний шкаф", 4),
+
+            ModuleCategory.Create("mezzanine", "Антресоль", description: "Шкафы-антресоли под потолком", orderIndex: 3),
+            ModuleCategory.Create("mezzanine_single_door", "Однодверный", "mezzanine", "Антресоль с одной дверью", 1),
+            ModuleCategory.Create("mezzanine_double_door", "Двудверный", "mezzanine", "Антресоль с двумя дверями", 2),
+
+            ModuleCategory.Create("tall", "Высокие шкафы", description: "Высокие шкафы-пеналы", orderIndex: 4),
+            ModuleCategory.Create("tall_single_door", "Однодверный", "tall", "Пенал с одной дверью", 1),
+            ModuleCategory.Create("tall_double_door", "Двудверный", "tall", "Пенал с двумя дверями", 2),
+            ModuleCategory.Create("tall_for_appliance", "Под духовку", "tall", "Пенал под встроенную духовку", 3),
+        };
 
         _dbContext.ModuleCategories.AddRange(categories);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _dbContext.SaveChangesAsync(ct);
         _logger.LogInformation("Seeded {Count} module categories", categories.Count);
     }
 
-    private static string FormatCategoryName(string categoryId)
+    private async Task SeedComponentsAsync(CancellationToken ct)
     {
-        return string.Join(" ", categoryId.Split('_')
-            .Select(w => char.ToUpper(w[0]) + w[1..]));
-    }
+        if (await _dbContext.Components.AnyAsync(ct)) return;
 
-    private async Task SeedModuleTypesAsync(List<ModuleTypeSeed>? moduleTypes, CancellationToken cancellationToken)
-    {
-        if (moduleTypes is null || !moduleTypes.Any())
-            return;
-
-        var entities = moduleTypes.Select(m =>
+        var components = new List<Component>
         {
-            var @params = m.Params;
-            return ModuleType.Create(
-                m.Id,
-                m.CategoryId ?? "unknown",
-                m.Type,
-                m.Name,
-                @params?.Width?.Default ?? 600,
-                @params?.Width?.Min ?? 300,
-                @params?.Width?.Max ?? 1200,
-                @params?.Height?.Default ?? 720,
-                @params?.Height?.Min ?? 720,
-                @params?.Height?.Max ?? 720,
-                @params?.Depth?.Default ?? 560,
-                @params?.Depth?.Min ?? 500,
-                @params?.Depth?.Max ?? 600,
-                @params?.PanelThickness?.Default ?? 16,
-                @params?.BackPanelThickness?.Default ?? 4,
-                @params?.FacadeThickness?.Default ?? 18,
-                @params?.FacadeGap?.Default ?? 2,
-                0,
-                @params?.ShelfSideGap?.Default ?? 2,
-                @params?.ShelfRearInset?.Default ?? 20,
-                @params?.ShelfFrontInset?.Default ?? 10
-            );
-        }).ToList();
+            Component.Create("Панель ДСП 16мм", new PanelParams(16), ["panel", "dsp"]),
+            Component.Create("Панель задняя ДВП 4мм", new PanelParams(4), ["panel", "dvp", "back"]),
+            Component.Create("Панель фасадная МДФ 18мм", new PanelParams(18), ["panel", "mdf", "facade"]),
+            Component.Create("Петля Blum Clip Top", new GlbParams("/models/hardware/blum-clip-top.glb", 1), ["hinge", "blum"]),
+            Component.Create("Ручка IKEA 128мм", new GlbParams("/models/hardware/ikea-handle-128.glb", 1), ["handle", "ikea"]),
+            Component.Create("Ножка регулируемая", new GlbParams("/models/hardware/adjustable-leg.glb", 1), ["leg"]),
+            Component.Create("Кронштейн подвесной", new GlbParams("/models/hardware/wall-mounting-bracket.glb", 1), ["mounting", "bracket"]),
+            Component.Create("Глухая планка", new PanelParams(16), ["panel", "divider"]),
+        };
 
-        _dbContext.ModuleTypes.AddRange(entities);
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        _logger.LogInformation("Seeded {Count} module types", entities.Count);
+        _dbContext.Components.AddRange(components);
+        await _dbContext.SaveChangesAsync(ct);
+        _logger.LogInformation("Seeded {Count} components", components.Count);
     }
 
-    private async Task SeedHardwareAsync(List<HardwareSeed>? hardware, CancellationToken cancellationToken)
+    private async Task SeedAssembliesAsync(CancellationToken ct)
     {
-        if (hardware is null || !hardware.Any())
-            return;
+        if (await _dbContext.Assemblies.AnyAsync(ct)) return;
 
-        var entities = hardware.Select(h =>
+        var components = await _dbContext.Components.ToListAsync(ct);
+        var panelDsp = components.First(c => c.Name == "Панель ДСП 16мм");
+        var panelBack = components.First(c => c.Name == "Панель задняя ДВП 4мм");
+        var panelFacade = components.First(c => c.Name == "Панель фасадная МДФ 18мм");
+        var hinge = components.First(c => c.Name == "Петля Blum Clip Top");
+        var handle = components.First(c => c.Name == "Ручка IKEA 128мм");
+        var leg = components.First(c => c.Name == "Ножка регулируемая");
+        var bracket = components.First(c => c.Name == "Кронштейн подвесной");
+        var divider = components.First(c => c.Name == "Глухая планка");
+
+        var defaultPlacement = new Placement(
+            AnchorOrigin.Start, AnchorOrigin.Start, AnchorOrigin.Start,
+            0, 0, 0, 0, 0, 0);
+
+        var defaultConstruction = new Construction(16, 4, 18, 2, 0, 2, 20, 10);
+
+        // Assembly definitions: (categoryId, type, name, w, h, d, wMin, wMax, hMin, hMax, dMin, dMax)
+        var assemblyDefs = new (string cat, string type, string name,
+            double w, double h, double d,
+            double wMin, double wMax, double hMin, double hMax, double dMin, double dMax)[]
         {
-            var paramsJson = h.Params is not null
-                ? JsonSerializer.Serialize(h.Params)
-                : null;
+            ("base_single_door", "base-single-door", "Нижний однодверный", 450, 720, 560, 300, 600, 720, 720, 500, 600),
+            ("base_double_door", "base-double-door", "Нижний двудверный", 800, 720, 560, 600, 1200, 720, 720, 500, 600),
+            ("base_with_drawers", "base-with-drawers", "Нижний с ящиками", 600, 720, 560, 400, 900, 720, 720, 500, 600),
+            ("base_corner", "base-corner", "Нижний угловой L-образный", 600, 720, 900, 300, 1200, 720, 720, 800, 1000),
+            ("base_corner", "base-corner-diagonal", "Нижний угловой диагональный", 900, 720, 900, 800, 1000, 720, 720, 800, 1000),
+            ("base_corner", "base-corner-blind-left", "Нижний угловой глухой (левый)", 1000, 720, 560, 900, 1200, 720, 720, 500, 600),
+            ("base_corner", "base-corner-blind-right", "Нижний угловой глухой (правый)", 1000, 720, 560, 900, 1200, 720, 720, 500, 600),
+            ("base_for_appliance", "base-appliance", "Нижний под технику", 600, 720, 560, 450, 600, 720, 720, 550, 600),
+            ("wall_single_door", "wall-single-door", "Верхний однодверный", 450, 720, 320, 300, 600, 550, 920, 280, 350),
+            ("wall_double_door", "wall-double-door", "Верхний двудверный", 800, 720, 320, 600, 1200, 550, 920, 280, 350),
+            ("wall_open", "wall-open", "Верхний открытый", 600, 720, 320, 300, 900, 550, 720, 280, 350),
+            ("wall_corner", "wall-corner", "Верхний угловой L-образный", 600, 720, 600, 300, 1200, 550, 920, 550, 650),
+            ("wall_corner", "wall-corner-diagonal", "Верхний угловой диагональный", 600, 720, 600, 550, 650, 550, 920, 550, 650),
+            ("wall_corner", "wall-corner-blind-left", "Верхний угловой глухой (левый)", 1000, 720, 320, 900, 1200, 550, 920, 300, 400),
+            ("wall_corner", "wall-corner-blind-right", "Верхний угловой глухой (правый)", 1000, 720, 320, 900, 1200, 550, 920, 300, 400),
+            ("mezzanine_single_door", "mezzanine-single-door", "Антресоль однодверная", 600, 360, 320, 300, 900, 250, 550, 280, 350),
+            ("mezzanine_double_door", "mezzanine-double-door", "Антресоль двудверная", 800, 360, 320, 600, 1200, 250, 550, 280, 350),
+            ("tall_single_door", "tall-single-door", "Пенал однодверный", 600, 2100, 560, 400, 600, 2000, 2400, 500, 600),
+            ("tall_double_door", "tall-double-door", "Пенал двудверный", 800, 2100, 560, 600, 900, 2000, 2400, 500, 600),
+            ("tall_for_appliance", "tall-appliance-fridge", "Пенал под холодильник", 600, 2100, 560, 560, 600, 2000, 2200, 560, 560),
+            ("tall_for_appliance", "tall-appliance-oven", "Пенал под духовку", 600, 2100, 560, 560, 600, 2000, 2200, 560, 560),
+        };
 
-            return Hardware.Create(
-                h.Id,
-                h.Type,
-                h.Name,
-                h.Params?.GetValueOrDefault("brand")?.ToString(),
-                h.Params?.GetValueOrDefault("model")?.ToString(),
-                h.ModelUrl,
-                paramsJson
-            );
-        }).ToList();
+        var assemblies = new List<Assembly>();
+        var allParts = new List<AssemblyPart>();
 
-        _dbContext.Hardware.AddRange(entities);
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        _logger.LogInformation("Seeded {Count} hardware items", entities.Count);
+        foreach (var def in assemblyDefs)
+        {
+            var assembly = Assembly.Create(
+                def.cat, def.type, def.name,
+                new Dimensions(def.w, def.d, def.h),
+                new Constraints(def.wMin, def.wMax, def.hMin, def.hMax, def.dMin, def.dMax),
+                defaultConstruction);
+
+            assemblies.Add(assembly);
+
+            var sortOrder = 0;
+
+            // Left panel
+            allParts.Add(AssemblyPart.Create(assembly.Id, panelDsp.Id, PartRole.Left, defaultPlacement, sortOrder: sortOrder++));
+            // Right panel
+            allParts.Add(AssemblyPart.Create(assembly.Id, panelDsp.Id, PartRole.Right, defaultPlacement, sortOrder: sortOrder++));
+            // Top panel
+            allParts.Add(AssemblyPart.Create(assembly.Id, panelDsp.Id, PartRole.Top, defaultPlacement, sortOrder: sortOrder++));
+            // Bottom panel
+            allParts.Add(AssemblyPart.Create(assembly.Id, panelDsp.Id, PartRole.Bottom, defaultPlacement, sortOrder: sortOrder++));
+            // Back panel
+            allParts.Add(AssemblyPart.Create(assembly.Id, panelBack.Id, PartRole.Back, defaultPlacement, sortOrder: sortOrder++));
+
+            // Facade (skip open shelves)
+            if (def.type != "wall-open")
+            {
+                allParts.Add(AssemblyPart.Create(assembly.Id, panelFacade.Id, PartRole.Facade, defaultPlacement, sortOrder: sortOrder++));
+            }
+
+            // Hinges for assemblies with facades (2 per door)
+            if (def.type != "wall-open" && !def.type.Contains("appliance") && !def.type.Contains("drawers"))
+            {
+                allParts.Add(AssemblyPart.Create(assembly.Id, hinge.Id, PartRole.Hinge, defaultPlacement, quantity: 2, sortOrder: sortOrder++));
+            }
+
+            // Handle
+            if (def.type != "wall-open" && !def.type.Contains("appliance"))
+            {
+                allParts.Add(AssemblyPart.Create(assembly.Id, handle.Id, PartRole.Handle, defaultPlacement, sortOrder: sortOrder++));
+            }
+
+            // Legs for base modules
+            if (def.cat.StartsWith("base"))
+            {
+                allParts.Add(AssemblyPart.Create(assembly.Id, leg.Id, PartRole.Leg, defaultPlacement, quantity: 4, sortOrder: sortOrder++));
+            }
+
+            // Mounting brackets for wall/mezzanine
+            if (def.cat.StartsWith("wall") || def.cat.StartsWith("mezzanine"))
+            {
+                allParts.Add(AssemblyPart.Create(assembly.Id, bracket.Id, PartRole.Handle, defaultPlacement, quantity: 2, sortOrder: sortOrder++));
+            }
+
+            // Dividers for blind corner assemblies
+            if (def.type.Contains("blind"))
+            {
+                allParts.Add(AssemblyPart.Create(assembly.Id, divider.Id, PartRole.Divider, defaultPlacement, sortOrder: sortOrder++));
+            }
+
+            // Shelf for most assemblies
+            allParts.Add(AssemblyPart.Create(assembly.Id, panelDsp.Id, PartRole.Shelf, defaultPlacement, sortOrder: sortOrder));
+        }
+
+        _dbContext.Assemblies.AddRange(assemblies);
+        await _dbContext.SaveChangesAsync(ct);
+        _logger.LogInformation("Seeded {Count} assemblies", assemblies.Count);
+
+        _dbContext.AssemblyParts.AddRange(allParts);
+        await _dbContext.SaveChangesAsync(ct);
+        _logger.LogInformation("Seeded {Count} assembly parts", allParts.Count);
     }
-
-    private async Task SeedModuleHardwareAsync(List<ModuleHardwareSeed>? moduleHardware, CancellationToken cancellationToken)
-    {
-        if (moduleHardware is null || !moduleHardware.Any())
-            return;
-
-        var entities = moduleHardware.Select(mh => ModuleHardware.Create(
-            mh.Id,
-            mh.ModuleTypeId,
-            mh.HardwareId,
-            mh.Role,
-            mh.Quantity ?? "1",
-            mh.Position?.X,
-            mh.Position?.Y,
-            mh.Position?.Z
-        )).ToList();
-
-        _dbContext.ModuleHardware.AddRange(entities);
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        _logger.LogInformation("Seeded {Count} module hardware relations", entities.Count);
-    }
 }
-
-#region Seed Data Models
-
-internal sealed class SeedData
-{
-    public List<ModuleTypeSeed>? ModuleTypes { get; set; }
-    public List<HardwareSeed>? Hardware { get; set; }
-    public List<ModuleHardwareSeed>? ModuleHardware { get; set; }
-}
-
-internal sealed class ModuleTypeSeed
-{
-    public int Id { get; set; }
-    public string Type { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public string? CategoryId { get; set; }
-    public ModuleParamsSeed? Params { get; set; }
-}
-
-internal sealed class ModuleParamsSeed
-{
-    public DimensionSeed? Width { get; set; }
-    public DimensionSeed? Height { get; set; }
-    public DimensionSeed? Depth { get; set; }
-    public DefaultValueSeed? PanelThickness { get; set; }
-    public DefaultValueSeed? BackPanelThickness { get; set; }
-    public DefaultValueSeed? FacadeThickness { get; set; }
-    public DefaultValueSeed? FacadeGap { get; set; }
-    public DefaultValueSeed? ShelfSideGap { get; set; }
-    public DefaultValueSeed? ShelfRearInset { get; set; }
-    public DefaultValueSeed? ShelfFrontInset { get; set; }
-}
-
-internal sealed class DimensionSeed
-{
-    public int Default { get; set; }
-    public int Min { get; set; }
-    public int Max { get; set; }
-    public int? Step { get; set; }
-}
-
-internal sealed class DefaultValueSeed
-{
-    public int Default { get; set; }
-}
-
-internal sealed class HardwareSeed
-{
-    public int Id { get; set; }
-    public string Type { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public string? ModelUrl { get; set; }
-    public Dictionary<string, object>? Params { get; set; }
-}
-
-internal sealed class ModuleHardwareSeed
-{
-    public int Id { get; set; }
-    public int ModuleTypeId { get; set; }
-    public int HardwareId { get; set; }
-    public string Role { get; set; } = string.Empty;
-    public string? Quantity { get; set; }
-    public PositionFormulaSeed? Position { get; set; }
-}
-
-internal sealed class PositionFormulaSeed
-{
-    public string? X { get; set; }
-    public string? Y { get; set; }
-    public string? Z { get; set; }
-}
-
-#endregion

@@ -42,9 +42,9 @@ public class CabinetHardwareOverridesController : ControllerBase
     {
         var command = new CreateOverrideCommand(
             cabinetId,
-            request.ModuleHardwareId,
+            request.AssemblyPartId,
             request.IsEnabled,
-            request.HardwareId,
+            request.ComponentId,
             request.Role,
             request.QuantityFormula,
             request.PositionXFormula,
@@ -65,7 +65,7 @@ public class CabinetHardwareOverridesController : ControllerBase
         var command = new UpdateOverrideCommand(
             id,
             request.IsEnabled,
-            request.HardwareId,
+            request.ComponentId,
             request.Role,
             request.QuantityFormula,
             request.PositionXFormula,

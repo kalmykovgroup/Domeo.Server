@@ -22,6 +22,10 @@ public static class SupplierEndpoints
             .WithName("GetCategoriesTree")
             .WithSummary("Получить дерево категорий с supplierIds");
 
+        categories.MapGet("/{id}/attributes", GetCategoryAttributes)
+            .WithName("GetCategoryAttributes")
+            .WithSummary("Получить атрибуты категории");
+
         // Materials
         var materials = app.MapGroup("/api/materials")
             .WithTags("Materials");
@@ -30,9 +34,21 @@ public static class SupplierEndpoints
             .WithName("GetMaterials")
             .WithSummary("Получить список материалов");
 
+        materials.MapGet("/suggest", GetSearchSuggestions)
+            .WithName("GetSearchSuggestions")
+            .WithSummary("Поиск с подсказками по материалам, брендам, категориям и атрибутам");
+
         materials.MapGet("/{id}", GetMaterial)
             .WithName("GetMaterial")
             .WithSummary("Получить материал по ID");
+
+        // Brands
+        var brands = app.MapGroup("/api/brands")
+            .WithTags("Brands");
+
+        brands.MapGet("/", GetBrands)
+            .WithName("GetBrands")
+            .WithSummary("Получить список брендов");
 
         // Suppliers
         var suppliers = app.MapGroup("/api/suppliers")
@@ -80,9 +96,46 @@ public static class SupplierEndpoints
         return Results.Ok(new { success = true, data = tree });
     }
 
-    private static IResult GetMaterials(DataStore store, string? categoryId = null, bool activeOnly = true)
+    private static IResult GetCategoryAttributes(string id, DataStore store)
     {
-        var materials = store.GetMaterials(categoryId, activeOnly);
+        var category = store.GetCategory(id);
+        if (category == null)
+            return Results.NotFound(new { success = false, message = "Category not found" });
+
+        var attributes = store.GetCategoryAttributes(id);
+        return Results.Ok(new { success = true, data = attributes });
+    }
+
+    private static IResult GetSearchSuggestions(DataStore store, string? query = null, int limit = 10)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+            return Results.Ok(new { success = true, data = Array.Empty<object>() });
+
+        var suggestions = store.GetSearchSuggestions(query, limit);
+        return Results.Ok(new { success = true, data = suggestions });
+    }
+
+    private static IResult GetMaterials(
+        DataStore store,
+        HttpContext httpContext,
+        string? categoryId = null,
+        bool activeOnly = true,
+        string? brandId = null,
+        string? supplierId = null)
+    {
+        // Collect attribute filters from query: attr_{name}={value}
+        Dictionary<string, string>? attributes = null;
+        foreach (var param in httpContext.Request.Query)
+        {
+            if (param.Key.StartsWith("attr_", StringComparison.OrdinalIgnoreCase))
+            {
+                attributes ??= new Dictionary<string, string>();
+                var attrName = param.Key[5..]; // Remove "attr_" prefix
+                attributes[attrName] = param.Value.ToString();
+            }
+        }
+
+        var materials = store.GetMaterials(categoryId, activeOnly, brandId, supplierId, attributes);
         return Results.Ok(new { success = true, data = materials });
     }
 
@@ -93,6 +146,12 @@ public static class SupplierEndpoints
             return Results.NotFound(new { success = false, message = "Material not found" });
 
         return Results.Ok(new { success = true, data = material });
+    }
+
+    private static IResult GetBrands(DataStore store, bool activeOnly = true)
+    {
+        var brands = store.GetBrands(activeOnly);
+        return Results.Ok(new { success = true, data = brands });
     }
 
     private static IResult GetSuppliers(DataStore store, bool activeOnly = true)

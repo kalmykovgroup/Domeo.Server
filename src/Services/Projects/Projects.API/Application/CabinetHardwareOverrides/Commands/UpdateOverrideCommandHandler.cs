@@ -23,7 +23,7 @@ public sealed class UpdateOverrideCommandHandler : IRequestHandler<UpdateOverrid
 
         entity.Update(
             request.IsEnabled,
-            request.HardwareId,
+            request.ComponentId,
             request.Role,
             request.QuantityFormula,
             request.PositionXFormula,

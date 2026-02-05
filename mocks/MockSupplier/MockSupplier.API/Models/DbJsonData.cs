@@ -6,6 +6,9 @@ public class DbJsonData
     public List<DbMaterial>? Materials { get; set; }
     public List<DbSupplier>? Suppliers { get; set; }
     public List<DbSupplierMaterial>? SupplierMaterials { get; set; }
+    public List<DbBrand>? Brands { get; set; }
+    public List<DbCategoryAttribute>? CategoryAttributes { get; set; }
+    public List<DbMaterialAttribute>? MaterialAttributes { get; set; }
 }
 
 public class DbMaterialCategory
@@ -23,6 +26,7 @@ public class DbMaterial
 {
     public string Id { get; set; } = "";
     public string CategoryId { get; set; } = "";
+    public string? BrandId { get; set; }
     public string Name { get; set; } = "";
     public string? Description { get; set; }
     public string Unit { get; set; } = "sqm";
@@ -52,4 +56,29 @@ public class DbSupplierMaterial
     public bool InStock { get; set; } = true;
     public string? Sku { get; set; }
     public string? Notes { get; set; }
+}
+
+public class DbBrand
+{
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
+    public string? LogoUrl { get; set; }
+    public bool IsActive { get; set; } = true;
+}
+
+public class DbCategoryAttribute
+{
+    public string Id { get; set; } = "";
+    public string CategoryId { get; set; } = "";
+    public string Name { get; set; } = "";
+    public string Type { get; set; } = "string";
+    public string? Unit { get; set; }
+    public List<string>? EnumValues { get; set; }
+}
+
+public class DbMaterialAttribute
+{
+    public string MaterialId { get; set; } = "";
+    public string AttributeId { get; set; } = "";
+    public string Value { get; set; } = "";
 }

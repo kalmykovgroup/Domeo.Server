@@ -13,6 +13,6 @@ public sealed record UpdateCabinetCommand(
     string? Name,
     Guid? EdgeId,
     Guid? ZoneId,
-    int? ModuleTypeId,
+    Guid? AssemblyId,
     string? FacadeType,
     decimal? CalculatedPrice) : IRequest;

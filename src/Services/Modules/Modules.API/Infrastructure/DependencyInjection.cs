@@ -23,8 +23,9 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {
         services.AddScoped<IModuleCategoryRepository, ModuleCategoryRepository>();
-        services.AddScoped<IModuleTypeRepository, ModuleTypeRepository>();
-        services.AddScoped<IHardwareRepository, HardwareRepository>();
+        services.AddScoped<IAssemblyRepository, AssemblyRepository>();
+        services.AddScoped<IComponentRepository, ComponentRepository>();
+        services.AddScoped<IAssemblyPartRepository, AssemblyPartRepository>();
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ModulesDbContext>());
 
         return services;

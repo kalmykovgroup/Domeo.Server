@@ -2,7 +2,7 @@ namespace Projects.Abstractions.DTOs;
 
 public sealed record UpdateCabinetHardwareOverrideRequest(
     bool? IsEnabled = null,
-    int? HardwareId = null,
+    Guid? ComponentId = null,
     string? Role = null,
     string? QuantityFormula = null,
     string? PositionXFormula = null,

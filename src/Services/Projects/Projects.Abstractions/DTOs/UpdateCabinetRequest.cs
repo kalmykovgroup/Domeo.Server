@@ -10,6 +10,6 @@ public sealed record UpdateCabinetRequest(
     string? Name,
     Guid? EdgeId,
     Guid? ZoneId,
-    int? ModuleTypeId,
+    Guid? AssemblyId,
     string? FacadeType,
     decimal? CalculatedPrice);

@@ -27,7 +27,7 @@ public sealed class GetCabinetByIdQueryHandler : IRequestHandler<GetCabinetByIdQ
             cabinet.RoomId,
             cabinet.EdgeId,
             cabinet.ZoneId,
-            cabinet.ModuleTypeId,
+            cabinet.AssemblyId,
             cabinet.Name,
             cabinet.PlacementType,
             cabinet.FacadeType,

@@ -78,12 +78,12 @@ public static class GatewayRouteBuilder
             serviceName: ModulesRoutes.ServiceName,
             removePrefix: "/api/modules"));
 
-        // Alternative route: /api/module-types/* -> /types/*
+        // Alternative route: /api/assemblies/* -> /assemblies/*
         routes.Add(CreateRouteWithPathRewrite(
-            id: "module-types",
-            gatewayPath: ModulesRoutes.Gateway.ModuleTypes,
+            id: "assemblies",
+            gatewayPath: ModulesRoutes.Gateway.Assemblies,
             serviceName: ModulesRoutes.ServiceName,
-            targetPath: "/types"));
+            targetPath: "/assemblies"));
 
         // Alternative route: /api/module-categories/* -> /categories/*
         routes.Add(CreateRouteWithPathRewrite(
@@ -106,6 +106,13 @@ public static class GatewayRouteBuilder
             gatewayPath: MaterialsRoutes.Gateway.Suppliers,
             serviceName: MaterialsRoutes.ServiceName,
             targetPath: "/suppliers"));
+
+        // Alternative route: /api/material-categories/* -> /categories/*
+        routes.Add(CreateRouteWithPathRewrite(
+            id: "material-categories",
+            gatewayPath: MaterialsRoutes.Gateway.MaterialCategories,
+            serviceName: MaterialsRoutes.ServiceName,
+            targetPath: "/categories"));
 
         return routes.ToArray();
     }

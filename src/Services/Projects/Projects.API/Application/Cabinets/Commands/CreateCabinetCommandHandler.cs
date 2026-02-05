@@ -30,8 +30,8 @@ public sealed class CreateCabinetCommandHandler : IRequestHandler<CreateCabinetC
             cabinet.SetEdge(request.EdgeId);
         if (request.ZoneId.HasValue)
             cabinet.SetZone(request.ZoneId);
-        if (request.ModuleTypeId.HasValue)
-            cabinet.SetModuleType(request.ModuleTypeId);
+        if (request.AssemblyId.HasValue)
+            cabinet.SetAssembly(request.AssemblyId);
         if (request.FacadeType is not null)
             cabinet.SetFacadeType(request.FacadeType);
         if (request.Rotation != 0)

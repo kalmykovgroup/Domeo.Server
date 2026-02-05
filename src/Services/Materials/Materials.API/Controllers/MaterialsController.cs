@@ -1,6 +1,7 @@
 using Domeo.Shared.Contracts;
 using Materials.Abstractions.DTOs;
 using Materials.Abstractions.Queries.Materials;
+using Materials.Abstractions.Queries.Search;
 using Materials.Abstractions.Routes;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -25,9 +26,24 @@ public class MaterialsController : ControllerBase
     public async Task<ActionResult<ApiResponse<List<MaterialDto>>>> GetMaterials(
         [FromQuery] string? categoryId,
         [FromQuery] bool? activeOnly,
+        [FromQuery] string? brandId,
+        [FromQuery] string? supplierId,
         CancellationToken cancellationToken)
     {
-        var result = await _sender.Send(new GetMaterialsQuery(categoryId, activeOnly), cancellationToken);
+        // Collect attribute filters from query: attr_{name}={value}
+        Dictionary<string, string>? attributes = null;
+        foreach (var param in HttpContext.Request.Query)
+        {
+            if (param.Key.StartsWith("attr_", StringComparison.OrdinalIgnoreCase))
+            {
+                attributes ??= new Dictionary<string, string>();
+                attributes[param.Key[5..]] = param.Value.ToString();
+            }
+        }
+
+        var result = await _sender.Send(
+            new GetMaterialsQuery(categoryId, activeOnly, brandId, supplierId, attributes),
+            cancellationToken);
         return Ok(ApiResponse<List<MaterialDto>>.Ok(result));
     }
 
@@ -42,6 +58,25 @@ public class MaterialsController : ControllerBase
     {
         var result = await _sender.Send(new GetMaterialByIdQuery(id), cancellationToken);
         return Ok(ApiResponse<MaterialDto>.Ok(result));
+    }
+
+    /// <summary>
+    /// Search suggestions across materials, brands, categories and attributes
+    /// </summary>
+    [HttpGet(MaterialsRoutes.Controller.Suggest)]
+    [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
+    public async Task<ActionResult<ApiResponse<List<SearchSuggestionDto>>>> GetSearchSuggestions(
+        [FromQuery] string query,
+        [FromQuery] int? limit,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+            return Ok(ApiResponse<List<SearchSuggestionDto>>.Ok([]));
+
+        var result = await _sender.Send(
+            new GetSearchSuggestionsQuery(query, limit ?? 10),
+            cancellationToken);
+        return Ok(ApiResponse<List<SearchSuggestionDto>>.Ok(result));
     }
 
     /// <summary>

@@ -31,6 +31,8 @@ public sealed class GetMaterialByIdQueryHandler : IRequestHandler<GetMaterialByI
         var material = new MaterialDto(
             externalMaterial.Id,
             externalMaterial.CategoryId,
+            externalMaterial.BrandId,
+            externalMaterial.BrandName,
             externalMaterial.Name,
             externalMaterial.Description,
             externalMaterial.Unit,

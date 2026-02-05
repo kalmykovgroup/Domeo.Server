@@ -24,7 +24,7 @@ public sealed class GetCabinetsByRoomQueryHandler : IRequestHandler<GetCabinetsB
                 c.RoomId,
                 c.EdgeId,
                 c.ZoneId,
-                c.ModuleTypeId,
+                c.AssemblyId,
                 c.Name,
                 c.PlacementType,
                 c.FacadeType,

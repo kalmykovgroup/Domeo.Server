@@ -25,8 +25,8 @@ public sealed class GetOverrideByIdQueryHandler : IRequestHandler<GetOverrideByI
         return new CabinetHardwareOverrideDto(
             entity.Id,
             entity.CabinetId,
-            entity.ModuleHardwareId,
-            entity.HardwareId,
+            entity.AssemblyPartId,
+            entity.ComponentId,
             entity.Role,
             entity.QuantityFormula,
             entity.PositionXFormula,

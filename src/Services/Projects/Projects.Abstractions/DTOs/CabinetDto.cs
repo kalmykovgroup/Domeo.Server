@@ -5,7 +5,7 @@ public sealed record CabinetDto(
     Guid RoomId,
     Guid? EdgeId,
     Guid? ZoneId,
-    int? ModuleTypeId,
+    Guid? AssemblyId,
     string? Name,
     string PlacementType,
     string? FacadeType,

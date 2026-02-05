@@ -27,8 +27,8 @@ public sealed class GetOverridesByCabinetQueryHandler : IRequestHandler<GetOverr
             .Select(o => new CabinetHardwareOverrideDto(
                 o.Id,
                 o.CabinetId,
-                o.ModuleHardwareId,
-                o.HardwareId,
+                o.AssemblyPartId,
+                o.ComponentId,
                 o.Role,
                 o.QuantityFormula,
                 o.PositionXFormula,

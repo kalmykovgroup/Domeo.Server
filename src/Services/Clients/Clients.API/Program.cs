@@ -17,15 +17,16 @@ Log.Logger = new LoggerConfiguration()
 
 try
 {
-    Log.Information("Starting Clients.API");
-
     var builder = WebApplication.CreateBuilder(args);
+
+    Log.Information("Starting Clients.API in {Environment} mode", builder.Environment.EnvironmentName);
 
     // Serilog with Redis sink for Error/Fatal logs
     builder.Host.UseSerilog((context, services, configuration) => configuration
         .MinimumLevel.Information()
         .MinimumLevel.Override("Microsoft.AspNetCore.Routing", LogEventLevel.Warning)
         .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
+        .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Warning)
         .Enrich.FromLogContext()
         .WriteTo.Console(theme: AnsiConsoleTheme.Code)
         .WriteTo.Redis(services, serviceName: "Clients.API"));
@@ -119,18 +120,8 @@ async Task InitializeDatabaseAsync(WebApplication app)
             return;
         }
 
-        if (app.Environment.IsDevelopment())
-        {
-            Log.Information("Development mode: Recreating database...");
-            await db.Database.EnsureDeletedAsync(cts.Token);
-            await db.Database.EnsureCreatedAsync(cts.Token);
-            Log.Information("Database recreated successfully");
-        }
-        else
-        {
-            await db.Database.MigrateAsync(cts.Token);
-            Log.Information("Database migrations applied successfully");
-        }
+        await db.Database.MigrateAsync(cts.Token);
+        Log.Information("Database migrations applied successfully");
 
         stateTracker.SetDatabaseAvailable(true);
     }

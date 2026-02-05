@@ -9,10 +9,10 @@ namespace Projects.API.Entities;
 public sealed class CabinetHardwareOverride : AuditableEntity<Guid>
 {
     public Guid CabinetId { get; private set; }
-    public int ModuleHardwareId { get; private set; }
+    public Guid AssemblyPartId { get; private set; }
 
-    // Переопределения полей из module_hardware (null = использовать оригинал)
-    public int? HardwareId { get; private set; }
+    // Переопределения полей из assembly_part (null = использовать оригинал)
+    public Guid? ComponentId { get; private set; }
     public string? Role { get; private set; }
     public string? QuantityFormula { get; private set; }
     public string? PositionXFormula { get; private set; }
@@ -27,9 +27,9 @@ public sealed class CabinetHardwareOverride : AuditableEntity<Guid>
 
     public static CabinetHardwareOverride Create(
         Guid cabinetId,
-        int moduleHardwareId,
+        Guid assemblyPartId,
         bool isEnabled = true,
-        int? hardwareId = null,
+        Guid? componentId = null,
         string? role = null,
         string? quantityFormula = null,
         string? positionXFormula = null,
@@ -41,9 +41,9 @@ public sealed class CabinetHardwareOverride : AuditableEntity<Guid>
         {
             Id = Guid.NewGuid(),
             CabinetId = cabinetId,
-            ModuleHardwareId = moduleHardwareId,
+            AssemblyPartId = assemblyPartId,
             IsEnabled = isEnabled,
-            HardwareId = hardwareId,
+            ComponentId = componentId,
             Role = role,
             QuantityFormula = quantityFormula,
             PositionXFormula = positionXFormula,
@@ -55,7 +55,7 @@ public sealed class CabinetHardwareOverride : AuditableEntity<Guid>
 
     public void SetEnabled(bool isEnabled) => IsEnabled = isEnabled;
 
-    public void SetHardware(int? hardwareId) => HardwareId = hardwareId;
+    public void SetComponent(Guid? componentId) => ComponentId = componentId;
 
     public void SetRole(string? role) => Role = role;
 
@@ -72,7 +72,7 @@ public sealed class CabinetHardwareOverride : AuditableEntity<Guid>
 
     public void Update(
         bool? isEnabled,
-        int? hardwareId,
+        Guid? componentId,
         string? role,
         string? quantityFormula,
         string? positionXFormula,
@@ -82,8 +82,8 @@ public sealed class CabinetHardwareOverride : AuditableEntity<Guid>
     {
         if (isEnabled.HasValue)
             IsEnabled = isEnabled.Value;
-        if (hardwareId.HasValue)
-            HardwareId = hardwareId;
+        if (componentId.HasValue)
+            ComponentId = componentId;
         if (role != null)
             Role = role;
         if (quantityFormula != null)

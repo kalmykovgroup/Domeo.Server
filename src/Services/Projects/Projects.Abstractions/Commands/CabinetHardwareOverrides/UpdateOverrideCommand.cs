@@ -5,7 +5,7 @@ namespace Projects.Abstractions.Commands.CabinetHardwareOverrides;
 public sealed record UpdateOverrideCommand(
     Guid Id,
     bool? IsEnabled,
-    int? HardwareId,
+    Guid? ComponentId,
     string? Role,
     string? QuantityFormula,
     string? PositionXFormula,

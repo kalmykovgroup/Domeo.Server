@@ -22,16 +22,19 @@ services:
     image: postgres:17-alpine
     container_name: domeo-postgres
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER_FILE: /run/secrets/postgres_user
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
       POSTGRES_MULTIPLE_DATABASES: domeo_auth,domeo_users,domeo_projects,domeo_cabinets,domeo_catalog
     ports:
       - "${POSTGRES_EXTERNAL_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres/init-multiple-dbs.sh:/docker-entrypoint-initdb.d/init-multiple-dbs.sh
+    secrets:
+      - postgres_user
+      - postgres_password
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U domeo"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -80,3 +83,9 @@ networks:
 volumes:
   postgres_data:
   redis_data:
+
+secrets:
+  postgres_user:
+    file: ./secrets/postgres_user.txt
+  postgres_password:
+    file: ./secrets/postgres_password.txt

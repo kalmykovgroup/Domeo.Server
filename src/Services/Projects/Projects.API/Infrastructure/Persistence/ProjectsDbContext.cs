@@ -130,7 +130,7 @@ public sealed class ProjectsDbContext : DbContext, IUnitOfWork
             builder.Property(x => x.RoomId).HasColumnName("room_id").IsRequired();
             builder.Property(x => x.EdgeId).HasColumnName("edge_id");
             builder.Property(x => x.ZoneId).HasColumnName("zone_id");
-            builder.Property(x => x.ModuleTypeId).HasColumnName("module_type_id");
+            builder.Property(x => x.AssemblyId).HasColumnName("assembly_id");
             builder.Property(x => x.Name).HasColumnName("name").HasMaxLength(200);
             builder.Property(x => x.PlacementType).HasColumnName("placement_type").HasMaxLength(50).IsRequired();
             builder.Property(x => x.FacadeType).HasColumnName("facade_type").HasMaxLength(50);
@@ -168,8 +168,8 @@ public sealed class ProjectsDbContext : DbContext, IUnitOfWork
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Id).HasColumnName("id");
             builder.Property(x => x.CabinetId).HasColumnName("cabinet_id").IsRequired();
-            builder.Property(x => x.ModuleHardwareId).HasColumnName("module_hardware_id").IsRequired();
-            builder.Property(x => x.HardwareId).HasColumnName("hardware_id");
+            builder.Property(x => x.AssemblyPartId).HasColumnName("assembly_part_id").IsRequired();
+            builder.Property(x => x.ComponentId).HasColumnName("component_id");
             builder.Property(x => x.Role).HasColumnName("role").HasMaxLength(50);
             builder.Property(x => x.QuantityFormula).HasColumnName("quantity_formula").HasMaxLength(255);
             builder.Property(x => x.PositionXFormula).HasColumnName("position_x_formula").HasMaxLength(255);
@@ -181,8 +181,8 @@ public sealed class ProjectsDbContext : DbContext, IUnitOfWork
             builder.Property(x => x.UpdatedAt).HasColumnName("updated_at");
 
             builder.HasIndex(x => x.CabinetId);
-            builder.HasIndex(x => x.ModuleHardwareId);
-            builder.HasIndex(x => new { x.CabinetId, x.ModuleHardwareId }).IsUnique();
+            builder.HasIndex(x => x.AssemblyPartId);
+            builder.HasIndex(x => new { x.CabinetId, x.AssemblyPartId }).IsUnique();
         });
     }
 

@@ -7,7 +7,7 @@ public sealed class Cabinet : AuditableEntity<Guid>
     public Guid RoomId { get; private set; }
     public Guid? EdgeId { get; private set; }
     public Guid? ZoneId { get; private set; }
-    public int? ModuleTypeId { get; private set; }
+    public Guid? AssemblyId { get; private set; }
     public string? Name { get; private set; }
     public string PlacementType { get; private set; } = string.Empty;
     public string? FacadeType { get; private set; }
@@ -59,7 +59,7 @@ public sealed class Cabinet : AuditableEntity<Guid>
         Depth = depth;
     }
 
-    public void SetModuleType(int? moduleTypeId) => ModuleTypeId = moduleTypeId;
+    public void SetAssembly(Guid? assemblyId) => AssemblyId = assemblyId;
     public void SetEdge(Guid? edgeId) => EdgeId = edgeId;
     public void SetZone(Guid? zoneId) => ZoneId = zoneId;
     public void SetFacadeType(string? facadeType) => FacadeType = facadeType;

@@ -23,16 +23,16 @@ public sealed class CreateOverrideCommandHandler : IRequestHandler<CreateOverrid
             throw new NotFoundException("Cabinet", request.CabinetId);
 
         var existingOverride = await _dbContext.CabinetHardwareOverrides
-            .AnyAsync(o => o.CabinetId == request.CabinetId && o.ModuleHardwareId == request.ModuleHardwareId, cancellationToken);
+            .AnyAsync(o => o.CabinetId == request.CabinetId && o.AssemblyPartId == request.AssemblyPartId, cancellationToken);
 
         if (existingOverride)
-            throw new ConflictException($"Override for cabinet {request.CabinetId} and module_hardware {request.ModuleHardwareId} already exists");
+            throw new ConflictException($"Override for cabinet {request.CabinetId} and assembly_part {request.AssemblyPartId} already exists");
 
         var entity = CabinetHardwareOverride.Create(
             request.CabinetId,
-            request.ModuleHardwareId,
+            request.AssemblyPartId,
             request.IsEnabled,
-            request.HardwareId,
+            request.ComponentId,
             request.Role,
             request.QuantityFormula,
             request.PositionXFormula,

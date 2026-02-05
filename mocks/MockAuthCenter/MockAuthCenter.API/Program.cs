@@ -3,6 +3,8 @@ using MockAuthCenter.API.Endpoints;
 
 var builder = WebApplication.CreateBuilder(args);
 
+Console.WriteLine($"Starting MockAuthCenter.API in {builder.Environment.EnvironmentName} mode");
+
 // Services
 builder.Services.AddSingleton<RsaKeyService>();
 builder.Services.AddSingleton<UserStore>();

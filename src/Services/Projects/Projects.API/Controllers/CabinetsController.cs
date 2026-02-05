@@ -50,7 +50,7 @@ public class CabinetsController : ControllerBase
             request.Name,
             request.EdgeId,
             request.ZoneId,
-            request.ModuleTypeId,
+            request.AssemblyId,
             request.FacadeType,
             request.Rotation);
         var result = await _sender.Send(command, cancellationToken);
@@ -75,7 +75,7 @@ public class CabinetsController : ControllerBase
             request.Name,
             request.EdgeId,
             request.ZoneId,
-            request.ModuleTypeId,
+            request.AssemblyId,
             request.FacadeType,
             request.CalculatedPrice);
         await _sender.Send(command, cancellationToken);

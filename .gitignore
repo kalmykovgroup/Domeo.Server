@@ -16,6 +16,9 @@ infrastructure/secrets/*.txt
 *.userosscache
 *.sln.docstates
 
+# SQLite databases
+supplier.db
+
 # SSL certificates
 nginx/ssl/*.pem
 nginx/ssl/*.crt
