@@ -1,6 +1,6 @@
-using Audit.Abstractions.DTOs;
-using Audit.Abstractions.Queries.LoginSessions;
-using Audit.Abstractions.Repositories;
+using Audit.Contracts.DTOs.LoginSessions;
+using Audit.Application.Queries.LoginSessions;
+using Audit.Domain.Repositories;
 using Domeo.Shared.Exceptions;
 using MediatR;
 

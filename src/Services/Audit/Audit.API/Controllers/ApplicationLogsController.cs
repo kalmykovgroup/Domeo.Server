@@ -1,6 +1,6 @@
-using Audit.Abstractions.DTOs;
-using Audit.Abstractions.Queries.ApplicationLogs;
-using Audit.Abstractions.Routes;
+using Audit.Contracts.DTOs.ApplicationLogs;
+using Audit.Application.Queries.ApplicationLogs;
+using Audit.Contracts.Routes;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

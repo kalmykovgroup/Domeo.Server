@@ -5,7 +5,7 @@ using Domeo.Shared.Infrastructure.Middleware;
 using Domeo.Shared.Infrastructure.Resilience;
 using Microsoft.EntityFrameworkCore;
 using Modules.API.Infrastructure;
-using Modules.API.Infrastructure.Persistence;
+using Modules.Infrastructure.Persistence;
 using Modules.API.Services;
 using Scalar.AspNetCore;
 using Serilog;
@@ -36,7 +36,11 @@ try
     builder.Services.AddDbContext<ModulesDbContext>(options =>
         options.UseNpgsql(
             builder.Configuration.GetConnectionString("DefaultConnection"),
-            npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "modules")));
+            npgsql =>
+            {
+                npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "modules");
+                npgsql.MigrationsAssembly("Modules.API");
+            }));
 
     // Auth & Infrastructure with resilience
     builder.Services.AddAuthContracts(builder.Configuration);

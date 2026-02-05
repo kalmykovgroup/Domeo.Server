@@ -1,6 +1,6 @@
 using FluentValidation;
-using Materials.Abstractions.ExternalServices;
-using Materials.API.Infrastructure.ExternalServices;
+using Materials.Application.ExternalServices;
+using Materials.Infrastructure.ExternalServices;
 using MediatR;
 
 namespace Materials.API.Infrastructure;

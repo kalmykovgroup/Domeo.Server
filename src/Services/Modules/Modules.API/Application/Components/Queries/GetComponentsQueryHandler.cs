@@ -1,7 +1,7 @@
 using MediatR;
-using Modules.Abstractions.DTOs;
-using Modules.Abstractions.Queries.Components;
-using Modules.Abstractions.Repositories;
+using Modules.Application.Queries.Components;
+using Modules.Contracts.DTOs.Components;
+using Modules.Domain.Repositories;
 
 namespace Modules.API.Application.Components.Queries;
 

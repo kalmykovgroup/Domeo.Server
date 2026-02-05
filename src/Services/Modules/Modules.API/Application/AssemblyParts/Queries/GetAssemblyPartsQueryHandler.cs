@@ -1,8 +1,9 @@
 using MediatR;
-using Modules.Abstractions.DTOs;
-using Modules.Abstractions.Entities;
-using Modules.Abstractions.Queries.AssemblyParts;
-using Modules.Abstractions.Repositories;
+using Modules.Application.Queries.AssemblyParts;
+using Modules.Contracts.DTOs.AssemblyParts;
+using Modules.Contracts.DTOs.Components;
+using Modules.Domain.Entities;
+using Modules.Domain.Repositories;
 
 namespace Modules.API.Application.AssemblyParts.Queries;
 

@@ -1,7 +1,7 @@
 using Domeo.Shared.Exceptions;
-using Materials.Abstractions.DTOs;
-using Materials.Abstractions.ExternalServices;
-using Materials.Abstractions.Queries.Materials;
+using Materials.Contracts.DTOs;
+using Materials.Application.ExternalServices;
+using Materials.Application.Queries.Materials;
 using MediatR;
 
 namespace Materials.API.Application.Materials.Queries;

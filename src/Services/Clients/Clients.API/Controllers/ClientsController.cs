@@ -1,7 +1,7 @@
-using Clients.Abstractions.Commands;
-using Clients.Abstractions.DTOs;
-using Clients.Abstractions.Queries;
-using Clients.Abstractions.Routes;
+using Clients.Application.Commands;
+using Clients.Contracts.DTOs;
+using Clients.Application.Queries;
+using Clients.Contracts.Routes;
 using Domeo.Shared.Contracts;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;

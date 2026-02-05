@@ -1,10 +1,10 @@
 using Domeo.Shared.Contracts;
-using Modules.Abstractions.DTOs;
+using Modules.Contracts.DTOs.Components;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Modules.Abstractions.Queries.Components;
-using Modules.Abstractions.Routes;
+using Modules.Application.Queries.Components;
+using Modules.Contracts.Routes;
 
 namespace Modules.API.Controllers;
 

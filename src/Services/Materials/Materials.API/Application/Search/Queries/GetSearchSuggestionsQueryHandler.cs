@@ -1,7 +1,7 @@
 using System.Text.Json;
-using Materials.Abstractions.DTOs;
-using Materials.Abstractions.ExternalServices;
-using Materials.Abstractions.Queries.Search;
+using Materials.Contracts.DTOs;
+using Materials.Application.ExternalServices;
+using Materials.Application.Queries.Search;
 using MediatR;
 
 namespace Materials.API.Application.Search.Queries;

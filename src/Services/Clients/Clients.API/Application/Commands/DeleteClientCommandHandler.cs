@@ -1,6 +1,6 @@
 using System.Security.Claims;
-using Clients.Abstractions.Commands;
-using Clients.Abstractions.Repositories;
+using Clients.Application.Commands;
+using Clients.Domain.Repositories;
 using Domeo.Shared.Application;
 using Domeo.Shared.Exceptions;
 using MediatR;

@@ -1,5 +1,5 @@
 using Clients.API.Infrastructure;
-using Clients.API.Infrastructure.Persistence;
+using Clients.Infrastructure.Persistence;
 using Auth.Contracts;
 using Domeo.Shared.Infrastructure;
 using Domeo.Shared.Infrastructure.Logging;
@@ -35,7 +35,11 @@ try
     builder.Services.AddDbContext<ClientsDbContext>(options =>
         options.UseNpgsql(
             builder.Configuration.GetConnectionString("DefaultConnection"),
-            npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "clients")));
+            npgsql =>
+            {
+                npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "clients");
+                npgsql.MigrationsAssembly("Clients.API");
+            }));
 
     // Auth & Infrastructure with resilience
     builder.Services.AddAuthContracts(builder.Configuration);

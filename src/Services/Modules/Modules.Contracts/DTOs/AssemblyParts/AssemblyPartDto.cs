@@ -1,0 +1,17 @@
+using Modules.Contracts.DTOs.Components;
+using Modules.Domain.Entities.Shared;
+
+namespace Modules.Contracts.DTOs.AssemblyParts;
+
+public sealed record AssemblyPartDto(
+    Guid Id,
+    Guid AssemblyId,
+    Guid ComponentId,
+    string Role,
+    DynamicSize? Length,
+    DynamicSize? Width,
+    Placement Placement,
+    int Quantity,
+    string? QuantityFormula,
+    int SortOrder,
+    ComponentDto? Component);

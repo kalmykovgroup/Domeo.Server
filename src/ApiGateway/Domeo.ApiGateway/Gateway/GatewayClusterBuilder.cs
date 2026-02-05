@@ -1,8 +1,8 @@
 using Auth.Contracts.Routes;
-using Audit.Abstractions.Routes;
-using Clients.Abstractions.Routes;
-using Materials.Abstractions.Routes;
-using Modules.Abstractions.Routes;
+using Audit.Contracts.Routes;
+using Clients.Contracts.Routes;
+using Materials.Contracts.Routes;
+using Modules.Contracts.Routes;
 using Projects.Contracts.Routes;
 using Yarp.ReverseProxy.Configuration;
 

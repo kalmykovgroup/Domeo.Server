@@ -1,7 +1,7 @@
-using Audit.Abstractions.Commands;
-using Audit.Abstractions.DTOs;
-using Audit.Abstractions.Entities;
-using Audit.Abstractions.Repositories;
+using Audit.Application.Commands;
+using Audit.Contracts.DTOs.LoginSessions;
+using Audit.Domain.Entities;
+using Audit.Domain.Repositories;
 using Domeo.Shared.Application;
 using MediatR;
 

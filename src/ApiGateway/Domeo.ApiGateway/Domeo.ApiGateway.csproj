@@ -13,11 +13,11 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Services\Auth\Auth.Contracts\Auth.Contracts.csproj" />
     <ProjectReference Include="..\..\Shared\Domeo.Shared\Domeo.Shared.csproj" />
-    <ProjectReference Include="..\..\Services\Clients\Clients.Abstractions\Clients.Abstractions.csproj" />
-    <ProjectReference Include="..\..\Services\Audit\Audit.Abstractions\Audit.Abstractions.csproj" />
+    <ProjectReference Include="..\..\Services\Clients\Clients.Contracts\Clients.Contracts.csproj" />
+    <ProjectReference Include="..\..\Services\Audit\Audit.Contracts\Audit.Contracts.csproj" />
     <ProjectReference Include="..\..\Services\Projects\Projects.Contracts\Projects.Contracts.csproj" />
-    <ProjectReference Include="..\..\Services\Modules\Modules.Abstractions\Modules.Abstractions.csproj" />
-    <ProjectReference Include="..\..\Services\Materials\Materials.Abstractions\Materials.Abstractions.csproj" />
+    <ProjectReference Include="..\..\Services\Modules\Modules.Contracts\Modules.Contracts.csproj" />
+    <ProjectReference Include="..\..\Services\Materials\Materials.Contracts\Materials.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

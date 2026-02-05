@@ -1,6 +1,6 @@
 using MediatR;
-using Modules.Abstractions.Queries.Assemblies;
-using Modules.Abstractions.Repositories;
+using Modules.Application.Queries.Assemblies;
+using Modules.Domain.Repositories;
 
 namespace Modules.API.Application.Assemblies.Queries;
 

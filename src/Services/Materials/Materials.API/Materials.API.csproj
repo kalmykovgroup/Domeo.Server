@@ -12,7 +12,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Auth\Auth.Contracts\Auth.Contracts.csproj" />
     <ProjectReference Include="..\..\..\Shared\Domeo.Shared\Domeo.Shared.csproj" />
-    <ProjectReference Include="..\Materials.Abstractions\Materials.Abstractions.csproj" />
+    <ProjectReference Include="..\Materials.Contracts\Materials.Contracts.csproj" />
+    <ProjectReference Include="..\Materials.Infrastructure\Materials.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

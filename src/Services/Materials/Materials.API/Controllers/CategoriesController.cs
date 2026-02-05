@@ -1,7 +1,7 @@
 using Domeo.Shared.Contracts;
-using Materials.Abstractions.DTOs;
-using Materials.Abstractions.Queries.Categories;
-using Materials.Abstractions.Routes;
+using Materials.Contracts.DTOs;
+using Materials.Application.Queries.Categories;
+using Materials.Contracts.Routes;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

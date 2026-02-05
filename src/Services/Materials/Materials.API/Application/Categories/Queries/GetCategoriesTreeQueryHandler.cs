@@ -1,6 +1,6 @@
-using Materials.Abstractions.DTOs;
-using Materials.Abstractions.ExternalServices;
-using Materials.Abstractions.Queries.Categories;
+using Materials.Contracts.DTOs;
+using Materials.Application.ExternalServices;
+using Materials.Application.Queries.Categories;
 using MediatR;
 
 namespace Materials.API.Application.Categories.Queries;

@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using Modules.Abstractions.Entities;
-using Modules.Abstractions.Entities.Shared;
-using Modules.API.Infrastructure.Persistence;
+using Modules.Domain.Entities;
+using Modules.Domain.Entities.Shared;
+using Modules.Infrastructure.Persistence;
 
 namespace Modules.API.Services;
 

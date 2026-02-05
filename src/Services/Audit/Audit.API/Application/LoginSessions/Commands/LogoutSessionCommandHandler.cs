@@ -1,5 +1,5 @@
-using Audit.Abstractions.Commands;
-using Audit.Abstractions.Repositories;
+using Audit.Application.Commands;
+using Audit.Domain.Repositories;
 using Domeo.Shared.Application;
 using Domeo.Shared.Exceptions;
 using MediatR;

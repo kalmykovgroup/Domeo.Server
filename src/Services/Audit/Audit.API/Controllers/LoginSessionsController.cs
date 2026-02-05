@@ -1,7 +1,7 @@
-using Audit.Abstractions.Commands;
-using Audit.Abstractions.DTOs;
-using Audit.Abstractions.Queries.LoginSessions;
-using Audit.Abstractions.Routes;
+using Audit.Application.Commands;
+using Audit.Contracts.DTOs.LoginSessions;
+using Audit.Application.Queries.LoginSessions;
+using Audit.Contracts.Routes;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,9 +17,6 @@ public class LoginSessionsController : ControllerBase
 
     public LoginSessionsController(ISender sender) => _sender = sender;
 
-    /// <summary>
-    /// Internal API - called by Auth.API
-    /// </summary>
     [HttpPost]
     [Authorize(Policy = "InternalApi")]
     public async Task<ActionResult<LoginSessionDto>> CreateLoginSession([FromBody] CreateLoginSessionRequest request)
@@ -33,9 +30,6 @@ public class LoginSessionsController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Internal API - called by Auth.API
-    /// </summary>
     [HttpPut(AuditRoutes.Controller.Logout)]
     [Authorize(Policy = "InternalApi")]
     public async Task<IActionResult> LogoutSession(Guid id)

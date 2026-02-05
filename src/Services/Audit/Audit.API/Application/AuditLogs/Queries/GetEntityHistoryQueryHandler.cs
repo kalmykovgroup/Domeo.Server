@@ -1,6 +1,6 @@
-using Audit.Abstractions.DTOs;
-using Audit.Abstractions.Queries.AuditLogs;
-using Audit.Abstractions.Repositories;
+using Audit.Contracts.DTOs.AuditLogs;
+using Audit.Application.Queries.AuditLogs;
+using Audit.Domain.Repositories;
 using Domeo.Shared.Contracts;
 using MediatR;
 

@@ -1,5 +1,5 @@
-using Audit.Abstractions.Queries.ApplicationLogs;
-using Audit.API.Infrastructure.Persistence;
+using Audit.Application.Queries.ApplicationLogs;
+using Audit.Infrastructure.Persistence;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 

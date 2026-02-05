@@ -1,7 +1,7 @@
 using System.Security.Claims;
-using Clients.Abstractions.DTOs;
-using Clients.Abstractions.Queries;
-using Clients.Abstractions.Repositories;
+using Clients.Contracts.DTOs;
+using Clients.Application.Queries;
+using Clients.Domain.Repositories;
 using Domeo.Shared.Exceptions;
 using MediatR;
 using Microsoft.AspNetCore.Http;
