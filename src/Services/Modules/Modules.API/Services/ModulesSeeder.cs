@@ -77,10 +77,10 @@ public sealed class ModulesSeeder
             Component.Create("Панель ДСП 16мм", new PanelParams(16), ["panel", "dsp"]),
             Component.Create("Панель задняя ДВП 4мм", new PanelParams(4), ["panel", "dvp", "back"]),
             Component.Create("Панель фасадная МДФ 18мм", new PanelParams(18), ["panel", "mdf", "facade"]),
-            Component.Create("Петля Blum Clip Top", new GlbParams("/models/hardware/blum-clip-top.glb", 1), ["hinge", "blum"]),
-            Component.Create("Ручка IKEA 128мм", new GlbParams("/models/hardware/ikea-handle-128.glb", 1), ["handle", "ikea"]),
-            Component.Create("Ножка регулируемая", new GlbParams("/models/hardware/adjustable-leg.glb", 1), ["leg"]),
-            Component.Create("Кронштейн подвесной", new GlbParams("/models/hardware/wall-mounting-bracket.glb", 1), ["mounting", "bracket"]),
+            Component.Create("Петля", tags: ["hinge"]),
+            Component.Create("Ручка", tags: ["handle"]),
+            Component.Create("Ножка регулируемая", tags: ["leg"]),
+            Component.Create("Кронштейн подвесной", tags: ["mounting", "bracket"]),
             Component.Create("Глухая планка", new PanelParams(16), ["panel", "divider"]),
         };
 
@@ -97,8 +97,8 @@ public sealed class ModulesSeeder
         var panelDsp = components.First(c => c.Name == "Панель ДСП 16мм");
         var panelBack = components.First(c => c.Name == "Панель задняя ДВП 4мм");
         var panelFacade = components.First(c => c.Name == "Панель фасадная МДФ 18мм");
-        var hinge = components.First(c => c.Name == "Петля Blum Clip Top");
-        var handle = components.First(c => c.Name == "Ручка IKEA 128мм");
+        var hinge = components.First(c => c.Name == "Петля");
+        var handle = components.First(c => c.Name == "Ручка");
         var leg = components.First(c => c.Name == "Ножка регулируемая");
         var bracket = components.First(c => c.Name == "Кронштейн подвесной");
         var divider = components.First(c => c.Name == "Глухая планка");
