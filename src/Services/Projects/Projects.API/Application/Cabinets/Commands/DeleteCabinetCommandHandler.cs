@@ -1,7 +1,7 @@
 using Domeo.Shared.Exceptions;
 using MediatR;
-using Projects.Abstractions.Commands.Cabinets;
-using Projects.API.Infrastructure.Persistence;
+using Projects.Application.Commands.Cabinets;
+using Projects.Infrastructure.Persistence;
 
 namespace Projects.API.Application.Cabinets.Commands;
 

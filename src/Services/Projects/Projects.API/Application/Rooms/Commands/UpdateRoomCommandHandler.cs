@@ -1,8 +1,8 @@
 using Domeo.Shared.Exceptions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Projects.Abstractions.Commands.Rooms;
-using Projects.API.Infrastructure.Persistence;
+using Projects.Application.Commands.Rooms;
+using Projects.Infrastructure.Persistence;
 
 namespace Projects.API.Application.Rooms.Commands;
 

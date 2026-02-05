@@ -1,7 +1,7 @@
 using MediatR;
-using Projects.Abstractions.Commands.Rooms;
-using Projects.API.Entities;
-using Projects.API.Infrastructure.Persistence;
+using Projects.Application.Commands.Rooms;
+using Projects.Domain.Entities;
+using Projects.Infrastructure.Persistence;
 
 namespace Projects.API.Application.Rooms.Commands;
 

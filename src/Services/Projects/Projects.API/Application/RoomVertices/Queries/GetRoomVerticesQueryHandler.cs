@@ -1,8 +1,8 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Projects.Abstractions.Commands.RoomVertices;
-using Projects.Abstractions.DTOs;
-using Projects.API.Infrastructure.Persistence;
+using Projects.Application.Commands.RoomVertices;
+using Projects.Contracts.DTOs.RoomVertices;
+using Projects.Infrastructure.Persistence;
 
 namespace Projects.API.Application.RoomVertices.Queries;
 

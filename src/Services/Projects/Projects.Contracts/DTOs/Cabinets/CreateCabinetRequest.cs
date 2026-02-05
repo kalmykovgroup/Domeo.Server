@@ -1,0 +1,16 @@
+namespace Projects.Contracts.DTOs.Cabinets;
+
+public sealed record CreateCabinetRequest(
+    Guid RoomId,
+    string PlacementType,
+    double PositionX,
+    double PositionY,
+    double Width,
+    double Height,
+    double Depth,
+    string? Name,
+    Guid? EdgeId,
+    Guid? ZoneId,
+    Guid? AssemblyId,
+    string? FacadeType,
+    double Rotation = 0);

@@ -2,12 +2,10 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="MediatR" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
     <PackageReference Include="Scalar.AspNetCore" />
@@ -17,7 +15,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Projects.Abstractions\Projects.Abstractions.csproj" />
+    <ProjectReference Include="..\Projects.Contracts\Projects.Contracts.csproj" />
+    <ProjectReference Include="..\Projects.Infrastructure\Projects.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Auth\Auth.Contracts\Auth.Contracts.csproj" />
     <ProjectReference Include="..\..\..\Shared\Domeo.Shared\Domeo.Shared.csproj" />
   </ItemGroup>

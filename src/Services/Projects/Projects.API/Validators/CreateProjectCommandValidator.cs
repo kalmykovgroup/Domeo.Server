@@ -1,5 +1,5 @@
 using FluentValidation;
-using Projects.Abstractions.Commands.Projects;
+using Projects.Application.Commands.Projects;
 
 namespace Projects.API.Validators;
 

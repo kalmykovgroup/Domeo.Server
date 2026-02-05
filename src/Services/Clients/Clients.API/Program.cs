@@ -34,7 +34,7 @@ try
     // Database
     builder.Services.AddDbContext<ClientsDbContext>(options =>
         options.UseNpgsql(
-            builder.Configuration.GetConnectionString("ClientsDb"),
+            builder.Configuration.GetConnectionString("DefaultConnection"),
             npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "clients")));
 
     // Auth & Infrastructure with resilience

@@ -3,10 +3,10 @@ using Domeo.Shared.Contracts;
 using Domeo.Shared.Exceptions;
 using MediatR;
 using Microsoft.AspNetCore.Http;
-using Projects.Abstractions.Commands.Projects;
-using Projects.Abstractions.Entities;
-using Projects.Abstractions.Repositories;
-using ProjectDto = Projects.Abstractions.DTOs.ProjectDto;
+using Projects.Application.Commands.Projects;
+using Projects.Domain.Entities;
+using Projects.Domain.Repositories;
+using ProjectDto = Projects.Contracts.DTOs.Projects.ProjectDto;
 
 namespace Projects.API.Application.Projects.Queries;
 

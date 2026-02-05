@@ -1,8 +1,8 @@
 using Domeo.Shared.Exceptions;
 using MediatR;
-using Projects.Abstractions.Commands.Projects;
-using Projects.Abstractions.DTOs;
-using Projects.Abstractions.Repositories;
+using Projects.Application.Commands.Projects;
+using Projects.Contracts.DTOs.Projects;
+using Projects.Domain.Repositories;
 
 namespace Projects.API.Application.Projects.Queries;
 

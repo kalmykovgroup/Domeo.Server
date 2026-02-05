@@ -1,8 +1,8 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Projects.Abstractions.Commands.RoomEdges;
-using Projects.Abstractions.DTOs;
-using Projects.API.Infrastructure.Persistence;
+using Projects.Application.Commands.RoomEdges;
+using Projects.Contracts.DTOs.RoomEdges;
+using Projects.Infrastructure.Persistence;
 
 namespace Projects.API.Application.RoomEdges.Queries;
 

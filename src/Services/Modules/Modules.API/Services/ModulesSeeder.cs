@@ -63,14 +63,9 @@ public sealed class ModulesSeeder
 
         var components = new List<Component>
         {
-            Component.Create("Панель ДСП 16мм", new PanelParams(16), ["panel", "dsp"]),
-            Component.Create("Панель задняя ДВП 4мм", new PanelParams(4), ["panel", "dvp", "back"]),
-            Component.Create("Панель фасадная МДФ 18мм", new PanelParams(18), ["panel", "mdf", "facade"]),
-            Component.Create("Петля", tags: ["hinge"]),
-            Component.Create("Ручка", tags: ["handle"]),
-            Component.Create("Ножка регулируемая", tags: ["leg"]),
-            Component.Create("Кронштейн подвесной", tags: ["mounting", "bracket"]),
-            Component.Create("Глухая планка", new PanelParams(16), ["panel", "divider"]),
+            Component.Create("Стенка", new PanelParams(16), ["panel", "wall"]),
+            Component.Create("Задняя стенка", new PanelParams(4), ["panel", "back"]),
+            Component.Create("Полка", new PanelParams(16), ["panel", "shelf"]),
         };
 
         _dbContext.Components.AddRange(components);
@@ -83,14 +78,9 @@ public sealed class ModulesSeeder
         if (await _dbContext.Assemblies.AnyAsync(ct)) return;
 
         var components = await _dbContext.Components.ToListAsync(ct);
-        var panelDsp = components.First(c => c.Name == "Панель ДСП 16мм");
-        var panelBack = components.First(c => c.Name == "Панель задняя ДВП 4мм");
-        var panelFacade = components.First(c => c.Name == "Панель фасадная МДФ 18мм");
-        var hinge = components.First(c => c.Name == "Петля");
-        var handle = components.First(c => c.Name == "Ручка");
-        var leg = components.First(c => c.Name == "Ножка регулируемая");
-        var bracket = components.First(c => c.Name == "Кронштейн подвесной");
-        var divider = components.First(c => c.Name == "Глухая планка");
+        var wall = components.First(c => c.Name == "Стенка");
+        var back = components.First(c => c.Name == "Задняя стенка");
+        var shelf = components.First(c => c.Name == "Полка");
 
         var defaultPlacement = new Placement(
             AnchorOrigin.Start, AnchorOrigin.Start, AnchorOrigin.Start,
@@ -140,48 +130,12 @@ public sealed class ModulesSeeder
 
             assemblies.Add(assembly);
 
-            var sortOrder = 0;
-
-            // Left panel
-            allParts.Add(AssemblyPart.Create(assembly.Id, panelDsp.Id, PartRole.Left, defaultPlacement, sortOrder: sortOrder++));
-            // Right panel
-            allParts.Add(AssemblyPart.Create(assembly.Id, panelDsp.Id, PartRole.Right, defaultPlacement, sortOrder: sortOrder++));
-            // Top panel
-            allParts.Add(AssemblyPart.Create(assembly.Id, panelDsp.Id, PartRole.Top, defaultPlacement, sortOrder: sortOrder++));
-            // Bottom panel
-            allParts.Add(AssemblyPart.Create(assembly.Id, panelDsp.Id, PartRole.Bottom, defaultPlacement, sortOrder: sortOrder++));
-            // Back panel
-            allParts.Add(AssemblyPart.Create(assembly.Id, panelBack.Id, PartRole.Back, defaultPlacement, sortOrder: sortOrder++));
-
-            // Facade
-            allParts.Add(AssemblyPart.Create(assembly.Id, panelFacade.Id, PartRole.Facade, defaultPlacement, sortOrder: sortOrder++));
-
-            // Hinges (2 per door)
-            allParts.Add(AssemblyPart.Create(assembly.Id, hinge.Id, PartRole.Hinge, defaultPlacement, quantity: 2, sortOrder: sortOrder++));
-
-            // Handle
-            allParts.Add(AssemblyPart.Create(assembly.Id, handle.Id, PartRole.Handle, defaultPlacement, sortOrder: sortOrder++));
-
-            // Legs for base modules
-            if (def.cat.StartsWith("base"))
-            {
-                allParts.Add(AssemblyPart.Create(assembly.Id, leg.Id, PartRole.Leg, defaultPlacement, quantity: 4, sortOrder: sortOrder++));
-            }
-
-            // Mounting brackets for wall/mezzanine
-            if (def.cat.StartsWith("wall") || def.cat.StartsWith("mezzanine"))
-            {
-                allParts.Add(AssemblyPart.Create(assembly.Id, bracket.Id, PartRole.Handle, defaultPlacement, quantity: 2, sortOrder: sortOrder++));
-            }
-
-            // Dividers for straight corner assemblies
-            if (def.type.Contains("straight"))
-            {
-                allParts.Add(AssemblyPart.Create(assembly.Id, divider.Id, PartRole.Divider, defaultPlacement, sortOrder: sortOrder++));
-            }
-
-            // Shelf for most assemblies
-            allParts.Add(AssemblyPart.Create(assembly.Id, panelDsp.Id, PartRole.Shelf, defaultPlacement, sortOrder: sortOrder));
+            allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, PartRole.Left, defaultPlacement, sortOrder: 0));
+            allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, PartRole.Right, defaultPlacement, sortOrder: 1));
+            allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, PartRole.Top, defaultPlacement, sortOrder: 2));
+            allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, PartRole.Bottom, defaultPlacement, sortOrder: 3));
+            allParts.Add(AssemblyPart.Create(assembly.Id, back.Id, PartRole.Back, defaultPlacement, sortOrder: 4));
+            allParts.Add(AssemblyPart.Create(assembly.Id, shelf.Id, PartRole.Shelf, defaultPlacement, sortOrder: 5));
         }
 
         _dbContext.Assemblies.AddRange(assemblies);

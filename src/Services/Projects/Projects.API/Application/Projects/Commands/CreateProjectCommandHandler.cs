@@ -3,9 +3,9 @@ using Domeo.Shared.Application;
 using Domeo.Shared.Exceptions;
 using MediatR;
 using Microsoft.AspNetCore.Http;
-using Projects.Abstractions.Commands.Projects;
-using Projects.Abstractions.Entities;
-using Projects.Abstractions.Repositories;
+using Projects.Application.Commands.Projects;
+using Projects.Domain.Entities;
+using Projects.Domain.Repositories;
 
 namespace Projects.API.Application.Projects.Commands;
 

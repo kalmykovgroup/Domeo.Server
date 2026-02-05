@@ -1,7 +1,7 @@
 using MediatR;
-using Projects.Abstractions.Commands.Cabinets;
-using Projects.API.Entities;
-using Projects.API.Infrastructure.Persistence;
+using Projects.Application.Commands.Cabinets;
+using Projects.Domain.Entities;
+using Projects.Infrastructure.Persistence;
 
 namespace Projects.API.Application.Cabinets.Commands;
 

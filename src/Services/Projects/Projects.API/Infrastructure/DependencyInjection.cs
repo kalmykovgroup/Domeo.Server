@@ -1,9 +1,9 @@
 using Domeo.Shared.Application;
 using FluentValidation;
 using MediatR;
-using Projects.Abstractions.Repositories;
-using Projects.API.Infrastructure.Persistence;
-using Projects.API.Infrastructure.Persistence.Repositories;
+using Projects.Domain.Repositories;
+using Projects.Infrastructure.Persistence;
+using Projects.Infrastructure.Persistence.Repositories;
 
 namespace Projects.API.Infrastructure;
 

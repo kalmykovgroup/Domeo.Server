@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\Domeo.Shared\Domeo.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

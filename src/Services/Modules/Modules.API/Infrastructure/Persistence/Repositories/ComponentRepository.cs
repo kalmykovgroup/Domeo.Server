@@ -20,6 +20,9 @@ public sealed class ComponentRepository : IComponentRepository
     public void Update(Component entity) => _dbContext.Components.Update(entity);
     public void Remove(Component entity) => _dbContext.Components.Remove(entity);
 
+    public async Task<List<Component>> GetByIdsAsync(List<Guid> ids, CancellationToken ct = default)
+        => await _dbContext.Components.Where(c => ids.Contains(c.Id)).ToListAsync(ct);
+
     public async Task<List<Component>> GetComponentsAsync(string? tag, bool? activeOnly, CancellationToken ct = default)
     {
         var query = _dbContext.Components.AsQueryable();

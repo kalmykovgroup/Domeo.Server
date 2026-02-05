@@ -1,9 +1,9 @@
 using Domeo.Shared.Exceptions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Projects.Abstractions.Commands.CabinetHardwareOverrides;
-using Projects.API.Entities;
-using Projects.API.Infrastructure.Persistence;
+using Projects.Application.Commands.CabinetHardwareOverrides;
+using Projects.Domain.Entities;
+using Projects.Infrastructure.Persistence;
 
 namespace Projects.API.Application.CabinetHardwareOverrides.Commands;
 

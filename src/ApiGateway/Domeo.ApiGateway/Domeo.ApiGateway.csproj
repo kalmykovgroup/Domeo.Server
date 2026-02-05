@@ -15,7 +15,7 @@
     <ProjectReference Include="..\..\Shared\Domeo.Shared\Domeo.Shared.csproj" />
     <ProjectReference Include="..\..\Services\Clients\Clients.Abstractions\Clients.Abstractions.csproj" />
     <ProjectReference Include="..\..\Services\Audit\Audit.Abstractions\Audit.Abstractions.csproj" />
-    <ProjectReference Include="..\..\Services\Projects\Projects.Abstractions\Projects.Abstractions.csproj" />
+    <ProjectReference Include="..\..\Services\Projects\Projects.Contracts\Projects.Contracts.csproj" />
     <ProjectReference Include="..\..\Services\Modules\Modules.Abstractions\Modules.Abstractions.csproj" />
     <ProjectReference Include="..\..\Services\Materials\Materials.Abstractions\Materials.Abstractions.csproj" />
   </ItemGroup>

@@ -35,7 +35,7 @@ try
     // Database
     builder.Services.AddDbContext<ModulesDbContext>(options =>
         options.UseNpgsql(
-            builder.Configuration.GetConnectionString("ModulesDb"),
+            builder.Configuration.GetConnectionString("DefaultConnection"),
             npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "modules")));
 
     // Auth & Infrastructure with resilience

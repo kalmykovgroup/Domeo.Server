@@ -12,4 +12,5 @@ public sealed record AssemblyPartDto(
     Placement Placement,
     int Quantity,
     string? QuantityFormula,
-    int SortOrder);
+    int SortOrder,
+    ComponentDto? Component);

@@ -3,7 +3,7 @@ using Audit.Abstractions.Routes;
 using Clients.Abstractions.Routes;
 using Materials.Abstractions.Routes;
 using Modules.Abstractions.Routes;
-using Projects.Abstractions.Routes;
+using Projects.Contracts.Routes;
 using Yarp.ReverseProxy.Configuration;
 
 namespace Domeo.ApiGateway.Gateway;

@@ -1,8 +1,8 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Projects.Abstractions.Commands.Rooms;
-using Projects.Abstractions.DTOs;
-using Projects.API.Infrastructure.Persistence;
+using Projects.Application.Commands.Rooms;
+using Projects.Contracts.DTOs.Rooms;
+using Projects.Infrastructure.Persistence;
 
 namespace Projects.API.Application.Rooms.Queries;
 

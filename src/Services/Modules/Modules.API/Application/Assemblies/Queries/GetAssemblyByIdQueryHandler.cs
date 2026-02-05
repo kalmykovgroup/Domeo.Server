@@ -11,13 +11,16 @@ public sealed class GetAssemblyByIdQueryHandler : IRequestHandler<GetAssemblyByI
 {
     private readonly IAssemblyRepository _assemblyRepository;
     private readonly IAssemblyPartRepository _partRepository;
+    private readonly IComponentRepository _componentRepository;
 
     public GetAssemblyByIdQueryHandler(
         IAssemblyRepository assemblyRepository,
-        IAssemblyPartRepository partRepository)
+        IAssemblyPartRepository partRepository,
+        IComponentRepository componentRepository)
     {
         _assemblyRepository = assemblyRepository;
         _partRepository = partRepository;
+        _componentRepository = componentRepository;
     }
 
     public async Task<AssemblyDetailDto> Handle(
@@ -30,6 +33,10 @@ public sealed class GetAssemblyByIdQueryHandler : IRequestHandler<GetAssemblyByI
 
         var parts = await _partRepository.GetByAssemblyIdAsync(request.Id, cancellationToken);
 
+        var componentIds = parts.Select(p => p.ComponentId).Distinct().ToList();
+        var components = await _componentRepository.GetByIdsAsync(componentIds, cancellationToken);
+        var componentMap = components.ToDictionary(c => c.Id);
+
         return new AssemblyDetailDto(
             assembly.Id,
             assembly.CategoryId,
@@ -40,10 +47,10 @@ public sealed class GetAssemblyByIdQueryHandler : IRequestHandler<GetAssemblyByI
             assembly.Construction,
             assembly.IsActive,
             assembly.CreatedAt,
-            parts.Select(ToPartDto).ToList());
+            parts.Select(p => ToPartDto(p, componentMap)).ToList());
     }
 
-    private static AssemblyPartDto ToPartDto(AssemblyPart p) => new(
+    private static AssemblyPartDto ToPartDto(AssemblyPart p, Dictionary<Guid, Component> componentMap) => new(
         p.Id,
         p.AssemblyId,
         p.ComponentId,
@@ -53,5 +60,8 @@ public sealed class GetAssemblyByIdQueryHandler : IRequestHandler<GetAssemblyByI
         p.Placement,
         p.Quantity,
         p.QuantityFormula,
-        p.SortOrder);
+        p.SortOrder,
+        componentMap.TryGetValue(p.ComponentId, out var c)
+            ? new ComponentDto(c.Id, c.Name, c.Tags, c.Params, c.IsActive, c.CreatedAt)
+            : null);
 }

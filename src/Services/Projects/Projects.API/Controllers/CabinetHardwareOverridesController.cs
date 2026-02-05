@@ -2,9 +2,9 @@ using Domeo.Shared.Contracts;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Projects.Abstractions.Commands.CabinetHardwareOverrides;
-using Projects.Abstractions.DTOs;
-using Projects.Abstractions.Routes;
+using Projects.Application.Commands.CabinetHardwareOverrides;
+using Projects.Contracts.DTOs.CabinetHardwareOverrides;
+using Projects.Contracts.Routes;
 
 namespace Projects.API.Controllers;
 

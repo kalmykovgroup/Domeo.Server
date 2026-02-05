@@ -35,7 +35,7 @@ try
     // Database
     builder.Services.AddDbContext<AuditDbContext>(options =>
         options.UseNpgsql(
-            builder.Configuration.GetConnectionString("AuditDb"),
+            builder.Configuration.GetConnectionString("DefaultConnection"),
             npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "audit")));
 
     // Auth & Infrastructure with resilience

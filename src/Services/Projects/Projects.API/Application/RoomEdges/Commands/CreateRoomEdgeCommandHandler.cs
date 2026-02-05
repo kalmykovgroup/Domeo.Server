@@ -1,7 +1,7 @@
 using MediatR;
-using Projects.Abstractions.Commands.RoomEdges;
-using Projects.API.Entities;
-using Projects.API.Infrastructure.Persistence;
+using Projects.Application.Commands.RoomEdges;
+using Projects.Domain.Entities;
+using Projects.Infrastructure.Persistence;
 
 namespace Projects.API.Application.RoomEdges.Commands;
 

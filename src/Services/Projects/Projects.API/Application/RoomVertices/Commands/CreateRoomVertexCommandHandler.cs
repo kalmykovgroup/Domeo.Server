@@ -1,7 +1,7 @@
 using MediatR;
-using Projects.Abstractions.Commands.RoomVertices;
-using Projects.API.Entities;
-using Projects.API.Infrastructure.Persistence;
+using Projects.Application.Commands.RoomVertices;
+using Projects.Domain.Entities;
+using Projects.Infrastructure.Persistence;
 
 namespace Projects.API.Application.RoomVertices.Commands;
 

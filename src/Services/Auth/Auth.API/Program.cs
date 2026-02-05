@@ -36,7 +36,7 @@ try
     // Database
     builder.Services.AddDbContext<AuthDbContext>(options =>
         options.UseNpgsql(
-            builder.Configuration.GetConnectionString("AuthDb"),
+            builder.Configuration.GetConnectionString("DefaultConnection"),
             npgsql =>
             {
                 npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "auth");

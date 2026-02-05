@@ -57,6 +57,7 @@ public sealed class ModulesDbContext : DbContext, IUnitOfWork
             builder.Property(x => x.IsActive).HasColumnName("is_active").IsRequired().HasDefaultValue(true);
 
             builder.HasIndex(x => x.ParentId);
+            builder.HasOne<ModuleCategory>().WithMany().HasForeignKey(x => x.ParentId).OnDelete(DeleteBehavior.SetNull);
         });
 
         // Assembly
@@ -89,6 +90,7 @@ public sealed class ModulesDbContext : DbContext, IUnitOfWork
             builder.HasIndex(x => x.Type).IsUnique();
             builder.HasIndex(x => x.CategoryId);
             builder.HasIndex(x => x.IsActive);
+            builder.HasOne<ModuleCategory>().WithMany().HasForeignKey(x => x.CategoryId).OnDelete(DeleteBehavior.Restrict);
         });
 
         // Component
@@ -142,6 +144,8 @@ public sealed class ModulesDbContext : DbContext, IUnitOfWork
 
             builder.HasIndex(x => x.AssemblyId);
             builder.HasIndex(x => x.ComponentId);
+            builder.HasOne<Assembly>().WithMany().HasForeignKey(x => x.AssemblyId).OnDelete(DeleteBehavior.Cascade);
+            builder.HasOne<Component>().WithMany().HasForeignKey(x => x.ComponentId).OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

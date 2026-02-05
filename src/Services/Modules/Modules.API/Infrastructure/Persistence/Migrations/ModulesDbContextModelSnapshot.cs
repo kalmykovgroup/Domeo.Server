@@ -216,6 +216,38 @@ namespace Modules.API.Infrastructure.Persistence.Migrations
 
                     b.ToTable("module_categories", "modules");
                 });
+
+            modelBuilder.Entity("Modules.Abstractions.Entities.Assembly", b =>
+                {
+                    b.HasOne("Modules.Abstractions.Entities.ModuleCategory", null)
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Modules.Abstractions.Entities.AssemblyPart", b =>
+                {
+                    b.HasOne("Modules.Abstractions.Entities.Assembly", null)
+                        .WithMany()
+                        .HasForeignKey("AssemblyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Modules.Abstractions.Entities.Component", null)
+                        .WithMany()
+                        .HasForeignKey("ComponentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Modules.Abstractions.Entities.ModuleCategory", b =>
+                {
+                    b.HasOne("Modules.Abstractions.Entities.ModuleCategory", null)
+                        .WithMany()
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
 #pragma warning restore 612, 618
         }
     }

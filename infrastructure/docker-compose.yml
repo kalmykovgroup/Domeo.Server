@@ -24,12 +24,11 @@ services:
     environment:
       POSTGRES_USER_FILE: /run/secrets/postgres_user
       POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
-      POSTGRES_MULTIPLE_DATABASES: domeo_auth,domeo_users,domeo_projects,domeo_cabinets,domeo_catalog
+      POSTGRES_DB: domeo
     ports:
       - "${POSTGRES_EXTERNAL_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./postgres/init-multiple-dbs.sh:/docker-entrypoint-initdb.d/init-multiple-dbs.sh
     secrets:
       - postgres_user
       - postgres_password
