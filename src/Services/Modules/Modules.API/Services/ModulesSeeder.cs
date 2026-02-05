@@ -114,27 +114,28 @@ public sealed class ModulesSeeder
             double w, double h, double d,
             double wMin, double wMax, double hMin, double hMax, double dMin, double dMax)[]
         {
-            ("base_single_door", "base-single-door", "Нижний однодверный", 450, 720, 560, 300, 600, 720, 720, 500, 600),
-            ("base_double_door", "base-double-door", "Нижний двудверный", 800, 720, 560, 600, 1200, 720, 720, 500, 600),
-            ("base_with_drawers", "base-with-drawers", "Нижний с ящиками", 600, 720, 560, 400, 900, 720, 720, 500, 600),
-            ("base_corner", "base-corner", "Нижний угловой L-образный", 600, 720, 900, 300, 1200, 720, 720, 800, 1000),
-            ("base_corner", "base-corner-diagonal", "Нижний угловой диагональный", 900, 720, 900, 800, 1000, 720, 720, 800, 1000),
-            ("base_corner", "base-corner-blind-left", "Нижний угловой глухой (левый)", 1000, 720, 560, 900, 1200, 720, 720, 500, 600),
-            ("base_corner", "base-corner-blind-right", "Нижний угловой глухой (правый)", 1000, 720, 560, 900, 1200, 720, 720, 500, 600),
-            ("base_for_appliance", "base-appliance", "Нижний под технику", 600, 720, 560, 450, 600, 720, 720, 550, 600),
-            ("wall_single_door", "wall-single-door", "Верхний однодверный", 450, 720, 320, 300, 600, 550, 920, 280, 350),
-            ("wall_double_door", "wall-double-door", "Верхний двудверный", 800, 720, 320, 600, 1200, 550, 920, 280, 350),
-            ("wall_open", "wall-open", "Верхний открытый", 600, 720, 320, 300, 900, 550, 720, 280, 350),
-            ("wall_corner", "wall-corner", "Верхний угловой L-образный", 600, 720, 600, 300, 1200, 550, 920, 550, 650),
-            ("wall_corner", "wall-corner-diagonal", "Верхний угловой диагональный", 600, 720, 600, 550, 650, 550, 920, 550, 650),
-            ("wall_corner", "wall-corner-blind-left", "Верхний угловой глухой (левый)", 1000, 720, 320, 900, 1200, 550, 920, 300, 400),
-            ("wall_corner", "wall-corner-blind-right", "Верхний угловой глухой (правый)", 1000, 720, 320, 900, 1200, 550, 920, 300, 400),
-            ("mezzanine_single_door", "mezzanine-single-door", "Антресоль однодверная", 600, 360, 320, 300, 900, 250, 550, 280, 350),
-            ("mezzanine_double_door", "mezzanine-double-door", "Антресоль двудверная", 800, 360, 320, 600, 1200, 250, 550, 280, 350),
-            ("tall_single_door", "tall-single-door", "Пенал однодверный", 600, 2100, 560, 400, 600, 2000, 2400, 500, 600),
-            ("tall_double_door", "tall-double-door", "Пенал двудверный", 800, 2100, 560, 600, 900, 2000, 2400, 500, 600),
-            ("tall_for_appliance", "tall-appliance-fridge", "Пенал под холодильник", 600, 2100, 560, 560, 600, 2000, 2200, 560, 560),
-            ("tall_for_appliance", "tall-appliance-oven", "Пенал под духовку", 600, 2100, 560, 560, 600, 2000, 2200, 560, 560),
+            // Угловые верхние
+            ("wall_corner", "wall-corner-straight-left", "Угловой прямой левый верхний", 600, 720, 320, 300, 900, 550, 920, 280, 350),
+            ("wall_corner", "wall-corner-straight-right", "Угловой прямой правый верхний", 600, 720, 320, 300, 900, 550, 920, 280, 350),
+            ("wall_corner", "wall-corner-l-shaped", "Угловой г-образный верхний", 600, 720, 600, 300, 1200, 550, 920, 550, 650),
+            ("wall_corner", "wall-corner-diagonal", "Угловой диагональный верхний", 600, 720, 600, 550, 650, 550, 920, 550, 650),
+
+            // Угловые нижние
+            ("base_corner", "base-corner-straight-left", "Угловой прямой левый нижний", 900, 720, 560, 300, 1200, 720, 720, 500, 600),
+            ("base_corner", "base-corner-straight-right", "Угловой прямой правый нижний", 900, 720, 560, 300, 1200, 720, 720, 500, 600),
+            ("base_corner", "base-corner-l-shaped", "Угловой г-образный нижний", 600, 720, 900, 300, 1200, 720, 720, 800, 1000),
+            ("base_corner", "base-corner-diagonal", "Угловой диагональный нижний", 900, 720, 900, 800, 1000, 720, 720, 800, 1000),
+
+            // Антресоль
+            ("mezzanine", "mezzanine", "Антресоль", 800, 360, 320, 300, 1200, 250, 550, 280, 350),
+
+            // Верхние базы
+            ("wall_double_door", "wall-double-door", "Верхняя база двудверный", 800, 720, 320, 600, 1200, 550, 920, 280, 350),
+            ("wall_single_door", "wall-single-door", "Верхняя база однодверный", 450, 720, 320, 300, 600, 550, 920, 280, 350),
+
+            // Нижние базы
+            ("base_double_door", "base-double-door", "Нижняя база двудверный", 800, 720, 560, 600, 1200, 720, 720, 500, 600),
+            ("base_single_door", "base-single-door", "Нижняя база однодверный", 450, 720, 560, 300, 600, 720, 720, 500, 600),
         };
 
         var assemblies = new List<Assembly>();
@@ -163,23 +164,14 @@ public sealed class ModulesSeeder
             // Back panel
             allParts.Add(AssemblyPart.Create(assembly.Id, panelBack.Id, PartRole.Back, defaultPlacement, sortOrder: sortOrder++));
 
-            // Facade (skip open shelves)
-            if (def.type != "wall-open")
-            {
-                allParts.Add(AssemblyPart.Create(assembly.Id, panelFacade.Id, PartRole.Facade, defaultPlacement, sortOrder: sortOrder++));
-            }
+            // Facade
+            allParts.Add(AssemblyPart.Create(assembly.Id, panelFacade.Id, PartRole.Facade, defaultPlacement, sortOrder: sortOrder++));
 
-            // Hinges for assemblies with facades (2 per door)
-            if (def.type != "wall-open" && !def.type.Contains("appliance") && !def.type.Contains("drawers"))
-            {
-                allParts.Add(AssemblyPart.Create(assembly.Id, hinge.Id, PartRole.Hinge, defaultPlacement, quantity: 2, sortOrder: sortOrder++));
-            }
+            // Hinges (2 per door)
+            allParts.Add(AssemblyPart.Create(assembly.Id, hinge.Id, PartRole.Hinge, defaultPlacement, quantity: 2, sortOrder: sortOrder++));
 
             // Handle
-            if (def.type != "wall-open" && !def.type.Contains("appliance"))
-            {
-                allParts.Add(AssemblyPart.Create(assembly.Id, handle.Id, PartRole.Handle, defaultPlacement, sortOrder: sortOrder++));
-            }
+            allParts.Add(AssemblyPart.Create(assembly.Id, handle.Id, PartRole.Handle, defaultPlacement, sortOrder: sortOrder++));
 
             // Legs for base modules
             if (def.cat.StartsWith("base"))
@@ -193,8 +185,8 @@ public sealed class ModulesSeeder
                 allParts.Add(AssemblyPart.Create(assembly.Id, bracket.Id, PartRole.Handle, defaultPlacement, quantity: 2, sortOrder: sortOrder++));
             }
 
-            // Dividers for blind corner assemblies
-            if (def.type.Contains("blind"))
+            // Dividers for straight corner assemblies
+            if (def.type.Contains("straight"))
             {
                 allParts.Add(AssemblyPart.Create(assembly.Id, divider.Id, PartRole.Divider, defaultPlacement, sortOrder: sortOrder++));
             }
