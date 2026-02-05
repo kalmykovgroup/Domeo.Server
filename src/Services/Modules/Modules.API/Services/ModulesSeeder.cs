@@ -42,25 +42,14 @@ public sealed class ModulesSeeder
             ModuleCategory.Create("base", "Нижние шкафы", description: "Шкафы для нижней зоны кухни", orderIndex: 1),
             ModuleCategory.Create("base_single_door", "Однодверный", "base", "Шкаф с одной распашной дверью", 1),
             ModuleCategory.Create("base_double_door", "Двудверный", "base", "Шкаф с двумя распашными дверями", 2),
-            ModuleCategory.Create("base_triple_door", "Трёхдверный", "base", "Шкаф с тремя распашными дверями", 3),
-            ModuleCategory.Create("base_with_drawers", "С ящиками", "base", "Шкаф с выдвижными ящиками", 4),
-            ModuleCategory.Create("base_corner", "Угловой", "base", "Угловой шкаф (L-образный, диагональный, глухой)", 5),
-            ModuleCategory.Create("base_for_appliance", "Под технику", "base", "Шкаф под встроенную технику", 6),
+            ModuleCategory.Create("base_corner", "Угловой", "base", "Угловой нижний шкаф", 3),
 
             ModuleCategory.Create("wall", "Верхние шкафы", description: "Шкафы для верхней зоны кухни", orderIndex: 2),
             ModuleCategory.Create("wall_single_door", "Однодверный", "wall", "Шкаф с одной распашной дверью", 1),
             ModuleCategory.Create("wall_double_door", "Двудверный", "wall", "Шкаф с двумя распашными дверями", 2),
-            ModuleCategory.Create("wall_open", "Открытый", "wall", "Шкаф без дверей (открытые полки)", 3),
-            ModuleCategory.Create("wall_corner", "Угловой", "wall", "Угловой верхний шкаф", 4),
+            ModuleCategory.Create("wall_corner", "Угловой", "wall", "Угловой верхний шкаф", 3),
 
             ModuleCategory.Create("mezzanine", "Антресоль", description: "Шкафы-антресоли под потолком", orderIndex: 3),
-            ModuleCategory.Create("mezzanine_single_door", "Однодверный", "mezzanine", "Антресоль с одной дверью", 1),
-            ModuleCategory.Create("mezzanine_double_door", "Двудверный", "mezzanine", "Антресоль с двумя дверями", 2),
-
-            ModuleCategory.Create("tall", "Высокие шкафы", description: "Высокие шкафы-пеналы", orderIndex: 4),
-            ModuleCategory.Create("tall_single_door", "Однодверный", "tall", "Пенал с одной дверью", 1),
-            ModuleCategory.Create("tall_double_door", "Двудверный", "tall", "Пенал с двумя дверями", 2),
-            ModuleCategory.Create("tall_for_appliance", "Под духовку", "tall", "Пенал под встроенную духовку", 3),
         };
 
         _dbContext.ModuleCategories.AddRange(categories);
