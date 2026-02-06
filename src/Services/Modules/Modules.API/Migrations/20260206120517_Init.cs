@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Modules.API.Migrations
 {
     /// <inheritdoc />
-    public partial class ParametricModel : Migration
+    public partial class Init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -24,6 +24,7 @@ namespace Modules.API.Migrations
                     name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     @params = table.Column<string>(name: "params", type: "jsonb", nullable: true),
                     tags = table.Column<List<string>>(type: "varchar[]", nullable: false),
+                    color = table.Column<string>(type: "character varying(7)", maxLength: 7, nullable: true),
                     is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },

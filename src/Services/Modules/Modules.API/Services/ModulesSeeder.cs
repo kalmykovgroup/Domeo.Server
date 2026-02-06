@@ -161,7 +161,7 @@ public sealed class ModulesSeeder
                 allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, "top",
                     lengthExpr: "W - 2*t",
                     widthExpr: "D",
-                    x: "t", y: "D", z: "0",
+                    x: "t", y: "H - t", z: "0",
                     sortOrder: 2,
                     shape: DiagonalPentagon(innerExpr, cutExpr)));
 
@@ -185,7 +185,7 @@ public sealed class ModulesSeeder
                 allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, "top",
                     lengthExpr: "W - 2*t",
                     widthExpr: "D",
-                    x: "t", y: "D", z: "0",
+                    x: "t", y: "H - t", z: "0",
                     sortOrder: 2,
                     shape: LShapeHexagon("W - 2*t", "D - 2*t", armDepth)));
 
@@ -208,7 +208,7 @@ public sealed class ModulesSeeder
                 allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, "top",
                     lengthExpr: "W - 2*t",
                     widthExpr: "D",
-                    x: "t", y: "D", z: "0",
+                    x: "t", y: "H - t", z: "0",
                     sortOrder: 2));
 
                 allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, "bottom",
