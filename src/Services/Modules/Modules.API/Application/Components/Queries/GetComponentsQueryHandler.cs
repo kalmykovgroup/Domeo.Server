@@ -22,6 +22,7 @@ public sealed class GetComponentsQueryHandler : IRequestHandler<GetComponentsQue
             c.Name,
             c.Tags,
             c.Params,
+            c.Color,
             c.IsActive,
             c.CreatedAt)).ToList();
     }

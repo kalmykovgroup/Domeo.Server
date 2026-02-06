@@ -7,4 +7,5 @@ namespace Modules.Application.Commands.Components;
 public sealed record CreateComponentCommand(
     string Name,
     ComponentParams? Params,
-    List<string>? Tags) : IRequest<ComponentDto>;
+    List<string>? Tags,
+    string? Color) : IRequest<ComponentDto>;

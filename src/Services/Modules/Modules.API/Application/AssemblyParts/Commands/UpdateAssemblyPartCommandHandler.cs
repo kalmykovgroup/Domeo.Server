@@ -46,7 +46,7 @@ public sealed class UpdateAssemblyPartCommandHandler : IRequestHandler<UpdateAss
 
         var componentDto = new ComponentDto(
             component.Id, component.Name, component.Tags,
-            component.Params, component.IsActive, component.CreatedAt);
+            component.Params, component.Color, component.IsActive, component.CreatedAt);
 
         return new AssemblyPartDto(
             part.Id, part.AssemblyId, part.ComponentId,

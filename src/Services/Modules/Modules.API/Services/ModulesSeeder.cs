@@ -63,9 +63,9 @@ public sealed class ModulesSeeder
 
         var components = new List<Component>
         {
-            Component.Create("Стенка", new PanelParams(16), ["panel", "wall"]),
-            Component.Create("Задняя стенка", new PanelParams(4), ["panel", "back"]),
-            Component.Create("Полка", new PanelParams(16), ["panel", "shelf"]),
+            Component.Create("Стенка", new PanelParams(16), ["panel", "wall"], color: "#D4A574"),
+            Component.Create("Задняя стенка", new PanelParams(4), ["panel", "back"], color: "#E8D5B7"),
+            Component.Create("Полка", new PanelParams(16), ["panel", "shelf"], color: "#B8956A"),
             Component.Create("Ручка", new GlbParams("/uploads/glb/3DModelOfACabinetHandle.glb", 1.0), ["handle", "glb"]),
         };
 

@@ -18,6 +18,9 @@ public sealed class Component : Entity<Guid>
     /// <summary>Теги для фильтрации и поиска (например, «белый», «ЛДСП», «16мм»).</summary>
     public List<string> Tags { get; private set; } = [];
 
+    /// <summary>HEX-цвет для визуализации панели (например, «#D4A574»). Для GLB-компонентов не задаётся.</summary>
+    public string? Color { get; private set; }
+
     /// <summary>Флаг активности. Неактивные компоненты скрыты из каталога.</summary>
     public bool IsActive { get; private set; } = true;
 
@@ -29,7 +32,8 @@ public sealed class Component : Entity<Guid>
     public static Component Create(
         string name,
         ComponentParams? @params = null,
-        List<string>? tags = null)
+        List<string>? tags = null,
+        string? color = null)
     {
         return new Component
         {
@@ -37,15 +41,17 @@ public sealed class Component : Entity<Guid>
             Name = name,
             Params = @params,
             Tags = tags ?? [],
+            Color = color,
             IsActive = true,
             CreatedAt = DateTime.UtcNow
         };
     }
 
-    public void Update(string name, ComponentParams? @params, List<string>? tags)
+    public void Update(string name, ComponentParams? @params, List<string>? tags, string? color)
     {
         Name = name;
         Params = @params;
+        Color = color;
         if (tags is not null) Tags = tags;
     }
 

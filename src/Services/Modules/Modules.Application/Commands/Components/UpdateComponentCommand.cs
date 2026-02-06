@@ -8,4 +8,5 @@ public sealed record UpdateComponentCommand(
     Guid Id,
     string Name,
     ComponentParams? Params,
-    List<string>? Tags) : IRequest<ComponentDto>;
+    List<string>? Tags,
+    string? Color) : IRequest<ComponentDto>;

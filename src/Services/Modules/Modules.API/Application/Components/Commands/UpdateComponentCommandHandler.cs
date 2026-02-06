@@ -23,7 +23,7 @@ public sealed class UpdateComponentCommandHandler : IRequestHandler<UpdateCompon
         var component = await _repository.GetByIdAsync(request.Id, cancellationToken)
             ?? throw new KeyNotFoundException($"Component {request.Id} not found");
 
-        component.Update(request.Name, request.Params, request.Tags);
+        component.Update(request.Name, request.Params, request.Tags, request.Color);
         _repository.Update(component);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -32,6 +32,7 @@ public sealed class UpdateComponentCommandHandler : IRequestHandler<UpdateCompon
             component.Name,
             component.Tags,
             component.Params,
+            component.Color,
             component.IsActive,
             component.CreatedAt);
     }

@@ -69,6 +69,6 @@ public sealed class GetAssembliesQueryHandler : IRequestHandler<GetAssembliesQue
         p.Shape,
         p.Quantity, p.QuantityFormula, p.SortOrder,
         componentMap.TryGetValue(p.ComponentId, out var c)
-            ? new ComponentDto(c.Id, c.Name, c.Tags, c.Params, c.IsActive, c.CreatedAt)
+            ? new ComponentDto(c.Id, c.Name, c.Tags, c.Params, c.Color, c.IsActive, c.CreatedAt)
             : null);
 }

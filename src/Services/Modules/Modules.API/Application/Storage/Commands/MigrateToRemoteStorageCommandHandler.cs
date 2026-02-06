@@ -58,7 +58,7 @@ public sealed class MigrateToRemoteStorageCommandHandler : IRequestHandler<Migra
                     {
                         if (component.Params is GlbParams glb && glb.GlbUrl.Contains(fileName))
                         {
-                            component.Update(component.Name, new GlbParams(newUrl, glb.Scale), component.Tags);
+                            component.Update(component.Name, new GlbParams(newUrl, glb.Scale), component.Tags, component.Color);
                             _componentRepository.Update(component);
                         }
                     }

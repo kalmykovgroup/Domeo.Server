@@ -23,6 +23,7 @@ public sealed class GetComponentByIdQueryHandler : IRequestHandler<GetComponentB
             component.Name,
             component.Tags,
             component.Params,
+            component.Color,
             component.IsActive,
             component.CreatedAt);
     }

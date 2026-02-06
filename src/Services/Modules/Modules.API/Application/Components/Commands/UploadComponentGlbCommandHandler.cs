@@ -36,7 +36,7 @@ public sealed class UploadComponentGlbCommandHandler : IRequestHandler<UploadCom
 
         var currentParams = component.Params;
         var scale = currentParams is GlbParams glb ? glb.Scale : 1.0;
-        component.Update(component.Name, new GlbParams(url, scale), component.Tags);
+        component.Update(component.Name, new GlbParams(url, scale), component.Tags, component.Color);
         _repository.Update(component);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -45,6 +45,7 @@ public sealed class UploadComponentGlbCommandHandler : IRequestHandler<UploadCom
             component.Name,
             component.Tags,
             component.Params,
+            component.Color,
             component.IsActive,
             component.CreatedAt);
     }

@@ -7,5 +7,6 @@ public sealed record ComponentDto(
     string Name,
     List<string> Tags,
     ComponentParams? Params,
+    string? Color,
     bool IsActive,
     DateTime CreatedAt);

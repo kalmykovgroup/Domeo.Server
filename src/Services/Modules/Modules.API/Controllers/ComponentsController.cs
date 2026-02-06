@@ -44,7 +44,7 @@ public class ComponentsController : ControllerBase
         [FromBody] CreateComponentRequest request)
     {
         var result = await _sender.Send(new CreateComponentCommand(
-            request.Name, request.Params, request.Tags));
+            request.Name, request.Params, request.Tags, request.Color));
         return Created($"components/{result.Id}", ApiResponse<ComponentDto>.Ok(result));
     }
 
@@ -54,7 +54,7 @@ public class ComponentsController : ControllerBase
         Guid id, [FromBody] UpdateComponentRequest request)
     {
         var result = await _sender.Send(new UpdateComponentCommand(
-            id, request.Name, request.Params, request.Tags));
+            id, request.Name, request.Params, request.Tags, request.Color));
         return Ok(ApiResponse<ComponentDto>.Ok(result));
     }
 

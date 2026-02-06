@@ -105,6 +105,7 @@ public sealed class ModulesDbContext : DbContext, IUnitOfWork
                     v => v == null ? null : JsonSerializer.Serialize(v, JsonOptions),
                     v => v == null ? null : JsonSerializer.Deserialize<ComponentParams>(v, JsonOptions));
 
+            builder.Property(x => x.Color).HasColumnName("color").HasMaxLength(7);
             builder.Property(x => x.Tags).HasColumnName("tags").HasColumnType("varchar[]");
 
             builder.HasIndex(x => x.IsActive);

@@ -86,6 +86,7 @@ interface ComponentDto {
   name: string;       // "Стенка", "Задняя стенка", "Полка", "Ручка"
   tags: string[];
   params: PanelParams | GlbParams | null;
+  color: string | null; // HEX-цвет для панелей, например "#D4A574". Для GLB — null
   isActive: boolean;
   createdAt: string;
 }
@@ -405,7 +406,10 @@ function createRectPanel(length: number, width: number, thickness: number, role:
       geometry = new THREE.BoxGeometry(length, thickness, width);
   }
 
-  return new THREE.Mesh(geometry, getPanelMaterial(role));
+  const material = new THREE.MeshStandardMaterial({
+    color: part.component?.color ?? '#cccccc'
+  });
+  return new THREE.Mesh(geometry, material);
 }
 ```
 
@@ -493,7 +497,10 @@ function createExtrudedPanel(
       break;
   }
 
-  return new THREE.Mesh(geometry, getPanelMaterial(role));
+  const material = new THREE.MeshStandardMaterial({
+    color: part.component?.color ?? '#cccccc'
+  });
+  return new THREE.Mesh(geometry, material);
 }
 ```
 
@@ -756,20 +763,6 @@ const newModel = generateAssembly3D(assembly, { W: newW });
 | `*-corner-straight-*` | null | 8-point notched | Прямые угловые |
 | `*-corner-diagonal` | 5-point pentagon | null (прямоугольник) | Диагональные угловые |
 | `*-corner-l-shaped` | 6-point L-shape | 8-point notched | L-образные угловые |
-
----
-
-## Материалы / цвета (рекомендация)
-
-Разные роли деталей можно визуально различать:
-
-| Role | Предлагаемый цвет | Описание |
-|------|-------------------|----------|
-| left, right | #D4A574 | Боковые стенки — дерево |
-| top, bottom | #C89660 | Горизонтальные панели — чуть темнее |
-| back | #E8D5B7 | Задняя стенка — светлее, тоньше |
-| shelf | #B8956A | Полки — отдельный оттенок |
-| facade | #F5E6D0 | Фасады — самый светлый |
 
 ---
 

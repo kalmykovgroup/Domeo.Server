@@ -21,7 +21,7 @@ public sealed class CreateComponentCommandHandler : IRequestHandler<CreateCompon
     public async Task<ComponentDto> Handle(
         CreateComponentCommand request, CancellationToken cancellationToken)
     {
-        var component = Component.Create(request.Name, request.Params, request.Tags);
+        var component = Component.Create(request.Name, request.Params, request.Tags, request.Color);
         _repository.Add(component);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -30,6 +30,7 @@ public sealed class CreateComponentCommandHandler : IRequestHandler<CreateCompon
             component.Name,
             component.Tags,
             component.Params,
+            component.Color,
             component.IsActive,
             component.CreatedAt);
     }
