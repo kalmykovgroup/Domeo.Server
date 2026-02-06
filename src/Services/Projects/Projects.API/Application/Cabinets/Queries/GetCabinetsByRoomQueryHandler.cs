@@ -31,9 +31,7 @@ public sealed class GetCabinetsByRoomQueryHandler : IRequestHandler<GetCabinetsB
                 c.PositionX,
                 c.PositionY,
                 c.Rotation,
-                c.Width,
-                c.Height,
-                c.Depth,
+                c.ParameterOverrides,
                 c.CalculatedPrice,
                 c.CreatedAt))
             .ToListAsync(cancellationToken);

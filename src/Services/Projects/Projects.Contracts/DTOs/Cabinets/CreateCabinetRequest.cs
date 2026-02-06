@@ -1,3 +1,5 @@
+using Projects.Contracts.DTOs.CabinetParts;
+
 namespace Projects.Contracts.DTOs.Cabinets;
 
 public sealed record CreateCabinetRequest(
@@ -5,12 +7,11 @@ public sealed record CreateCabinetRequest(
     string PlacementType,
     double PositionX,
     double PositionY,
-    double Width,
-    double Height,
-    double Depth,
-    string? Name,
-    Guid? EdgeId,
-    Guid? ZoneId,
-    Guid? AssemblyId,
-    string? FacadeType,
-    double Rotation = 0);
+    Dictionary<string, double>? ParameterOverrides = null,
+    string? Name = null,
+    Guid? EdgeId = null,
+    Guid? ZoneId = null,
+    Guid? AssemblyId = null,
+    string? FacadeType = null,
+    double Rotation = 0,
+    List<CreateCabinetPartRequest>? Parts = null);

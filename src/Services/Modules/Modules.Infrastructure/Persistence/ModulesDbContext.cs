@@ -139,8 +139,6 @@ public sealed class ModulesDbContext : DbContext, IUnitOfWork
             builder.Property(x => x.Id).HasColumnName("id").ValueGeneratedNever();
             builder.Property(x => x.AssemblyId).HasColumnName("assembly_id").IsRequired();
             builder.Property(x => x.ComponentId).HasColumnName("component_id").IsRequired();
-            builder.Property(x => x.LengthExpr).HasColumnName("length_expr").HasMaxLength(500);
-            builder.Property(x => x.WidthExpr).HasColumnName("width_expr").HasMaxLength(500);
             builder.Property(x => x.X).HasColumnName("x").HasMaxLength(500);
             builder.Property(x => x.Y).HasColumnName("y").HasMaxLength(500);
             builder.Property(x => x.Z).HasColumnName("z").HasMaxLength(500);
@@ -156,6 +154,11 @@ public sealed class ModulesDbContext : DbContext, IUnitOfWork
                 .HasConversion(
                     v => v == null ? null : JsonSerializer.Serialize(v, JsonOptions),
                     v => v == null ? null : JsonSerializer.Deserialize<List<ShapeSegment>>(v, JsonOptions));
+
+            builder.Property(x => x.Provides).HasColumnName("provides").HasColumnType("jsonb")
+                .HasConversion(
+                    v => v == null ? null : JsonSerializer.Serialize(v, JsonOptions),
+                    v => v == null ? null : JsonSerializer.Deserialize<Dictionary<string, string>>(v, JsonOptions));
 
             builder.HasIndex(x => x.AssemblyId);
             builder.HasIndex(x => x.ComponentId);

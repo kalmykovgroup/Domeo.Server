@@ -1,15 +1,9 @@
 namespace Projects.Contracts.Routes;
 
-/// <summary>
-/// Route definitions for Projects.API service.
-/// </summary>
 public static class ProjectsRoutes
 {
     public const string ServiceName = "projects";
 
-    /// <summary>
-    /// Paths for controllers (relative, used in [Route] and [HttpGet])
-    /// </summary>
     public static class Controller
     {
         // Base paths for controllers
@@ -19,7 +13,7 @@ public static class ProjectsRoutes
         public const string RoomEdges = "rooms/{roomId:guid}/edges";
         public const string Zones = "edges/{edgeId:guid}/zones";
         public const string Cabinets = "cabinets";
-        public const string CabinetHardwareOverrides = "cabinet-hardware-overrides";
+        public const string CabinetParts = "cabinet-parts";
 
         // Relative paths for methods - Projects
         public const string ById = "{id:guid}";
@@ -42,20 +36,18 @@ public static class ProjectsRoutes
         public const string CabinetById = "{id:guid}";
         public const string CabinetsByRoom = "room/{roomId:guid}";
 
-        // Relative paths for Cabinet Hardware Overrides
-        public const string HardwareOverrideById = "{id:guid}";
-        public const string HardwareOverridesByCabinet = "cabinet/{cabinetId:guid}";
+        // Relative paths for Cabinet Parts
+        public const string CabinetPartById = "{id:guid}";
+        public const string CabinetPartsByCabinet = "cabinet/{cabinetId:guid}";
+        public const string CreateCabinetPart = "{cabinetId:guid}/parts";
     }
 
-    /// <summary>
-    /// Paths for API Gateway (full paths for YARP)
-    /// </summary>
     public static class Gateway
     {
         public const string ProjectsPrefix = "/api/projects";
         public const string RoomsPrefix = "/api/rooms";
         public const string EdgesPrefix = "/api/edges";
         public const string CabinetsPrefix = "/api/cabinets";
-        public const string CabinetHardwareOverridesPrefix = "/api/cabinet-hardware-overrides";
+        public const string CabinetPartsPrefix = "/api/cabinet-parts";
     }
 }

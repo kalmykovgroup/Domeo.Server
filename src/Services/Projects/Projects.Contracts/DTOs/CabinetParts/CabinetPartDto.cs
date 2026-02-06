@@ -1,11 +1,11 @@
-using Modules.Contracts.DTOs.Components;
 using Modules.Domain.Entities.Shared;
 
-namespace Modules.Contracts.DTOs.AssemblyParts;
+namespace Projects.Contracts.DTOs.CabinetParts;
 
-public sealed record AssemblyPartDto(
+public sealed record CabinetPartDto(
     Guid Id,
-    Guid AssemblyId,
+    Guid CabinetId,
+    Guid? SourceAssemblyPartId,
     Guid ComponentId,
     string? X,
     string? Y,
@@ -13,10 +13,12 @@ public sealed record AssemblyPartDto(
     double RotationX,
     double RotationY,
     double RotationZ,
-    string? Condition,
     List<ShapeSegment>? Shape,
+    string? Condition,
     int Quantity,
     string? QuantityFormula,
     int SortOrder,
+    bool IsEnabled,
+    Guid? MaterialId,
     Dictionary<string, string>? Provides,
-    ComponentDto? Component);
+    DateTime CreatedAt);

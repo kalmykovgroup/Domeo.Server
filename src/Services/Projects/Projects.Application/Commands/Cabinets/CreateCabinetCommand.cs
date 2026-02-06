@@ -1,4 +1,5 @@
 using MediatR;
+using Projects.Contracts.DTOs.CabinetParts;
 
 namespace Projects.Application.Commands.Cabinets;
 
@@ -7,12 +8,11 @@ public sealed record CreateCabinetCommand(
     string PlacementType,
     double PositionX,
     double PositionY,
-    double Width,
-    double Height,
-    double Depth,
+    Dictionary<string, double>? ParameterOverrides,
     string? Name,
     Guid? EdgeId,
     Guid? ZoneId,
     Guid? AssemblyId,
     string? FacadeType,
-    double Rotation) : IRequest<Guid>;
+    double Rotation,
+    List<CreateCabinetPartRequest>? Parts) : IRequest<Guid>;

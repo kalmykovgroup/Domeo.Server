@@ -66,6 +66,7 @@ public sealed class ModulesSeeder
             Component.Create("Стенка", new PanelParams(16), ["panel", "wall"], color: "#D4A574"),
             Component.Create("Задняя стенка", new PanelParams(4), ["panel", "back"], color: "#E8D5B7"),
             Component.Create("Полка", new PanelParams(16), ["panel", "shelf"], color: "#B8956A"),
+            Component.Create("Полка г-образная", new PanelParams(16), ["panel", "shelf", "l-shaped"], color: "#B8956A"),
             Component.Create("Ручка", new GlbParams("/uploads/glb/3DModelOfACabinetHandle.glb", 1.0), ["handle", "glb"]),
         };
 
@@ -82,6 +83,7 @@ public sealed class ModulesSeeder
         var wall = components.First(c => c.Name == "Стенка");
         var back = components.First(c => c.Name == "Задняя стенка");
         var shelf = components.First(c => c.Name == "Полка");
+        var shelfL = components.First(c => c.Name == "Полка г-образная");
 
         var assemblyDefs = new (string cat, string type, string name,
             double w, double h, double d,
@@ -154,100 +156,102 @@ public sealed class ModulesSeeder
             {
                 // #0 Left wall
                 allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
-                    x: "t", y: "0", z: "0",
+                    x: "t", y: "0", z: "backOffset",
                     rotationY: -90,
                     sortOrder: 0,
-                    shape: Rectangle("D", "H")));
+                    shape: Rectangle("D - backOffset", "H")));
 
                 // #1 Right wall (reduced depth)
                 allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
-                    x: "W", y: "0", z: "0",
+                    x: "W", y: "0", z: "backOffset",
                     rotationY: -90,
                     sortOrder: 1,
-                    shape: Rectangle("W-3*t-cutSize", "H")));
+                    shape: Rectangle("W-3*t-cutSize - backOffset", "H")));
 
                 // #2 Top
                 allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
-                    x: "t", y: "H", z: "0",
+                    x: "t", y: "H", z: "backOffset",
                     rotationX: 90,
                     sortOrder: 2,
                     shape: DiagonalPentagon("W-2*t", "W-2*t-cutSize")));
 
                 // #3 Bottom
                 allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
-                    x: "t", y: "t", z: "0",
+                    x: "t", y: "t", z: "backOffset",
                     rotationX: 90,
                     sortOrder: 3,
                     shape: DiagonalPentagon("W-2*t", "W-2*t-cutSize")));
 
-                // #4 Back (rectangle)
+                // #4 Back panel (overlay on base)
                 allParts.Add(AssemblyPart.Create(assembly.Id, back.Id,
-                    x: "t", y: "t", z: "0",
+                    x: "2", y: "2", z: "0",
                     sortOrder: 4,
-                    shape: Rectangle("W - 2*t", "H - 2*t")));
+                    shape: BackPanelWithNotches("W - 4", "H - 4"),
+                    provides: new Dictionary<string, string> { ["backOffset"] = "tBack" }));
 
                 // #5 Shelf
                 allParts.Add(AssemblyPart.Create(assembly.Id, shelf.Id,
                     x: "t+shelfSideGap", y: "shelfY+t", z: "shelfFrontInset",
                     rotationX: 90,
                     sortOrder: 5,
-                    shape: Rectangle("W-2*t-2*shelfSideGap", "D-shelfRearInset-shelfFrontInset")));
+                    shape: Rectangle("W-2*t-2*shelfSideGap", "D-2*backOffset-shelfRearInset-shelfFrontInset")));
             }
             else if (isLShaped)
             {
-                // #0 Left wall
-                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
-                    x: "t", y: "0", z: "0",
+                // L-shaped: левая сторона у стены (нет левой боковой),
+                // есть передняя боковая (x=0,z=D) и правая боковая (x=W)
+
+                // #0 Left back panel (x=0, overlay)
+                allParts.Add(AssemblyPart.Create(assembly.Id, back.Id,
+                    x: "backXOffset", y: "0", z: "0",
                     rotationY: -90,
                     sortOrder: 0,
-                    shape: Rectangle("D", "H")));
+                    shape: BackPanelWithNotches("D - t", "H"),
+                    provides: new Dictionary<string, string> { ["backXOffset"] = "tBack" }));
 
                 // #1 Right wall (armDepth deep)
                 allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
-                    x: "W", y: "0", z: "0",
+                    x: "W", y: "0", z: "backZOffset",
                     rotationY: -90,
                     sortOrder: 1,
-                    shape: Rectangle("armDepth", "H")));
+                    shape: Rectangle("armDepth - backZOffset", "H")));
 
                 // #2 Top (L-shape)
                 allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
-                    x: "t", y: "H", z: "0",
+                    x: "backXOffset", y: "H", z: "backZOffset",
                     rotationX: 90,
                     sortOrder: 2,
-                    shape: LShapeHexagon("W-2*t", "D-2*t", "armDepth")));
+                    shape: LShapeHexagon("W - t - backXOffset", "D - t - backZOffset", "armDepth")));
 
                 // #3 Bottom (L-shape)
                 allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
-                    x: "t", y: "t", z: "0",
+                    x: "backXOffset", y: "t", z: "backZOffset",
                     rotationX: 90,
                     sortOrder: 3,
-                    shape: LShapeHexagon("W-2*t", "D-2*t", "armDepth")));
+                    shape: LShapeHexagon("W - t - backXOffset", "D - t - backZOffset", "armDepth")));
 
-                // #4 Back (with notches)
+                // #4 Right back panel (z=0, overlay)
                 allParts.Add(AssemblyPart.Create(assembly.Id, back.Id,
-                    x: "t", y: "t", z: "0",
+                    x: "0", y: "0", z: "0",
                     sortOrder: 4,
-                    shape: BackPanelWithNotches("W-2*t", "H-2*t")));
+                    shape: BackPanelWithNotches("W - t", "H"),
+                    provides: new Dictionary<string, string> { ["backZOffset"] = "tBack" }));
 
-                // #5 Shelf
-                allParts.Add(AssemblyPart.Create(assembly.Id, shelf.Id,
-                    x: "t+shelfSideGap", y: "shelfY+t", z: "shelfFrontInset",
+                // #5 Shelf (L-shape)
+                allParts.Add(AssemblyPart.Create(assembly.Id, shelfL.Id,
+                    x: "backXOffset + shelfSideGap", y: "shelfY+t", z: "shelfFrontInset",
                     rotationX: 90,
                     sortOrder: 5,
-                    shape: Rectangle("W-2*t-2*shelfSideGap", "D-shelfRearInset-shelfFrontInset")));
+                    shape: LShapeHexagon(
+                        "W - t - backXOffset - 2*shelfSideGap",
+                        "D - t - backZOffset - shelfRearInset - shelfFrontInset",
+                        "armDepth")));
 
-                // #6 Partition wall (side, parallel to left wall)
+                // #6 Front side wall (x=0, z=D)
                 allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
-                    x: "armDepth+2*t", y: "0", z: "armDepth",
-                    rotationY: -90,
+                    x: "0", y: "0", z: "D",
                     sortOrder: 6,
-                    shape: Rectangle("W-2*t-armDepth", "H")));
-
-                // #7 Partition wall (front-facing)
-                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
-                    x: "armDepth+t", y: "0", z: "armDepth+t",
-                    sortOrder: 7,
-                    shape: Rectangle("D-2*t-armDepth", "H")));
+                    shape: Rectangle("armDepth", "H")));
             }
             else
             {
@@ -255,44 +259,45 @@ public sealed class ModulesSeeder
 
                 // #0 Left wall
                 allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
-                    x: "t", y: "0", z: "0",
+                    x: "t", y: "0", z: "backOffset",
                     rotationY: -90,
                     sortOrder: 0,
-                    shape: Rectangle("D", "H")));
+                    shape: Rectangle("D - backOffset", "H")));
 
                 // #1 Right wall
                 allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
-                    x: "W", y: "0", z: "0",
+                    x: "W", y: "0", z: "backOffset",
                     rotationY: -90,
                     sortOrder: 1,
-                    shape: Rectangle("D", "H")));
+                    shape: Rectangle("D - backOffset", "H")));
 
                 // #2 Top
                 allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
-                    x: "t", y: "H", z: "0",
+                    x: "t", y: "H", z: "backOffset",
                     rotationX: 90,
                     sortOrder: 2,
-                    shape: Rectangle("W - 2*t", "D")));
+                    shape: Rectangle("W - 2*t", "D - 2*backOffset")));
 
                 // #3 Bottom
                 allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
-                    x: "t", y: "t", z: "0",
+                    x: "t", y: "t", z: "backOffset",
                     rotationX: 90,
                     sortOrder: 3,
-                    shape: Rectangle("W - 2*t", "D")));
+                    shape: Rectangle("W - 2*t", "D - 2*backOffset")));
 
-                // #4 Back (with notches)
+                // #4 Back panel (overlay on base)
                 allParts.Add(AssemblyPart.Create(assembly.Id, back.Id,
-                    x: "t", y: "t", z: "0",
+                    x: "2", y: "2", z: "0",
                     sortOrder: 4,
-                    shape: BackPanelWithNotches("W - 2*t", "H - 2*t")));
+                    shape: BackPanelWithNotches("W - 4", "H - 4"),
+                    provides: new Dictionary<string, string> { ["backOffset"] = "tBack" }));
 
                 // #5 Shelf
                 allParts.Add(AssemblyPart.Create(assembly.Id, shelf.Id,
                     x: "t+shelfSideGap", y: "shelfY+t", z: "shelfFrontInset",
                     rotationX: 90,
                     sortOrder: 5,
-                    shape: Rectangle("W-2*t-2*shelfSideGap", "D-shelfRearInset-shelfFrontInset")));
+                    shape: Rectangle("W-2*t-2*shelfSideGap", "D-2*backOffset-shelfRearInset-shelfFrontInset")));
             }
         }
 

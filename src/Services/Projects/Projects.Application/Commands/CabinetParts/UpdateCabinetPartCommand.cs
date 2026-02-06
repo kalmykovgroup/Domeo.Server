@@ -1,8 +1,10 @@
+using MediatR;
 using Modules.Domain.Entities.Shared;
 
-namespace Modules.Contracts.DTOs.AssemblyParts;
+namespace Projects.Application.Commands.CabinetParts;
 
-public sealed record CreateAssemblyPartRequest(
+public sealed record UpdateCabinetPartCommand(
+    Guid Id,
     Guid ComponentId,
     string? X,
     string? Y,
@@ -10,9 +12,11 @@ public sealed record CreateAssemblyPartRequest(
     double RotationX,
     double RotationY,
     double RotationZ,
-    string? Condition,
     List<ShapeSegment>? Shape,
+    string? Condition,
     int Quantity,
     string? QuantityFormula,
     int SortOrder,
-    Dictionary<string, string>? Provides = null);
+    bool IsEnabled,
+    Guid? MaterialId,
+    Dictionary<string, string>? Provides) : IRequest;

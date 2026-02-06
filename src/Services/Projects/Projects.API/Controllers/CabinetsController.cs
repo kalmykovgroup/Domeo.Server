@@ -44,15 +44,14 @@ public class CabinetsController : ControllerBase
             request.PlacementType,
             request.PositionX,
             request.PositionY,
-            request.Width,
-            request.Height,
-            request.Depth,
+            request.ParameterOverrides,
             request.Name,
             request.EdgeId,
             request.ZoneId,
             request.AssemblyId,
             request.FacadeType,
-            request.Rotation);
+            request.Rotation,
+            request.Parts);
         var result = await _sender.Send(command, cancellationToken);
         return Ok(ApiResponse<IdResponse>.Ok(new IdResponse(result), "Cabinet created successfully"));
     }
@@ -69,9 +68,7 @@ public class CabinetsController : ControllerBase
             request.PositionX,
             request.PositionY,
             request.Rotation,
-            request.Width,
-            request.Height,
-            request.Depth,
+            request.ParameterOverrides,
             request.Name,
             request.EdgeId,
             request.ZoneId,

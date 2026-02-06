@@ -55,12 +55,12 @@ public sealed class UpdateAssemblyCommandHandler : IRequestHandler<UpdateAssembl
 
     private static AssemblyPartDto ToPartDto(AssemblyPart p, Dictionary<Guid, Component> componentMap) => new(
         p.Id, p.AssemblyId, p.ComponentId,
-        p.LengthExpr, p.WidthExpr,
         p.X, p.Y, p.Z,
         p.RotationX, p.RotationY, p.RotationZ,
         p.Condition,
         p.Shape,
         p.Quantity, p.QuantityFormula, p.SortOrder,
+        p.Provides,
         componentMap.TryGetValue(p.ComponentId, out var c)
             ? new ComponentDto(c.Id, c.Name, c.Tags, c.Params, c.Color, c.IsActive, c.CreatedAt)
             : null);

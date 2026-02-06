@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Modules.API.Migrations
 {
     [DbContext(typeof(ModulesDbContext))]
-    [Migration("20260206134542_RemoveRoleAddShapes")]
-    partial class RemoveRoleAddShapes
+    [Migration("20260206203340_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -101,10 +101,9 @@ namespace Modules.API.Migrations
                         .HasColumnType("character varying(500)")
                         .HasColumnName("condition");
 
-                    b.Property<string>("LengthExpr")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("length_expr");
+                    b.Property<string>("Provides")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("provides");
 
                     b.Property<int>("Quantity")
                         .ValueGeneratedOnAdd()
@@ -136,11 +135,6 @@ namespace Modules.API.Migrations
                     b.Property<int>("SortOrder")
                         .HasColumnType("integer")
                         .HasColumnName("sort_order");
-
-                    b.Property<string>("WidthExpr")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("width_expr");
 
                     b.Property<string>("X")
                         .HasMaxLength(500)

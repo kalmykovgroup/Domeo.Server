@@ -21,9 +21,7 @@ public sealed class CreateCabinetCommandHandler : IRequestHandler<CreateCabinetC
             request.PlacementType,
             request.PositionX,
             request.PositionY,
-            request.Width,
-            request.Height,
-            request.Depth,
+            request.ParameterOverrides,
             request.Name);
 
         if (request.EdgeId.HasValue)
@@ -39,6 +37,35 @@ public sealed class CreateCabinetCommandHandler : IRequestHandler<CreateCabinetC
 
         _dbContext.Cabinets.Add(cabinet);
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        if (request.Parts is { Count: > 0 })
+        {
+            foreach (var partReq in request.Parts)
+            {
+                var part = CabinetPart.Create(
+                    cabinet.Id,
+                    partReq.ComponentId,
+                    partReq.SourceAssemblyPartId,
+                    partReq.X,
+                    partReq.Y,
+                    partReq.Z,
+                    partReq.RotationX,
+                    partReq.RotationY,
+                    partReq.RotationZ,
+                    partReq.Shape,
+                    partReq.Condition,
+                    partReq.Quantity,
+                    partReq.QuantityFormula,
+                    partReq.SortOrder,
+                    partReq.IsEnabled,
+                    partReq.MaterialId,
+                    partReq.Provides);
+
+                _dbContext.CabinetParts.Add(part);
+            }
+
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
 
         return cabinet.Id;
     }

@@ -1,21 +1,23 @@
 using MediatR;
-using Modules.Contracts.DTOs.AssemblyParts;
 using Modules.Domain.Entities.Shared;
 
-namespace Modules.Application.Commands.AssemblyParts;
+namespace Projects.Application.Commands.CabinetParts;
 
-public sealed record CreateAssemblyPartCommand(
-    Guid AssemblyId,
+public sealed record CreateCabinetPartCommand(
+    Guid CabinetId,
     Guid ComponentId,
+    Guid? SourceAssemblyPartId,
     string? X,
     string? Y,
     string? Z,
     double RotationX,
     double RotationY,
     double RotationZ,
-    string? Condition,
     List<ShapeSegment>? Shape,
+    string? Condition,
     int Quantity,
     string? QuantityFormula,
     int SortOrder,
-    Dictionary<string, string>? Provides) : IRequest<AssemblyPartDto>;
+    bool IsEnabled,
+    Guid? MaterialId,
+    Dictionary<string, string>? Provides) : IRequest<Guid>;

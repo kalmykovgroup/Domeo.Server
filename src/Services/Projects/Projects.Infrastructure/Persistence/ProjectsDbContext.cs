@@ -1,7 +1,10 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Domeo.Shared.Application;
 using Domeo.Shared.Domain;
 using Domeo.Shared.Infrastructure.Audit;
 using Microsoft.EntityFrameworkCore;
+using Modules.Domain.Entities.Shared;
 using Projects.Domain.Entities;
 
 namespace Projects.Infrastructure.Persistence;
@@ -9,6 +12,13 @@ namespace Projects.Infrastructure.Persistence;
 public sealed class ProjectsDbContext : DbContext, IUnitOfWork
 {
     private readonly AuditSaveChangesInterceptor? _auditInterceptor;
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        AllowOutOfOrderMetadataProperties = true,
+        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
+    };
 
     public ProjectsDbContext(DbContextOptions<ProjectsDbContext> options) : base(options)
     {
@@ -27,8 +37,7 @@ public sealed class ProjectsDbContext : DbContext, IUnitOfWork
     public DbSet<RoomEdge> RoomEdges => Set<RoomEdge>();
     public DbSet<Zone> Zones => Set<Zone>();
     public DbSet<Cabinet> Cabinets => Set<Cabinet>();
-    public DbSet<CabinetMaterial> CabinetMaterials => Set<CabinetMaterial>();
-    public DbSet<CabinetHardwareOverride> CabinetHardwareOverrides => Set<CabinetHardwareOverride>();
+    public DbSet<CabinetPart> CabinetParts => Set<CabinetPart>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -142,9 +151,10 @@ public sealed class ProjectsDbContext : DbContext, IUnitOfWork
             builder.Property(x => x.PositionX).HasColumnName("position_x").IsRequired();
             builder.Property(x => x.PositionY).HasColumnName("position_y").IsRequired();
             builder.Property(x => x.Rotation).HasColumnName("rotation").IsRequired();
-            builder.Property(x => x.Width).HasColumnName("width").IsRequired();
-            builder.Property(x => x.Height).HasColumnName("height").IsRequired();
-            builder.Property(x => x.Depth).HasColumnName("depth").IsRequired();
+            builder.Property(x => x.ParameterOverrides).HasColumnName("parameter_overrides").HasColumnType("jsonb")
+                .HasConversion(
+                    v => v == null ? null : JsonSerializer.Serialize(v, JsonOptions),
+                    v => v == null ? null : JsonSerializer.Deserialize<Dictionary<string, double>>(v, JsonOptions));
             builder.Property(x => x.CalculatedPrice).HasColumnName("calculated_price").HasPrecision(18, 2);
             builder.Property(x => x.CreatedAt).HasColumnName("created_at").IsRequired();
             builder.Property(x => x.UpdatedAt).HasColumnName("updated_at");
@@ -158,41 +168,39 @@ public sealed class ProjectsDbContext : DbContext, IUnitOfWork
             builder.HasOne<Zone>().WithMany().HasForeignKey(x => x.ZoneId).OnDelete(DeleteBehavior.SetNull);
         });
 
-        modelBuilder.Entity<CabinetMaterial>(builder =>
+        modelBuilder.Entity<CabinetPart>(builder =>
         {
-            builder.ToTable("cabinet_materials");
+            builder.ToTable("cabinet_parts");
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Id).HasColumnName("id");
             builder.Property(x => x.CabinetId).HasColumnName("cabinet_id").IsRequired();
-            builder.Property(x => x.MaterialType).HasColumnName("material_type").HasMaxLength(50).IsRequired();
-            builder.Property(x => x.MaterialId).HasColumnName("material_id").IsRequired();
-
-            builder.HasIndex(x => x.CabinetId);
-            builder.HasIndex(x => new { x.CabinetId, x.MaterialType }).IsUnique();
-            builder.HasOne<Cabinet>().WithMany().HasForeignKey(x => x.CabinetId).OnDelete(DeleteBehavior.Cascade);
-        });
-
-        modelBuilder.Entity<CabinetHardwareOverride>(builder =>
-        {
-            builder.ToTable("cabinet_hardware_overrides");
-            builder.HasKey(x => x.Id);
-            builder.Property(x => x.Id).HasColumnName("id");
-            builder.Property(x => x.CabinetId).HasColumnName("cabinet_id").IsRequired();
-            builder.Property(x => x.AssemblyPartId).HasColumnName("assembly_part_id").IsRequired();
-            builder.Property(x => x.ComponentId).HasColumnName("component_id");
-            builder.Property(x => x.Role).HasColumnName("role").HasMaxLength(50);
-            builder.Property(x => x.QuantityFormula).HasColumnName("quantity_formula").HasMaxLength(255);
-            builder.Property(x => x.PositionXFormula).HasColumnName("position_x_formula").HasMaxLength(255);
-            builder.Property(x => x.PositionYFormula).HasColumnName("position_y_formula").HasMaxLength(255);
-            builder.Property(x => x.PositionZFormula).HasColumnName("position_z_formula").HasMaxLength(255);
+            builder.Property(x => x.SourceAssemblyPartId).HasColumnName("source_assembly_part_id");
+            builder.Property(x => x.ComponentId).HasColumnName("component_id").IsRequired();
+            builder.Property(x => x.X).HasColumnName("x").HasMaxLength(500);
+            builder.Property(x => x.Y).HasColumnName("y").HasMaxLength(500);
+            builder.Property(x => x.Z).HasColumnName("z").HasMaxLength(500);
+            builder.Property(x => x.RotationX).HasColumnName("rotation_x").IsRequired();
+            builder.Property(x => x.RotationY).HasColumnName("rotation_y").IsRequired();
+            builder.Property(x => x.RotationZ).HasColumnName("rotation_z").IsRequired();
+            builder.Property(x => x.Shape).HasColumnName("shape").HasColumnType("jsonb")
+                .HasConversion(
+                    v => v == null ? null : JsonSerializer.Serialize(v, JsonOptions),
+                    v => v == null ? null : JsonSerializer.Deserialize<List<ShapeSegment>>(v, JsonOptions));
+            builder.Property(x => x.Condition).HasColumnName("condition").HasMaxLength(500);
+            builder.Property(x => x.Quantity).HasColumnName("quantity").IsRequired().HasDefaultValue(1);
+            builder.Property(x => x.QuantityFormula).HasColumnName("quantity_formula").HasMaxLength(200);
+            builder.Property(x => x.SortOrder).HasColumnName("sort_order").IsRequired();
             builder.Property(x => x.IsEnabled).HasColumnName("is_enabled").IsRequired().HasDefaultValue(true);
-            builder.Property(x => x.MaterialId).HasColumnName("material_id").HasMaxLength(100);
+            builder.Property(x => x.MaterialId).HasColumnName("material_id");
+            builder.Property(x => x.Provides).HasColumnName("provides").HasColumnType("jsonb")
+                .HasConversion(
+                    v => v == null ? null : JsonSerializer.Serialize(v, JsonOptions),
+                    v => v == null ? null : JsonSerializer.Deserialize<Dictionary<string, string>>(v, JsonOptions));
             builder.Property(x => x.CreatedAt).HasColumnName("created_at").IsRequired();
             builder.Property(x => x.UpdatedAt).HasColumnName("updated_at");
 
             builder.HasIndex(x => x.CabinetId);
-            builder.HasIndex(x => x.AssemblyPartId);
-            builder.HasIndex(x => new { x.CabinetId, x.AssemblyPartId }).IsUnique();
+            builder.HasIndex(x => x.SourceAssemblyPartId);
             builder.HasOne<Cabinet>().WithMany().HasForeignKey(x => x.CabinetId).OnDelete(DeleteBehavior.Cascade);
         });
     }

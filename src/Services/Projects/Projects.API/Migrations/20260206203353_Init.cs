@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Projects.API.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class Init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -162,9 +162,7 @@ namespace Projects.API.Migrations
                     position_x = table.Column<double>(type: "double precision", nullable: false),
                     position_y = table.Column<double>(type: "double precision", nullable: false),
                     rotation = table.Column<double>(type: "double precision", nullable: false),
-                    width = table.Column<double>(type: "double precision", nullable: false),
-                    height = table.Column<double>(type: "double precision", nullable: false),
-                    depth = table.Column<double>(type: "double precision", nullable: false),
+                    parameter_overrides = table.Column<string>(type: "jsonb", nullable: true),
                     calculated_price = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: true),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
@@ -196,51 +194,36 @@ namespace Projects.API.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "cabinet_hardware_overrides",
+                name: "cabinet_parts",
                 schema: "projects",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     cabinet_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    assembly_part_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    component_id = table.Column<Guid>(type: "uuid", nullable: true),
-                    role = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    quantity_formula = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
-                    position_x_formula = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
-                    position_y_formula = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
-                    position_z_formula = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
+                    source_assembly_part_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    component_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    x = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    y = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    z = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    rotation_x = table.Column<double>(type: "double precision", nullable: false),
+                    rotation_y = table.Column<double>(type: "double precision", nullable: false),
+                    rotation_z = table.Column<double>(type: "double precision", nullable: false),
+                    shape = table.Column<string>(type: "jsonb", nullable: true),
+                    condition = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    quantity = table.Column<int>(type: "integer", nullable: false, defaultValue: 1),
+                    quantity_formula = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    sort_order = table.Column<int>(type: "integer", nullable: false),
                     is_enabled = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
                     material_id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    provides = table.Column<string>(type: "jsonb", nullable: true),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_cabinet_hardware_overrides", x => x.id);
+                    table.PrimaryKey("PK_cabinet_parts", x => x.id);
                     table.ForeignKey(
-                        name: "FK_cabinet_hardware_overrides_cabinets_cabinet_id",
-                        column: x => x.cabinet_id,
-                        principalSchema: "projects",
-                        principalTable: "cabinets",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "cabinet_materials",
-                schema: "projects",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    cabinet_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    material_type = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    material_id = table.Column<Guid>(type: "uuid", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_cabinet_materials", x => x.id);
-                    table.ForeignKey(
-                        name: "FK_cabinet_materials_cabinets_cabinet_id",
+                        name: "FK_cabinet_parts_cabinets_cabinet_id",
                         column: x => x.cabinet_id,
                         principalSchema: "projects",
                         principalTable: "cabinets",
@@ -249,36 +232,16 @@ namespace Projects.API.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_cabinet_hardware_overrides_assembly_part_id",
+                name: "IX_cabinet_parts_cabinet_id",
                 schema: "projects",
-                table: "cabinet_hardware_overrides",
-                column: "assembly_part_id");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_cabinet_hardware_overrides_cabinet_id",
-                schema: "projects",
-                table: "cabinet_hardware_overrides",
+                table: "cabinet_parts",
                 column: "cabinet_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_cabinet_hardware_overrides_cabinet_id_assembly_part_id",
+                name: "IX_cabinet_parts_source_assembly_part_id",
                 schema: "projects",
-                table: "cabinet_hardware_overrides",
-                columns: new[] { "cabinet_id", "assembly_part_id" },
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_cabinet_materials_cabinet_id",
-                schema: "projects",
-                table: "cabinet_materials",
-                column: "cabinet_id");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_cabinet_materials_cabinet_id_material_type",
-                schema: "projects",
-                table: "cabinet_materials",
-                columns: new[] { "cabinet_id", "material_type" },
-                unique: true);
+                table: "cabinet_parts",
+                column: "source_assembly_part_id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_cabinets_assembly_id",
@@ -357,11 +320,7 @@ namespace Projects.API.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "cabinet_hardware_overrides",
-                schema: "projects");
-
-            migrationBuilder.DropTable(
-                name: "cabinet_materials",
+                name: "cabinet_parts",
                 schema: "projects");
 
             migrationBuilder.DropTable(

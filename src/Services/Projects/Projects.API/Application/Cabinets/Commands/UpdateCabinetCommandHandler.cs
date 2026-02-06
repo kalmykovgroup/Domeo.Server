@@ -22,7 +22,7 @@ public sealed class UpdateCabinetCommandHandler : IRequestHandler<UpdateCabinetC
             throw new NotFoundException("Cabinet", request.Id);
 
         cabinet.UpdatePosition(request.PositionX, request.PositionY, request.Rotation);
-        cabinet.UpdateDimensions(request.Width, request.Height, request.Depth);
+        cabinet.SetParameterOverrides(request.ParameterOverrides);
         cabinet.SetName(request.Name);
         cabinet.SetEdge(request.EdgeId);
         cabinet.SetZone(request.ZoneId);

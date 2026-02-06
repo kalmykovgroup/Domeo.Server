@@ -457,8 +457,8 @@ X-User-Role: systemAdmin
   "shape": [
     {"type":"line","x":"0","y":"0"},
     {"type":"line","x":"W-2*t-2*shelfSideGap","y":"0"},
-    {"type":"line","x":"W-2*t-2*shelfSideGap","y":"D-shelfRearInset-shelfFrontInset"},
-    {"type":"line","x":"0","y":"D-shelfRearInset-shelfFrontInset"}
+    {"type":"line","x":"W-2*t-2*shelfSideGap","y":"D-2-shelfRearInset-shelfFrontInset"},
+    {"type":"line","x":"0","y":"D-2-shelfRearInset-shelfFrontInset"}
   ],
   "quantity": 1,
   "quantityFormula": null,
@@ -983,7 +983,7 @@ position: ("W", "0", "0")   → x=450, y=0, z=0
 #### 2. Верхняя панель (wall)
 
 ```
-shape: Rectangle("W - 2*t", "D")  → (0,0)→(418,0)→(418,560)→(0,560)
+shape: Rectangle("W - 2*t", "D - 2")  → (0,0)→(418,0)→(418,558)→(0,558)
 rotation: (90, 0, 0)              → горизонтальная ориентация
 position: ("t", "H", "0")         → x=16, y=720, z=0
 → ExtrudeGeometry + rotateX(90°) at (16, 720, 0)
@@ -992,7 +992,7 @@ position: ("t", "H", "0")         → x=16, y=720, z=0
 #### 3. Нижняя панель (wall)
 
 ```
-shape: Rectangle("W - 2*t", "D")
+shape: Rectangle("W - 2*t", "D - 2")
 rotation: (90, 0, 0)
 position: ("t", "t", "0")  → x=16, y=16, z=0
 ```
@@ -1023,7 +1023,7 @@ thickness: 4mm (Задняя стенка, color: #E8D5B7)
 #### 5. Полка (shelf)
 
 ```
-shape: Rectangle("W-2*t-2*shelfSideGap", "D-shelfRearInset-shelfFrontInset")
+shape: Rectangle("W-2*t-2*shelfSideGap", "D-2-shelfRearInset-shelfFrontInset")
   → (0,0)→(414,0)→(414,530)→(0,530)
 rotation: (90, 0, 0)
 position: ("t+shelfSideGap", "shelfY+t", "shelfFrontInset")  → x=18, y=256, z=10
@@ -1101,8 +1101,8 @@ Shape в XY, rotation (90,0,0) → контур ложится в XZ, экстр
 |---|-----------|-------|-------------|----------|
 | 0 | wall | Rectangle("D", "H") | (0, −90, 0) | ("t", "0", "0") |
 | 1 | wall | Rectangle("armDepth", "H") | (0, −90, 0) | ("W", "0", "0") |
-| 2 | wall | LShapeHexagon("W-2*t","D-2*t","armDepth") | (90, 0, 0) | ("t", "H", "0") |
-| 3 | wall | LShapeHexagon("W-2*t","D-2*t","armDepth") | (90, 0, 0) | ("t", "t", "0") |
+| 2 | wall | LShapeHexagon("W-2*t","D-2-2*t","armDepth") | (90, 0, 0) | ("t", "H", "0") |
+| 3 | wall | LShapeHexagon("W-2*t","D-2-2*t","armDepth") | (90, 0, 0) | ("t", "t", "0") |
 | 4 | back | BackPanelWithNotches("W-2*t","H-2*t") | (0, 0, 0) | ("t", "t", "0") |
 | 5 | shelf | Rectangle(...) | (90, 0, 0) | ("t+shelfSideGap", "shelfY+t", "shelfFrontInset") |
 | 6 | wall | Rectangle("W-2*t-armDepth","H") | (0, −90, 0) | ("armDepth+2*t", "0", "armDepth") |

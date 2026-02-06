@@ -113,9 +113,6 @@ namespace Modules.API.Migrations
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     assembly_id = table.Column<Guid>(type: "uuid", nullable: false),
                     component_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    role = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    length_expr = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    width_expr = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     x = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     y = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     z = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
@@ -126,7 +123,8 @@ namespace Modules.API.Migrations
                     shape = table.Column<string>(type: "jsonb", nullable: true),
                     quantity = table.Column<int>(type: "integer", nullable: false, defaultValue: 1),
                     quantity_formula = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
-                    sort_order = table.Column<int>(type: "integer", nullable: false)
+                    sort_order = table.Column<int>(type: "integer", nullable: false),
+                    provides = table.Column<string>(type: "jsonb", nullable: true)
                 },
                 constraints: table =>
                 {

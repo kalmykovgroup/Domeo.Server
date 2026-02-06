@@ -22,6 +22,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Projects", "Projects", "{F815D76B-7233-1BF6-F864-E6B3BAFC1A20}"
 	ProjectSection(SolutionItems) = preProject
 		src\Services\Projects\README.md = src\Services\Projects\README.md
+		src\Services\Projects\REACT_CABINET_SPEC.md = src\Services\Projects\REACT_CABINET_SPEC.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Projects.API", "src\Services\Projects\Projects.API\Projects.API.csproj", "{2E32146B-B973-411D-A4AD-D2A09F4FB336}"

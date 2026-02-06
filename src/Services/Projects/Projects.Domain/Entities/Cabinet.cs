@@ -14,9 +14,7 @@ public sealed class Cabinet : AuditableEntity<Guid>
     public double PositionX { get; private set; }
     public double PositionY { get; private set; }
     public double Rotation { get; private set; }
-    public double Width { get; private set; }
-    public double Height { get; private set; }
-    public double Depth { get; private set; }
+    public Dictionary<string, double>? ParameterOverrides { get; private set; }
     public decimal? CalculatedPrice { get; private set; }
 
     private Cabinet() { }
@@ -26,9 +24,7 @@ public sealed class Cabinet : AuditableEntity<Guid>
         string placementType,
         double positionX,
         double positionY,
-        double width,
-        double height,
-        double depth,
+        Dictionary<string, double>? parameterOverrides = null,
         string? name = null)
     {
         return new Cabinet
@@ -38,9 +34,7 @@ public sealed class Cabinet : AuditableEntity<Guid>
             PlacementType = placementType,
             PositionX = positionX,
             PositionY = positionY,
-            Width = width,
-            Height = height,
-            Depth = depth,
+            ParameterOverrides = parameterOverrides,
             Name = name
         };
     }
@@ -52,11 +46,9 @@ public sealed class Cabinet : AuditableEntity<Guid>
         Rotation = rotation;
     }
 
-    public void UpdateDimensions(double width, double height, double depth)
+    public void SetParameterOverrides(Dictionary<string, double>? parameterOverrides)
     {
-        Width = width;
-        Height = height;
-        Depth = depth;
+        ParameterOverrides = parameterOverrides;
     }
 
     public void SetAssembly(Guid? assemblyId) => AssemblyId = assemblyId;

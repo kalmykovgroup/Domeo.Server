@@ -12,8 +12,6 @@ public sealed record CabinetDto(
     double PositionX,
     double PositionY,
     double Rotation,
-    double Width,
-    double Height,
-    double Depth,
+    Dictionary<string, double>? ParameterOverrides,
     decimal? CalculatedPrice,
     DateTime CreatedAt);

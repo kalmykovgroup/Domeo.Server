@@ -89,15 +89,14 @@ public class AssembliesController : ControllerBase
         var result = await _sender.Send(new CreateAssemblyPartCommand(
             assemblyId,
             request.ComponentId,
-            request.LengthExpr,
-            request.WidthExpr,
             request.X, request.Y, request.Z,
             request.RotationX, request.RotationY, request.RotationZ,
             request.Condition,
             request.Shape,
             request.Quantity,
             request.QuantityFormula,
-            request.SortOrder));
+            request.SortOrder,
+            request.Provides));
 
         return Created($"parts/{result.Id}", ApiResponse<AssemblyPartDto>.Ok(result));
     }

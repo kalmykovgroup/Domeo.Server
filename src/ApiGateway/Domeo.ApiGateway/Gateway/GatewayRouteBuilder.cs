@@ -65,8 +65,8 @@ public static class GatewayRouteBuilder
             removePrefix: "/api"));
 
         routes.Add(CreateRoute(
-            id: "cabinet-hardware-overrides",
-            gatewayPath: ProjectsRoutes.Gateway.CabinetHardwareOverridesPrefix,
+            id: "cabinet-parts",
+            gatewayPath: ProjectsRoutes.Gateway.CabinetPartsPrefix,
             serviceName: ProjectsRoutes.ServiceName,
             removePrefix: "/api"));
 

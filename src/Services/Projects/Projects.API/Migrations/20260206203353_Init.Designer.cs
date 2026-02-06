@@ -12,8 +12,8 @@ using Projects.Infrastructure.Persistence;
 namespace Projects.API.Migrations
 {
     [DbContext(typeof(ProjectsDbContext))]
-    [Migration("20260206072310_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260206203353_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -46,10 +46,6 @@ namespace Projects.API.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<double>("Depth")
-                        .HasColumnType("double precision")
-                        .HasColumnName("depth");
-
                     b.Property<Guid?>("EdgeId")
                         .HasColumnType("uuid")
                         .HasColumnName("edge_id");
@@ -59,14 +55,14 @@ namespace Projects.API.Migrations
                         .HasColumnType("character varying(50)")
                         .HasColumnName("facade_type");
 
-                    b.Property<double>("Height")
-                        .HasColumnType("double precision")
-                        .HasColumnName("height");
-
                     b.Property<string>("Name")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
                         .HasColumnName("name");
+
+                    b.Property<string>("ParameterOverrides")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("parameter_overrides");
 
                     b.Property<string>("PlacementType")
                         .IsRequired()
@@ -94,10 +90,6 @@ namespace Projects.API.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
-                    b.Property<double>("Width")
-                        .HasColumnType("double precision")
-                        .HasColumnName("width");
-
                     b.Property<Guid?>("ZoneId")
                         .HasColumnType("uuid")
                         .HasColumnName("zone_id");
@@ -115,24 +107,25 @@ namespace Projects.API.Migrations
                     b.ToTable("cabinets", "projects");
                 });
 
-            modelBuilder.Entity("Projects.Domain.Entities.CabinetHardwareOverride", b =>
+            modelBuilder.Entity("Projects.Domain.Entities.CabinetPart", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<Guid>("AssemblyPartId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("assembly_part_id");
-
                     b.Property<Guid>("CabinetId")
                         .HasColumnType("uuid")
                         .HasColumnName("cabinet_id");
 
-                    b.Property<Guid?>("ComponentId")
+                    b.Property<Guid>("ComponentId")
                         .HasColumnType("uuid")
                         .HasColumnName("component_id");
+
+                    b.Property<string>("Condition")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("condition");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -149,76 +142,71 @@ namespace Projects.API.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("material_id");
 
-                    b.Property<string>("PositionXFormula")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("position_x_formula");
+                    b.Property<string>("Provides")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("provides");
 
-                    b.Property<string>("PositionYFormula")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("position_y_formula");
-
-                    b.Property<string>("PositionZFormula")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("position_z_formula");
+                    b.Property<int>("Quantity")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasColumnName("quantity");
 
                     b.Property<string>("QuantityFormula")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("quantity_formula");
 
-                    b.Property<string>("Role")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("role");
+                    b.Property<double>("RotationX")
+                        .HasColumnType("double precision")
+                        .HasColumnName("rotation_x");
+
+                    b.Property<double>("RotationY")
+                        .HasColumnType("double precision")
+                        .HasColumnName("rotation_y");
+
+                    b.Property<double>("RotationZ")
+                        .HasColumnType("double precision")
+                        .HasColumnName("rotation_z");
+
+                    b.Property<string>("Shape")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("shape");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("sort_order");
+
+                    b.Property<Guid?>("SourceAssemblyPartId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_assembly_part_id");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
-                    b.HasKey("Id");
+                    b.Property<string>("X")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("x");
 
-                    b.HasIndex("AssemblyPartId");
+                    b.Property<string>("Y")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("y");
 
-                    b.HasIndex("CabinetId");
-
-                    b.HasIndex("CabinetId", "AssemblyPartId")
-                        .IsUnique();
-
-                    b.ToTable("cabinet_hardware_overrides", "projects");
-                });
-
-            modelBuilder.Entity("Projects.Domain.Entities.CabinetMaterial", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("CabinetId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("cabinet_id");
-
-                    b.Property<Guid>("MaterialId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("material_id");
-
-                    b.Property<string>("MaterialType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("material_type");
+                    b.Property<string>("Z")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("z");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CabinetId");
 
-                    b.HasIndex("CabinetId", "MaterialType")
-                        .IsUnique();
+                    b.HasIndex("SourceAssemblyPartId");
 
-                    b.ToTable("cabinet_materials", "projects");
+                    b.ToTable("cabinet_parts", "projects");
                 });
 
             modelBuilder.Entity("Projects.Domain.Entities.Project", b =>
@@ -459,16 +447,7 @@ namespace Projects.API.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
                 });
 
-            modelBuilder.Entity("Projects.Domain.Entities.CabinetHardwareOverride", b =>
-                {
-                    b.HasOne("Projects.Domain.Entities.Cabinet", null)
-                        .WithMany()
-                        .HasForeignKey("CabinetId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Projects.Domain.Entities.CabinetMaterial", b =>
+            modelBuilder.Entity("Projects.Domain.Entities.CabinetPart", b =>
                 {
                     b.HasOne("Projects.Domain.Entities.Cabinet", null)
                         .WithMany()

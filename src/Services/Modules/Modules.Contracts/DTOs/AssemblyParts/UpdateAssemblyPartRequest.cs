@@ -4,8 +4,6 @@ namespace Modules.Contracts.DTOs.AssemblyParts;
 
 public sealed record UpdateAssemblyPartRequest(
     Guid ComponentId,
-    string? LengthExpr,
-    string? WidthExpr,
     string? X,
     string? Y,
     string? Z,
@@ -16,4 +14,5 @@ public sealed record UpdateAssemblyPartRequest(
     List<ShapeSegment>? Shape,
     int Quantity,
     string? QuantityFormula,
-    int SortOrder);
+    int SortOrder,
+    Dictionary<string, string>? Provides = null);

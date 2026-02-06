@@ -34,9 +34,7 @@ public sealed class GetCabinetByIdQueryHandler : IRequestHandler<GetCabinetByIdQ
             cabinet.PositionX,
             cabinet.PositionY,
             cabinet.Rotation,
-            cabinet.Width,
-            cabinet.Height,
-            cabinet.Depth,
+            cabinet.ParameterOverrides,
             cabinet.CalculatedPrice,
             cabinet.CreatedAt);
     }
