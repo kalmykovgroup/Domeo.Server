@@ -1,11 +1,9 @@
 using Domeo.Shared.Contracts;
 using Modules.Contracts.DTOs.Assemblies;
-using Modules.Contracts.DTOs.AssemblyParts;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Modules.Application.Queries.Assemblies;
-using Modules.Application.Queries.AssemblyParts;
 using Modules.Contracts.Routes;
 
 namespace Modules.API.Controllers;
@@ -52,21 +50,5 @@ public class AssembliesController : ControllerBase
     {
         var count = await _sender.Send(new GetAssembliesCountQuery(categoryId, activeOnly, search));
         return Ok(ApiResponse<object>.Ok(new { count }));
-    }
-
-    [HttpGet(ModulesRoutes.Controller.AssemblyById)]
-    [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
-    public async Task<ActionResult<ApiResponse<AssemblyDetailDto>>> GetAssembly(Guid id)
-    {
-        var result = await _sender.Send(new GetAssemblyByIdQuery(id));
-        return Ok(ApiResponse<AssemblyDetailDto>.Ok(result));
-    }
-
-    [HttpGet(ModulesRoutes.Controller.AssemblyParts)]
-    [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
-    public async Task<ActionResult<ApiResponse<List<AssemblyPartDto>>>> GetAssemblyParts(Guid id)
-    {
-        var result = await _sender.Send(new GetAssemblyPartsQuery(id));
-        return Ok(ApiResponse<List<AssemblyPartDto>>.Ok(result));
     }
 }

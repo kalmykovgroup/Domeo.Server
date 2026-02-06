@@ -12,7 +12,7 @@ using Projects.Infrastructure.Persistence;
 namespace Projects.API.Migrations
 {
     [DbContext(typeof(ProjectsDbContext))]
-    [Migration("20260205151503_InitialCreate")]
+    [Migration("20260206072310_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />

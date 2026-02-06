@@ -1,5 +1,8 @@
+using System.Text.Json.Serialization;
+
 namespace Modules.Domain.Entities.Shared;
 
+[JsonConverter(typeof(JsonStringEnumConverter<DimensionSource>))]
 public enum DimensionSource
 {
     ParentWidth,
@@ -8,6 +11,7 @@ public enum DimensionSource
     Fixed
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter<AnchorOrigin>))]
 public enum AnchorOrigin
 {
     Start,
@@ -15,6 +19,7 @@ public enum AnchorOrigin
     End
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter<PartRole>))]
 public enum PartRole
 {
     Left,

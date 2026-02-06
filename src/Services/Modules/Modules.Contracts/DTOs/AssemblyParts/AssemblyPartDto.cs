@@ -7,7 +7,7 @@ public sealed record AssemblyPartDto(
     Guid Id,
     Guid AssemblyId,
     Guid ComponentId,
-    string Role,
+    PartRole Role,
     DynamicSize? Length,
     DynamicSize? Width,
     Placement Placement,

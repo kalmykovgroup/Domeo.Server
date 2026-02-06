@@ -1,0 +1,256 @@
+﻿{
+    "success":  true,
+    "data":  {
+                 "id":  "e18b3383-a905-41c9-a8f6-07acd3cc833c",
+                 "categoryId":  "base_single_door",
+                 "type":  "base-single-door",
+                 "name":  "Нижняя база однодверный",
+                 "dimensions":  {
+                                    "width":  450,
+                                    "depth":  560,
+                                    "height":  720
+                                },
+                 "constraints":  {
+                                     "widthMin":  300,
+                                     "widthMax":  600,
+                                     "heightMin":  720,
+                                     "heightMax":  720,
+                                     "depthMin":  500,
+                                     "depthMax":  600
+                                 },
+                 "construction":  {
+                                      "panelThickness":  16,
+                                      "backPanelThickness":  4,
+                                      "facadeThickness":  18,
+                                      "facadeGap":  2,
+                                      "facadeOffset":  0,
+                                      "shelfSideGap":  2,
+                                      "shelfRearInset":  20,
+                                      "shelfFrontInset":  10
+                                  },
+                 "isActive":  true,
+                 "createdAt":  "2026-02-05T14:54:36.898278Z",
+                 "parts":  [
+                               {
+                                   "id":  "7d41975f-50e2-4926-a7f2-6b1d2cbcea6e",
+                                   "assemblyId":  "e18b3383-a905-41c9-a8f6-07acd3cc833c",
+                                   "componentId":  "0c934475-9baa-4fad-8098-9d23e8b887cd",
+                                   "role":  "Left",
+                                   "length":  null,
+                                   "width":  null,
+                                   "placement":  {
+                                                     "anchorX":  0,
+                                                     "anchorY":  0,
+                                                     "anchorZ":  0,
+                                                     "offsetX":  0,
+                                                     "offsetY":  0,
+                                                     "offsetZ":  0,
+                                                     "rotationX":  0,
+                                                     "rotationY":  0,
+                                                     "rotationZ":  0
+                                                 },
+                                   "quantity":  1,
+                                   "quantityFormula":  null,
+                                   "sortOrder":  0,
+                                   "component":  {
+                                                     "id":  "0c934475-9baa-4fad-8098-9d23e8b887cd",
+                                                     "name":  "Стенка",
+                                                     "tags":  [
+                                                                  "panel",
+                                                                  "wall"
+                                                              ],
+                                                     "params":  {
+                                                                    "type":  "panel",
+                                                                    "thickness":  16
+                                                                },
+                                                     "isActive":  true,
+                                                     "createdAt":  "2026-02-05T14:54:36.610289Z"
+                                                 }
+                               },
+                               {
+                                   "id":  "acdb9c97-44c1-4766-813b-2a97607d05cb",
+                                   "assemblyId":  "e18b3383-a905-41c9-a8f6-07acd3cc833c",
+                                   "componentId":  "0c934475-9baa-4fad-8098-9d23e8b887cd",
+                                   "role":  "Right",
+                                   "length":  null,
+                                   "width":  null,
+                                   "placement":  {
+                                                     "anchorX":  0,
+                                                     "anchorY":  0,
+                                                     "anchorZ":  0,
+                                                     "offsetX":  0,
+                                                     "offsetY":  0,
+                                                     "offsetZ":  0,
+                                                     "rotationX":  0,
+                                                     "rotationY":  0,
+                                                     "rotationZ":  0
+                                                 },
+                                   "quantity":  1,
+                                   "quantityFormula":  null,
+                                   "sortOrder":  1,
+                                   "component":  {
+                                                     "id":  "0c934475-9baa-4fad-8098-9d23e8b887cd",
+                                                     "name":  "Стенка",
+                                                     "tags":  [
+                                                                  "panel",
+                                                                  "wall"
+                                                              ],
+                                                     "params":  {
+                                                                    "type":  "panel",
+                                                                    "thickness":  16
+                                                                },
+                                                     "isActive":  true,
+                                                     "createdAt":  "2026-02-05T14:54:36.610289Z"
+                                                 }
+                               },
+                               {
+                                   "id":  "ef316b16-1539-41c4-9ca3-aca6e2c27c44",
+                                   "assemblyId":  "e18b3383-a905-41c9-a8f6-07acd3cc833c",
+                                   "componentId":  "0c934475-9baa-4fad-8098-9d23e8b887cd",
+                                   "role":  "Top",
+                                   "length":  null,
+                                   "width":  null,
+                                   "placement":  {
+                                                     "anchorX":  0,
+                                                     "anchorY":  0,
+                                                     "anchorZ":  0,
+                                                     "offsetX":  0,
+                                                     "offsetY":  0,
+                                                     "offsetZ":  0,
+                                                     "rotationX":  0,
+                                                     "rotationY":  0,
+                                                     "rotationZ":  0
+                                                 },
+                                   "quantity":  1,
+                                   "quantityFormula":  null,
+                                   "sortOrder":  2,
+                                   "component":  {
+                                                     "id":  "0c934475-9baa-4fad-8098-9d23e8b887cd",
+                                                     "name":  "Стенка",
+                                                     "tags":  [
+                                                                  "panel",
+                                                                  "wall"
+                                                              ],
+                                                     "params":  {
+                                                                    "type":  "panel",
+                                                                    "thickness":  16
+                                                                },
+                                                     "isActive":  true,
+                                                     "createdAt":  "2026-02-05T14:54:36.610289Z"
+                                                 }
+                               },
+                               {
+                                   "id":  "18be4c09-c5bd-4641-98e8-fb2ea52caf4f",
+                                   "assemblyId":  "e18b3383-a905-41c9-a8f6-07acd3cc833c",
+                                   "componentId":  "0c934475-9baa-4fad-8098-9d23e8b887cd",
+                                   "role":  "Bottom",
+                                   "length":  null,
+                                   "width":  null,
+                                   "placement":  {
+                                                     "anchorX":  0,
+                                                     "anchorY":  0,
+                                                     "anchorZ":  0,
+                                                     "offsetX":  0,
+                                                     "offsetY":  0,
+                                                     "offsetZ":  0,
+                                                     "rotationX":  0,
+                                                     "rotationY":  0,
+                                                     "rotationZ":  0
+                                                 },
+                                   "quantity":  1,
+                                   "quantityFormula":  null,
+                                   "sortOrder":  3,
+                                   "component":  {
+                                                     "id":  "0c934475-9baa-4fad-8098-9d23e8b887cd",
+                                                     "name":  "Стенка",
+                                                     "tags":  [
+                                                                  "panel",
+                                                                  "wall"
+                                                              ],
+                                                     "params":  {
+                                                                    "type":  "panel",
+                                                                    "thickness":  16
+                                                                },
+                                                     "isActive":  true,
+                                                     "createdAt":  "2026-02-05T14:54:36.610289Z"
+                                                 }
+                               },
+                               {
+                                   "id":  "2fa4f308-4cfd-4b60-a8ca-ecb37af62d33",
+                                   "assemblyId":  "e18b3383-a905-41c9-a8f6-07acd3cc833c",
+                                   "componentId":  "79f50c38-77b0-4750-b2e8-5b3f8eb2047d",
+                                   "role":  "Back",
+                                   "length":  null,
+                                   "width":  null,
+                                   "placement":  {
+                                                     "anchorX":  0,
+                                                     "anchorY":  0,
+                                                     "anchorZ":  0,
+                                                     "offsetX":  0,
+                                                     "offsetY":  0,
+                                                     "offsetZ":  0,
+                                                     "rotationX":  0,
+                                                     "rotationY":  0,
+                                                     "rotationZ":  0
+                                                 },
+                                   "quantity":  1,
+                                   "quantityFormula":  null,
+                                   "sortOrder":  4,
+                                   "component":  {
+                                                     "id":  "79f50c38-77b0-4750-b2e8-5b3f8eb2047d",
+                                                     "name":  "Задняя стенка",
+                                                     "tags":  [
+                                                                  "panel",
+                                                                  "back"
+                                                              ],
+                                                     "params":  {
+                                                                    "type":  "panel",
+                                                                    "thickness":  4
+                                                                },
+                                                     "isActive":  true,
+                                                     "createdAt":  "2026-02-05T14:54:36.610403Z"
+                                                 }
+                               },
+                               {
+                                   "id":  "f5736a33-b51b-4974-b681-806c814b40b5",
+                                   "assemblyId":  "e18b3383-a905-41c9-a8f6-07acd3cc833c",
+                                   "componentId":  "e3adfe5c-0e7a-4ccb-b05a-bd88186a8f0e",
+                                   "role":  "Shelf",
+                                   "length":  null,
+                                   "width":  null,
+                                   "placement":  {
+                                                     "anchorX":  0,
+                                                     "anchorY":  0,
+                                                     "anchorZ":  0,
+                                                     "offsetX":  0,
+                                                     "offsetY":  0,
+                                                     "offsetZ":  0,
+                                                     "rotationX":  0,
+                                                     "rotationY":  0,
+                                                     "rotationZ":  0
+                                                 },
+                                   "quantity":  1,
+                                   "quantityFormula":  null,
+                                   "sortOrder":  5,
+                                   "component":  {
+                                                     "id":  "e3adfe5c-0e7a-4ccb-b05a-bd88186a8f0e",
+                                                     "name":  "Полка",
+                                                     "tags":  [
+                                                                  "panel",
+                                                                  "shelf"
+                                                              ],
+                                                     "params":  {
+                                                                    "type":  "panel",
+                                                                    "thickness":  16
+                                                                },
+                                                     "isActive":  true,
+                                                     "createdAt":  "2026-02-05T14:54:36.610403Z"
+                                                 }
+                               }
+                           ]
+             },
+    "message":  null,
+    "errors":  [
+
+               ]
+}

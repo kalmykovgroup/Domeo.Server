@@ -82,11 +82,12 @@ public sealed class ModulesSeeder
         var back = components.First(c => c.Name == "Задняя стенка");
         var shelf = components.First(c => c.Name == "Полка");
 
-        var defaultPlacement = new Placement(
-            AnchorOrigin.Start, AnchorOrigin.Start, AnchorOrigin.Start,
-            0, 0, 0, 0, 0, 0);
-
         var defaultConstruction = new Construction(16, 4, 18, 2, 0, 2, 20, 10);
+
+        var t = defaultConstruction.PanelThickness;    // 16
+        var sg = defaultConstruction.ShelfSideGap;      // 2
+        var ri = defaultConstruction.ShelfRearInset;    // 20
+        var fi = defaultConstruction.ShelfFrontInset;   // 10
 
         // Assembly definitions: (categoryId, type, name, w, h, d, wMin, wMax, hMin, hMax, dMin, dMax)
         var assemblyDefs = new (string cat, string type, string name,
@@ -130,12 +131,47 @@ public sealed class ModulesSeeder
 
             assemblies.Add(assembly);
 
-            allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, PartRole.Left, defaultPlacement, sortOrder: 0));
-            allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, PartRole.Right, defaultPlacement, sortOrder: 1));
-            allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, PartRole.Top, defaultPlacement, sortOrder: 2));
-            allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, PartRole.Bottom, defaultPlacement, sortOrder: 3));
-            allParts.Add(AssemblyPart.Create(assembly.Id, back.Id, PartRole.Back, defaultPlacement, sortOrder: 4));
-            allParts.Add(AssemblyPart.Create(assembly.Id, shelf.Id, PartRole.Shelf, defaultPlacement, sortOrder: 5));
+            // Left: полная высота, полная глубина, привязка к левому краю
+            allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, PartRole.Left,
+                placement: new Placement(AnchorOrigin.Start, AnchorOrigin.Start, AnchorOrigin.Start, 0, 0, 0, 0, 0, 0),
+                length: new DynamicSize(DimensionSource.ParentHeight, 0, null),
+                width: new DynamicSize(DimensionSource.ParentDepth, 0, null),
+                sortOrder: 0));
+
+            // Right: полная высота, полная глубина, привязка к правому краю
+            allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, PartRole.Right,
+                placement: new Placement(AnchorOrigin.End, AnchorOrigin.Start, AnchorOrigin.Start, 0, 0, 0, 0, 0, 0),
+                length: new DynamicSize(DimensionSource.ParentHeight, 0, null),
+                width: new DynamicSize(DimensionSource.ParentDepth, 0, null),
+                sortOrder: 1));
+
+            // Top: ширина минус две стенки, полная глубина, привязка к верху
+            allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, PartRole.Top,
+                placement: new Placement(AnchorOrigin.Start, AnchorOrigin.End, AnchorOrigin.Start, t, 0, 0, 0, 0, 0),
+                length: new DynamicSize(DimensionSource.ParentWidth, -2 * t, null),
+                width: new DynamicSize(DimensionSource.ParentDepth, 0, null),
+                sortOrder: 2));
+
+            // Bottom: ширина минус две стенки, полная глубина, привязка к низу
+            allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, PartRole.Bottom,
+                placement: new Placement(AnchorOrigin.Start, AnchorOrigin.Start, AnchorOrigin.Start, t, 0, 0, 0, 0, 0),
+                length: new DynamicSize(DimensionSource.ParentWidth, -2 * t, null),
+                width: new DynamicSize(DimensionSource.ParentDepth, 0, null),
+                sortOrder: 3));
+
+            // Back: ширина минус две стенки, полная высота, привязка к задней стенке
+            allParts.Add(AssemblyPart.Create(assembly.Id, back.Id, PartRole.Back,
+                placement: new Placement(AnchorOrigin.Start, AnchorOrigin.Start, AnchorOrigin.End, t, 0, 0, 0, 0, 0),
+                length: new DynamicSize(DimensionSource.ParentWidth, -2 * t, null),
+                width: new DynamicSize(DimensionSource.ParentHeight, 0, null),
+                sortOrder: 4));
+
+            // Shelf: ширина минус стенки и зазоры, глубина минус отступы спереди и сзади
+            allParts.Add(AssemblyPart.Create(assembly.Id, shelf.Id, PartRole.Shelf,
+                placement: new Placement(AnchorOrigin.Start, AnchorOrigin.Center, AnchorOrigin.Start, t + sg, 0, fi, 0, 0, 0),
+                length: new DynamicSize(DimensionSource.ParentWidth, -2 * t - 2 * sg, null),
+                width: new DynamicSize(DimensionSource.ParentDepth, -ri - fi, null),
+                sortOrder: 5));
         }
 
         _dbContext.Assemblies.AddRange(assemblies);

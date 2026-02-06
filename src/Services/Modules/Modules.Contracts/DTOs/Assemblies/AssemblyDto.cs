@@ -1,3 +1,4 @@
+using Modules.Contracts.DTOs.AssemblyParts;
 using Modules.Domain.Entities.Shared;
 
 namespace Modules.Contracts.DTOs.Assemblies;
@@ -11,4 +12,5 @@ public sealed record AssemblyDto(
     Constraints? Constraints,
     Construction? Construction,
     bool IsActive,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    List<AssemblyPartDto> Parts);

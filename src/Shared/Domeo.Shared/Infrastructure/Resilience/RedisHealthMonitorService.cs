@@ -69,7 +69,7 @@ public sealed class RedisHealthMonitorService : BackgroundService
 
             var delay = _stateTracker.IsRedisAvailable
                 ? _options.HealthyCheckIntervalMs
-                : _currentRetryDelayMs;
+                : _options.UnhealthyCheckIntervalMs;
 
             await Task.Delay(delay, stoppingToken);
         }

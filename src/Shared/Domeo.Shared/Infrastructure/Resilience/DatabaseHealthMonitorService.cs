@@ -64,7 +64,7 @@ public sealed class DatabaseHealthMonitorService<TDbContext> : BackgroundService
 
             var delay = _stateTracker.IsDatabaseAvailable
                 ? _options.HealthyCheckIntervalMs
-                : _currentRetryDelayMs;
+                : _options.UnhealthyCheckIntervalMs;
 
             await Task.Delay(delay, stoppingToken);
         }

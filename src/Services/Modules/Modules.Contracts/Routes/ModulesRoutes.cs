@@ -12,8 +12,6 @@ public static class ModulesRoutes
 
         public const string Tree = "tree";
         public const string Count = "count";
-        public const string AssemblyById = "{id:guid}";
-        public const string AssemblyParts = "{id:guid}/parts";
         public const string ComponentById = "{id:guid}";
     }
 

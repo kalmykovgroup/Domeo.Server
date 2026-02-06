@@ -9,10 +9,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Auth.API.Infrastructure.Persistence.Migrations
+namespace Auth.API.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
-    [Migration("20260205144732_InitialCreate")]
+    [Migration("20260206072153_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />

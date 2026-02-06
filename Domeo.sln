@@ -20,22 +20,40 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modules.API", "src\Services\Modules\Modules.API\Modules.API.csproj", "{D1B2C3D4-0009-0000-0000-000000000001}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Projects", "Projects", "{F815D76B-7233-1BF6-F864-E6B3BAFC1A20}"
+	ProjectSection(SolutionItems) = preProject
+		src\Services\Projects\README.md = src\Services\Projects\README.md
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Projects.API", "src\Services\Projects\Projects.API\Projects.API.csproj", "{2E32146B-B973-411D-A4AD-D2A09F4FB336}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Modules", "Modules", "{E37856A1-D8E5-A351-1D14-E40614429F7E}"
+	ProjectSection(SolutionItems) = preProject
+		src\Services\Modules\README.md = src\Services\Modules\README.md
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Clients", "Clients", "{654BA843-216D-2CFB-769C-13CCF46B4AFB}"
+	ProjectSection(SolutionItems) = preProject
+		src\Services\Clients\README.md = src\Services\Clients\README.md
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Audit", "Audit", "{15A261CA-6950-6683-45D2-86438F894F2D}"
+	ProjectSection(SolutionItems) = preProject
+		src\Services\Audit\README.md = src\Services\Audit\README.md
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Audit.API", "src\Services\Audit\Audit.API\Audit.API.csproj", "{D33EB974-08C5-4278-866D-063B3B5C9923}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Auth", "Auth", "{5D2E74F6-5D77-6CC1-6422-882C3B01A500}"
+	ProjectSection(SolutionItems) = preProject
+		src\Services\Auth\README.md = src\Services\Auth\README.md
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Auth.API", "src\Services\Auth\Auth.API\Auth.API.csproj", "{85C8A97A-F12F-4AE6-8F7A-F5A18466F2D5}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Materials", "Materials", "{21FA1D81-903F-8AD4-2DFF-27BE248B6A17}"
+	ProjectSection(SolutionItems) = preProject
+		src\Services\Materials\README.md = src\Services\Materials\README.md
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Materials.API", "src\Services\Materials\Materials.API\Materials.API.csproj", "{6D73790A-E40A-46EA-8410-D17C963CB9FB}"
 EndProject
