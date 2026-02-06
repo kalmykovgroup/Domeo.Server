@@ -63,7 +63,7 @@ public sealed class GetAssembliesQueryHandler : IRequestHandler<GetAssembliesQue
     private static AssemblyPartDto ToPartDto(AssemblyPart p, Dictionary<Guid, Component> componentMap) => new(
         p.Id, p.AssemblyId, p.ComponentId, p.Role,
         p.Length, p.Width, p.Placement,
-        p.Cutouts,
+        p.Shape,
         p.Quantity, p.QuantityFormula, p.SortOrder,
         componentMap.TryGetValue(p.ComponentId, out var c)
             ? new ComponentDto(c.Id, c.Name, c.Tags, c.Params, c.IsActive, c.CreatedAt)

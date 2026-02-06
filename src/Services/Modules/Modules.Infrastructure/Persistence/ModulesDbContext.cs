@@ -15,6 +15,7 @@ public sealed class ModulesDbContext : DbContext, IUnitOfWork
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        AllowOutOfOrderMetadataProperties = true,
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
     };
 
@@ -163,10 +164,10 @@ public sealed class ModulesDbContext : DbContext, IUnitOfWork
                     v => JsonSerializer.Serialize(v, JsonOptions),
                     v => JsonSerializer.Deserialize<Placement>(v, JsonOptions)!);
 
-            builder.Property(x => x.Cutouts).HasColumnName("cutouts").HasColumnType("jsonb")
+            builder.Property(x => x.Shape).HasColumnName("shape").HasColumnType("jsonb")
                 .HasConversion(
                     v => v == null ? null : JsonSerializer.Serialize(v, JsonOptions),
-                    v => v == null ? null : JsonSerializer.Deserialize<List<Cutout>>(v, JsonOptions));
+                    v => v == null ? null : JsonSerializer.Deserialize<List<ShapeSegment>>(v, JsonOptions));
 
             builder.HasIndex(x => x.AssemblyId);
             builder.HasIndex(x => x.ComponentId);

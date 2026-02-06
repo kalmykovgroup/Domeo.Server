@@ -46,7 +46,7 @@ public sealed class CreateAssemblyPartCommandHandler : IRequestHandler<CreateAss
             request.Quantity,
             request.QuantityFormula,
             request.SortOrder,
-            request.Cutouts);
+            request.Shape);
 
         _partRepository.Add(part);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -58,7 +58,7 @@ public sealed class CreateAssemblyPartCommandHandler : IRequestHandler<CreateAss
         return new AssemblyPartDto(
             part.Id, part.AssemblyId, part.ComponentId,
             part.Role, part.Length, part.Width, part.Placement,
-            part.Cutouts,
+            part.Shape,
             part.Quantity, part.QuantityFormula, part.SortOrder,
             componentDto);
     }

@@ -11,7 +11,7 @@ public sealed record AssemblyPartDto(
     DynamicSize? Length,
     DynamicSize? Width,
     Placement Placement,
-    List<Cutout>? Cutouts,
+    List<ShapeSegment>? Shape,
     int Quantity,
     string? QuantityFormula,
     int SortOrder,

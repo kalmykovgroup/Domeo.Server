@@ -11,7 +11,7 @@ public sealed record CreateAssemblyPartCommand(
     Placement Placement,
     DynamicSize? Length,
     DynamicSize? Width,
-    List<Cutout>? Cutouts,
+    List<ShapeSegment>? Shape,
     int Quantity,
     string? QuantityFormula,
     int SortOrder) : IRequest<AssemblyPartDto>;

@@ -97,10 +97,6 @@ namespace Modules.API.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("component_id");
 
-                    b.Property<string>("Cutouts")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("cutouts");
-
                     b.Property<string>("Length")
                         .HasColumnType("jsonb")
                         .HasColumnName("length");
@@ -126,6 +122,10 @@ namespace Modules.API.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasColumnName("role");
+
+                    b.Property<string>("Shape")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("shape");
 
                     b.Property<int>("SortOrder")
                         .HasColumnType("integer")

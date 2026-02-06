@@ -51,7 +51,11 @@ try
     builder.Services.AddInfrastructure();
 
     // Controllers
-    builder.Services.AddControllers();
+    builder.Services.AddControllers()
+        .AddJsonOptions(options =>
+        {
+            options.JsonSerializerOptions.AllowOutOfOrderMetadataProperties = true;
+        });
 
     // Services
     builder.Services.AddScoped<ModulesSeeder>();

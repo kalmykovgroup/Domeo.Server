@@ -55,7 +55,7 @@ public class AssembliesController : ControllerBase
             request.Placement,
             request.Length,
             request.Width,
-            request.Cutouts,
+            request.Shape,
             request.Quantity,
             request.QuantityFormula,
             request.SortOrder));

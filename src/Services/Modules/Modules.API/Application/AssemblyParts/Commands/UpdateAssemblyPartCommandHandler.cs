@@ -36,7 +36,7 @@ public sealed class UpdateAssemblyPartCommandHandler : IRequestHandler<UpdateAss
             request.ComponentId, request.Role, request.Placement,
             request.Length, request.Width,
             request.Quantity, request.QuantityFormula, request.SortOrder,
-            request.Cutouts);
+            request.Shape);
 
         _partRepository.Update(part);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -48,7 +48,7 @@ public sealed class UpdateAssemblyPartCommandHandler : IRequestHandler<UpdateAss
         return new AssemblyPartDto(
             part.Id, part.AssemblyId, part.ComponentId,
             part.Role, part.Length, part.Width, part.Placement,
-            part.Cutouts,
+            part.Shape,
             part.Quantity, part.QuantityFormula, part.SortOrder,
             componentDto);
     }
