@@ -41,14 +41,4 @@ public class AssembliesController : ControllerBase
         return Ok(ApiResponse<List<AssemblyDto>>.Ok(response.Items));
     }
 
-    [HttpGet(ModulesRoutes.Controller.Count)]
-    [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
-    public async Task<ActionResult<ApiResponse<object>>> GetAssembliesCount(
-        [FromQuery] string? categoryId,
-        [FromQuery] bool? activeOnly,
-        [FromQuery] string? search)
-    {
-        var count = await _sender.Send(new GetAssembliesCountQuery(categoryId, activeOnly, search));
-        return Ok(ApiResponse<object>.Ok(new { count }));
-    }
 }

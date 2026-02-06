@@ -24,12 +24,4 @@ public class CategoriesController : ControllerBase
         var result = await _sender.Send(new GetCategoriesQuery(activeOnly));
         return Ok(ApiResponse<List<ModuleCategoryDto>>.Ok(result));
     }
-
-    [HttpGet(ModulesRoutes.Controller.Tree)]
-    [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
-    public async Task<ActionResult<ApiResponse<List<ModuleCategoryTreeDto>>>> GetCategoriesTree([FromQuery] bool? activeOnly)
-    {
-        var result = await _sender.Send(new GetCategoriesTreeQuery(activeOnly));
-        return Ok(ApiResponse<List<ModuleCategoryTreeDto>>.Ok(result));
-    }
 }

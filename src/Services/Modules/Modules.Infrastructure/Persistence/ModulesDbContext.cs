@@ -57,7 +57,7 @@ public sealed class ModulesDbContext : DbContext, IUnitOfWork
             builder.Property(x => x.IsActive).HasColumnName("is_active").IsRequired().HasDefaultValue(true);
 
             builder.HasIndex(x => x.ParentId);
-            builder.HasOne<ModuleCategory>().WithMany().HasForeignKey(x => x.ParentId).OnDelete(DeleteBehavior.SetNull);
+            builder.HasOne<ModuleCategory>().WithMany(x => x.Children).HasForeignKey(x => x.ParentId).OnDelete(DeleteBehavior.SetNull);
         });
 
         // Assembly

@@ -9,6 +9,7 @@ public sealed class ModuleCategory : Entity<string>
     public string? Description { get; private set; }
     public int OrderIndex { get; private set; }
     public bool IsActive { get; private set; } = true;
+    public List<ModuleCategory> Children { get; private set; } = [];
 
     private ModuleCategory() { }
 

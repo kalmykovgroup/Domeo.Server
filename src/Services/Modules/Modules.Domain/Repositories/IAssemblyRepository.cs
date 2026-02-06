@@ -8,7 +8,4 @@ public interface IAssemblyRepository : IRepository<Assembly, Guid>
         string? categoryId, bool? activeOnly, string? search,
         int? page, int? limit, CancellationToken ct = default);
 
-    Task<int> GetAssembliesCountAsync(
-        string? categoryId, bool? activeOnly, string? search,
-        CancellationToken ct = default);
 }

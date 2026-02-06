@@ -26,12 +26,4 @@ public class ComponentsController : ControllerBase
         var result = await _sender.Send(new GetComponentsQuery(tag, activeOnly));
         return Ok(ApiResponse<List<ComponentDto>>.Ok(result));
     }
-
-    [HttpGet(ModulesRoutes.Controller.ComponentById)]
-    [Authorize(Roles = "sales,designer,catalogAdmin,systemAdmin")]
-    public async Task<ActionResult<ApiResponse<ComponentDto>>> GetComponent(Guid id)
-    {
-        var result = await _sender.Send(new GetComponentByIdQuery(id));
-        return Ok(ApiResponse<ComponentDto>.Ok(result));
-    }
 }

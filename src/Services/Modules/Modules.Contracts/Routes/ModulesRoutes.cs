@@ -10,9 +10,6 @@ public static class ModulesRoutes
         public const string Assemblies = "assemblies";
         public const string Components = "components";
 
-        public const string Tree = "tree";
-        public const string Count = "count";
-        public const string ComponentById = "{id:guid}";
     }
 
     public static class Gateway

@@ -41,14 +41,6 @@ public sealed class AssemblyRepository : IAssemblyRepository
         return (allItems, allItems.Count);
     }
 
-    public async Task<int> GetAssembliesCountAsync(
-        string? categoryId, bool? activeOnly, string? search,
-        CancellationToken ct = default)
-    {
-        var query = BuildQuery(categoryId, activeOnly, search);
-        return await query.CountAsync(ct);
-    }
-
     private IQueryable<Assembly> BuildQuery(string? categoryId, bool? activeOnly, string? search)
     {
         var query = _dbContext.Assemblies.AsQueryable();
