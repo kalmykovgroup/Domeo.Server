@@ -11,6 +11,7 @@ public sealed class AssemblyPart : Entity<Guid>
     public DynamicSize? Length { get; private set; }
     public DynamicSize? Width { get; private set; }
     public Placement Placement { get; private set; } = null!;
+    public List<Cutout>? Cutouts { get; private set; }
     public int Quantity { get; private set; } = 1;
     public string? QuantityFormula { get; private set; }
     public int SortOrder { get; private set; }
@@ -26,7 +27,8 @@ public sealed class AssemblyPart : Entity<Guid>
         DynamicSize? width = null,
         int quantity = 1,
         string? quantityFormula = null,
-        int sortOrder = 0)
+        int sortOrder = 0,
+        List<Cutout>? cutouts = null)
     {
         return new AssemblyPart
         {
@@ -37,9 +39,32 @@ public sealed class AssemblyPart : Entity<Guid>
             Placement = placement,
             Length = length,
             Width = width,
+            Cutouts = cutouts,
             Quantity = quantity,
             QuantityFormula = quantityFormula,
             SortOrder = sortOrder
         };
+    }
+
+    public void Update(
+        Guid componentId,
+        PartRole role,
+        Placement placement,
+        DynamicSize? length,
+        DynamicSize? width,
+        int quantity,
+        string? quantityFormula,
+        int sortOrder,
+        List<Cutout>? cutouts = null)
+    {
+        ComponentId = componentId;
+        Role = role;
+        Placement = placement;
+        Length = length;
+        Width = width;
+        Cutouts = cutouts;
+        Quantity = quantity;
+        QuantityFormula = quantityFormula;
+        SortOrder = sortOrder;
     }
 }

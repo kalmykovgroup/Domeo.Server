@@ -33,6 +33,7 @@ public sealed class ModulesDbContext : DbContext, IUnitOfWork
     public DbSet<Assembly> Assemblies => Set<Assembly>();
     public DbSet<Component> Components => Set<Component>();
     public DbSet<AssemblyPart> AssemblyParts => Set<AssemblyPart>();
+    public DbSet<StorageConnection> StorageConnections => Set<StorageConnection>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -113,6 +114,26 @@ public sealed class ModulesDbContext : DbContext, IUnitOfWork
             builder.HasIndex(x => x.IsActive);
         });
 
+        // StorageConnection
+        modelBuilder.Entity<StorageConnection>(builder =>
+        {
+            builder.ToTable("storage_connections");
+            builder.HasKey(x => x.Id);
+            builder.Property(x => x.Id).HasColumnName("id").ValueGeneratedNever();
+            builder.Property(x => x.Name).HasColumnName("name").HasMaxLength(200).IsRequired();
+            builder.Property(x => x.Type).HasColumnName("type").HasMaxLength(50).IsRequired().HasDefaultValue("s3");
+            builder.Property(x => x.Endpoint).HasColumnName("endpoint").HasMaxLength(500).IsRequired();
+            builder.Property(x => x.Bucket).HasColumnName("bucket").HasMaxLength(200).IsRequired();
+            builder.Property(x => x.Region).HasColumnName("region").HasMaxLength(100).IsRequired();
+            builder.Property(x => x.AccessKey).HasColumnName("access_key").HasMaxLength(500).IsRequired();
+            builder.Property(x => x.SecretKey).HasColumnName("secret_key").HasMaxLength(500).IsRequired();
+            builder.Property(x => x.IsActive).HasColumnName("is_active").IsRequired().HasDefaultValue(false);
+            builder.Property(x => x.CreatedAt).HasColumnName("created_at").IsRequired();
+            builder.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+
+            builder.HasIndex(x => x.IsActive);
+        });
+
         // AssemblyPart
         modelBuilder.Entity<AssemblyPart>(builder =>
         {
@@ -141,6 +162,11 @@ public sealed class ModulesDbContext : DbContext, IUnitOfWork
                 .HasConversion(
                     v => JsonSerializer.Serialize(v, JsonOptions),
                     v => JsonSerializer.Deserialize<Placement>(v, JsonOptions)!);
+
+            builder.Property(x => x.Cutouts).HasColumnName("cutouts").HasColumnType("jsonb")
+                .HasConversion(
+                    v => v == null ? null : JsonSerializer.Serialize(v, JsonOptions),
+                    v => v == null ? null : JsonSerializer.Deserialize<List<Cutout>>(v, JsonOptions));
 
             builder.HasIndex(x => x.AssemblyId);
             builder.HasIndex(x => x.ComponentId);

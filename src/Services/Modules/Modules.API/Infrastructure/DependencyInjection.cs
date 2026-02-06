@@ -4,6 +4,7 @@ using MediatR;
 using Modules.Domain.Repositories;
 using Modules.Infrastructure.Persistence;
 using Modules.Infrastructure.Persistence.Repositories;
+using Modules.Infrastructure.Storage;
 
 namespace Modules.API.Infrastructure;
 
@@ -26,7 +27,11 @@ public static class DependencyInjection
         services.AddScoped<IAssemblyRepository, AssemblyRepository>();
         services.AddScoped<IComponentRepository, ComponentRepository>();
         services.AddScoped<IAssemblyPartRepository, AssemblyPartRepository>();
+        services.AddScoped<IStorageConnectionRepository, StorageConnectionRepository>();
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ModulesDbContext>());
+
+        services.AddHttpContextAccessor();
+        services.AddScoped<FileStorageResolver>();
 
         return services;
     }

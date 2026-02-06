@@ -77,6 +77,9 @@ try
     // Database initialization - resilient startup (never throws)
     await InitializeDatabaseAsync(app);
 
+    // Static files (GLB uploads from wwwroot)
+    app.UseStaticFiles();
+
     // Middleware Pipeline
     app.UseSerilogRequestLogging();
     app.UseAuthentication();

@@ -1,8 +1,10 @@
 using Domeo.Shared.Contracts;
 using Modules.Contracts.DTOs.Assemblies;
+using Modules.Contracts.DTOs.AssemblyParts;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Modules.Application.Commands.AssemblyParts;
 using Modules.Application.Queries.Assemblies;
 using Modules.Contracts.Routes;
 
@@ -41,4 +43,23 @@ public class AssembliesController : ControllerBase
         return Ok(ApiResponse<List<AssemblyDto>>.Ok(response.Items));
     }
 
+    [HttpPost("{assemblyId:guid}/parts")]
+    [Authorize(Roles = "catalogAdmin,systemAdmin")]
+    public async Task<ActionResult<ApiResponse<AssemblyPartDto>>> CreatePart(
+        Guid assemblyId, [FromBody] CreateAssemblyPartRequest request)
+    {
+        var result = await _sender.Send(new CreateAssemblyPartCommand(
+            assemblyId,
+            request.ComponentId,
+            request.Role,
+            request.Placement,
+            request.Length,
+            request.Width,
+            request.Cutouts,
+            request.Quantity,
+            request.QuantityFormula,
+            request.SortOrder));
+
+        return Created($"parts/{result.Id}", ApiResponse<AssemblyPartDto>.Ok(result));
+    }
 }

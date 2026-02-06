@@ -37,6 +37,8 @@
     <PackageVersion Include="StackExchange.Redis" Version="2.8.16" />
     <!-- API Documentation -->
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="7.2.0" />
+    <!-- Cloud Storage -->
+    <PackageVersion Include="AWSSDK.S3" Version="3.7.405.10" />
     <!-- API Gateway -->
     <PackageVersion Include="Yarp.ReverseProxy" Version="2.2.0" />
     <!-- Hosting -->

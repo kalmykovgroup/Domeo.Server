@@ -1,18 +1,14 @@
-using Modules.Contracts.DTOs.Components;
 using Modules.Domain.Entities.Shared;
 
 namespace Modules.Contracts.DTOs.AssemblyParts;
 
-public sealed record AssemblyPartDto(
-    Guid Id,
-    Guid AssemblyId,
+public sealed record CreateAssemblyPartRequest(
     Guid ComponentId,
     PartRole Role,
+    Placement Placement,
     DynamicSize? Length,
     DynamicSize? Width,
-    Placement Placement,
     List<Cutout>? Cutouts,
     int Quantity,
     string? QuantityFormula,
-    int SortOrder,
-    ComponentDto? Component);
+    int SortOrder);

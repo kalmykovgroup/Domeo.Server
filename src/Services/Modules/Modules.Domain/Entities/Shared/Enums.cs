@@ -35,3 +35,12 @@ public enum PartRole
     Leg,
     DrawerSlide
 }
+
+[JsonConverter(typeof(JsonStringEnumConverter<CutoutAnchor>))]
+public enum CutoutAnchor
+{
+    TopLeft,
+    TopRight,
+    BottomLeft,
+    BottomRight
+}

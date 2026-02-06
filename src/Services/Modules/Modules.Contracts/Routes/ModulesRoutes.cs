@@ -3,13 +3,15 @@ namespace Modules.Contracts.Routes;
 public static class ModulesRoutes
 {
     public const string ServiceName = "modules";
+    public const string ById = "{id:guid}";
 
     public static class Controller
     {
         public const string Categories = "categories";
         public const string Assemblies = "assemblies";
         public const string Components = "components";
-
+        public const string Parts = "parts";
+        public const string Storage = "storage";
     }
 
     public static class Gateway

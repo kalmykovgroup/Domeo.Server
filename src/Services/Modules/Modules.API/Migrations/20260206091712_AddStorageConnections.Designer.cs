@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Modules.Infrastructure.Persistence;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Modules.API.Migrations
 {
     [DbContext(typeof(ModulesDbContext))]
-    partial class ModulesDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260206091712_AddStorageConnections")]
+    partial class AddStorageConnections
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -96,10 +99,6 @@ namespace Modules.API.Migrations
                     b.Property<Guid>("ComponentId")
                         .HasColumnType("uuid")
                         .HasColumnName("component_id");
-
-                    b.Property<string>("Cutouts")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("cutouts");
 
                     b.Property<string>("Length")
                         .HasColumnType("jsonb")

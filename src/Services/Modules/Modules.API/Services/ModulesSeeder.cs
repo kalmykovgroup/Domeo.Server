@@ -159,12 +159,18 @@ public sealed class ModulesSeeder
                 width: new DynamicSize(DimensionSource.ParentDepth, 0, null),
                 sortOrder: 3));
 
-            // Back: ширина минус две стенки, полная высота, привязка к задней стенке
+            // Back: ширина минус две стенки, высота минус дно и крышка, отступ в паз 10мм
+            // Вырезы 25×50мм в верхних углах под петли
             allParts.Add(AssemblyPart.Create(assembly.Id, back.Id, PartRole.Back,
-                placement: new Placement(AnchorOrigin.Start, AnchorOrigin.Start, AnchorOrigin.End, t, 0, 0, 0, 0, 0),
+                placement: new Placement(AnchorOrigin.Start, AnchorOrigin.Start, AnchorOrigin.End, t, t, -10, 0, 0, 0),
                 length: new DynamicSize(DimensionSource.ParentWidth, -2 * t, null),
-                width: new DynamicSize(DimensionSource.ParentHeight, 0, null),
-                sortOrder: 4));
+                width: new DynamicSize(DimensionSource.ParentHeight, -2 * t, null),
+                sortOrder: 4,
+                cutouts:
+                [
+                    new Cutout(CutoutAnchor.TopLeft, 25, 50),
+                    new Cutout(CutoutAnchor.TopRight, 25, 50)
+                ]));
 
             // Shelf: ширина минус стенки и зазоры, глубина минус отступы спереди и сзади
             allParts.Add(AssemblyPart.Create(assembly.Id, shelf.Id, PartRole.Shelf,
