@@ -3,40 +3,23 @@ using Modules.Domain.Entities.Shared;
 
 namespace Modules.Domain.Entities;
 
-/// <summary>
-/// Деталь сборки — связь между <see cref="Assembly"/> и <see cref="Component"/>
-/// с указанием роли, параметрических размеров и позиции внутри корпуса.
-/// </summary>
 public sealed class AssemblyPart : Entity<Guid>
 {
-    /// <summary>Идентификатор родительской сборки.</summary>
     public Guid AssemblyId { get; private set; }
-
-    /// <summary>Идентификатор используемого компонента (материал или 3D-модель).</summary>
     public Guid ComponentId { get; private set; }
-
-    /// <summary>Конструктивная роль детали в сборке (стенка, полка, фасад и т.п.).</summary>
-    public PartRole Role { get; private set; }
-
-    /// <summary>Параметрическая длина детали. <c>null</c> — определяется компонентом.</summary>
-    public DynamicSize? Length { get; private set; }
-
-    /// <summary>Параметрическая ширина детали. <c>null</c> — определяется компонентом.</summary>
-    public DynamicSize? Width { get; private set; }
-
-    /// <summary>3D-позиция и ориентация детали внутри сборки.</summary>
-    public Placement Placement { get; private set; } = null!;
-
-    /// <summary>Произвольный 2D-контур детали (для нестандартных форм). <c>null</c> — прямоугольник.</summary>
+    public string Role { get; private set; } = string.Empty;
+    public string? LengthExpr { get; private set; }
+    public string? WidthExpr { get; private set; }
+    public string? X { get; private set; }
+    public string? Y { get; private set; }
+    public string? Z { get; private set; }
+    public double RotationX { get; private set; }
+    public double RotationY { get; private set; }
+    public double RotationZ { get; private set; }
+    public string? Condition { get; private set; }
     public List<ShapeSegment>? Shape { get; private set; }
-
-    /// <summary>Количество одинаковых деталей (по умолчанию 1).</summary>
     public int Quantity { get; private set; } = 1;
-
-    /// <summary>Формула для вычисления количества (например, зависимость от высоты). <c>null</c> — используется <see cref="Quantity"/>.</summary>
     public string? QuantityFormula { get; private set; }
-
-    /// <summary>Порядок сортировки при отображении деталей сборки.</summary>
     public int SortOrder { get; private set; }
 
     private AssemblyPart() { }
@@ -44,10 +27,16 @@ public sealed class AssemblyPart : Entity<Guid>
     public static AssemblyPart Create(
         Guid assemblyId,
         Guid componentId,
-        PartRole role,
-        Placement placement,
-        DynamicSize? length = null,
-        DynamicSize? width = null,
+        string role,
+        string? lengthExpr = null,
+        string? widthExpr = null,
+        string? x = null,
+        string? y = null,
+        string? z = null,
+        double rotationX = 0,
+        double rotationY = 0,
+        double rotationZ = 0,
+        string? condition = null,
         int quantity = 1,
         string? quantityFormula = null,
         int sortOrder = 0,
@@ -59,9 +48,15 @@ public sealed class AssemblyPart : Entity<Guid>
             AssemblyId = assemblyId,
             ComponentId = componentId,
             Role = role,
-            Placement = placement,
-            Length = length,
-            Width = width,
+            LengthExpr = lengthExpr,
+            WidthExpr = widthExpr,
+            X = x,
+            Y = y,
+            Z = z,
+            RotationX = rotationX,
+            RotationY = rotationY,
+            RotationZ = rotationZ,
+            Condition = condition,
             Shape = shape,
             Quantity = quantity,
             QuantityFormula = quantityFormula,
@@ -71,10 +66,16 @@ public sealed class AssemblyPart : Entity<Guid>
 
     public void Update(
         Guid componentId,
-        PartRole role,
-        Placement placement,
-        DynamicSize? length,
-        DynamicSize? width,
+        string role,
+        string? lengthExpr,
+        string? widthExpr,
+        string? x,
+        string? y,
+        string? z,
+        double rotationX,
+        double rotationY,
+        double rotationZ,
+        string? condition,
         int quantity,
         string? quantityFormula,
         int sortOrder,
@@ -82,9 +83,15 @@ public sealed class AssemblyPart : Entity<Guid>
     {
         ComponentId = componentId;
         Role = role;
-        Placement = placement;
-        Length = length;
-        Width = width;
+        LengthExpr = lengthExpr;
+        WidthExpr = widthExpr;
+        X = x;
+        Y = y;
+        Z = z;
+        RotationX = rotationX;
+        RotationY = rotationY;
+        RotationZ = rotationZ;
+        Condition = condition;
         Shape = shape;
         Quantity = quantity;
         QuantityFormula = quantityFormula;

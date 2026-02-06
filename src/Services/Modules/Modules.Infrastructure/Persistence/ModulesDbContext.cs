@@ -74,20 +74,15 @@ public sealed class ModulesDbContext : DbContext, IUnitOfWork
             builder.Property(x => x.IsActive).HasColumnName("is_active").IsRequired().HasDefaultValue(true);
             builder.Property(x => x.CreatedAt).HasColumnName("created_at").IsRequired();
 
-            builder.Property(x => x.Dimensions).HasColumnName("dimensions").HasColumnType("jsonb").IsRequired()
+            builder.Property(x => x.Parameters).HasColumnName("parameters").HasColumnType("jsonb").IsRequired()
                 .HasConversion(
                     v => JsonSerializer.Serialize(v, JsonOptions),
-                    v => JsonSerializer.Deserialize<Dimensions>(v, JsonOptions)!);
+                    v => JsonSerializer.Deserialize<Dictionary<string, double>>(v, JsonOptions)!);
 
-            builder.Property(x => x.Constraints).HasColumnName("constraints").HasColumnType("jsonb")
+            builder.Property(x => x.ParamConstraints).HasColumnName("param_constraints").HasColumnType("jsonb")
                 .HasConversion(
                     v => v == null ? null : JsonSerializer.Serialize(v, JsonOptions),
-                    v => v == null ? null : JsonSerializer.Deserialize<Constraints>(v, JsonOptions));
-
-            builder.Property(x => x.Construction).HasColumnName("construction").HasColumnType("jsonb")
-                .HasConversion(
-                    v => v == null ? null : JsonSerializer.Serialize(v, JsonOptions),
-                    v => v == null ? null : JsonSerializer.Deserialize<Construction>(v, JsonOptions));
+                    v => v == null ? null : JsonSerializer.Deserialize<Dictionary<string, ParamConstraint>>(v, JsonOptions));
 
             builder.HasIndex(x => x.Type).IsUnique();
             builder.HasIndex(x => x.CategoryId);
@@ -143,26 +138,19 @@ public sealed class ModulesDbContext : DbContext, IUnitOfWork
             builder.Property(x => x.Id).HasColumnName("id").ValueGeneratedNever();
             builder.Property(x => x.AssemblyId).HasColumnName("assembly_id").IsRequired();
             builder.Property(x => x.ComponentId).HasColumnName("component_id").IsRequired();
-            builder.Property(x => x.Role).HasColumnName("role").HasMaxLength(50).IsRequired()
-                .HasConversion<string>();
+            builder.Property(x => x.Role).HasColumnName("role").HasMaxLength(50).IsRequired();
+            builder.Property(x => x.LengthExpr).HasColumnName("length_expr").HasMaxLength(500);
+            builder.Property(x => x.WidthExpr).HasColumnName("width_expr").HasMaxLength(500);
+            builder.Property(x => x.X).HasColumnName("x").HasMaxLength(500);
+            builder.Property(x => x.Y).HasColumnName("y").HasMaxLength(500);
+            builder.Property(x => x.Z).HasColumnName("z").HasMaxLength(500);
+            builder.Property(x => x.RotationX).HasColumnName("rotation_x").IsRequired();
+            builder.Property(x => x.RotationY).HasColumnName("rotation_y").IsRequired();
+            builder.Property(x => x.RotationZ).HasColumnName("rotation_z").IsRequired();
+            builder.Property(x => x.Condition).HasColumnName("condition").HasMaxLength(500);
             builder.Property(x => x.Quantity).HasColumnName("quantity").IsRequired().HasDefaultValue(1);
             builder.Property(x => x.QuantityFormula).HasColumnName("quantity_formula").HasMaxLength(200);
             builder.Property(x => x.SortOrder).HasColumnName("sort_order").IsRequired();
-
-            builder.Property(x => x.Length).HasColumnName("length").HasColumnType("jsonb")
-                .HasConversion(
-                    v => v == null ? null : JsonSerializer.Serialize(v, JsonOptions),
-                    v => v == null ? null : JsonSerializer.Deserialize<DynamicSize>(v, JsonOptions));
-
-            builder.Property(x => x.Width).HasColumnName("width").HasColumnType("jsonb")
-                .HasConversion(
-                    v => v == null ? null : JsonSerializer.Serialize(v, JsonOptions),
-                    v => v == null ? null : JsonSerializer.Deserialize<DynamicSize>(v, JsonOptions));
-
-            builder.Property(x => x.Placement).HasColumnName("placement").HasColumnType("jsonb").IsRequired()
-                .HasConversion(
-                    v => JsonSerializer.Serialize(v, JsonOptions),
-                    v => JsonSerializer.Deserialize<Placement>(v, JsonOptions)!);
 
             builder.Property(x => x.Shape).HasColumnName("shape").HasColumnType("jsonb")
                 .HasConversion(

@@ -36,22 +36,9 @@ namespace Modules.API.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("category_id");
 
-                    b.Property<string>("Constraints")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("constraints");
-
-                    b.Property<string>("Construction")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("construction");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
-
-                    b.Property<string>("Dimensions")
-                        .IsRequired()
-                        .HasColumnType("jsonb")
-                        .HasColumnName("dimensions");
 
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
@@ -64,6 +51,15 @@ namespace Modules.API.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
                         .HasColumnName("name");
+
+                    b.Property<string>("ParamConstraints")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("param_constraints");
+
+                    b.Property<string>("Parameters")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("parameters");
 
                     b.Property<string>("Type")
                         .IsRequired()
@@ -97,14 +93,15 @@ namespace Modules.API.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("component_id");
 
-                    b.Property<string>("Length")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("length");
+                    b.Property<string>("Condition")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("condition");
 
-                    b.Property<string>("Placement")
-                        .IsRequired()
-                        .HasColumnType("jsonb")
-                        .HasColumnName("placement");
+                    b.Property<string>("LengthExpr")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("length_expr");
 
                     b.Property<int>("Quantity")
                         .ValueGeneratedOnAdd()
@@ -123,6 +120,18 @@ namespace Modules.API.Migrations
                         .HasColumnType("character varying(50)")
                         .HasColumnName("role");
 
+                    b.Property<double>("RotationX")
+                        .HasColumnType("double precision")
+                        .HasColumnName("rotation_x");
+
+                    b.Property<double>("RotationY")
+                        .HasColumnType("double precision")
+                        .HasColumnName("rotation_y");
+
+                    b.Property<double>("RotationZ")
+                        .HasColumnType("double precision")
+                        .HasColumnName("rotation_z");
+
                     b.Property<string>("Shape")
                         .HasColumnType("jsonb")
                         .HasColumnName("shape");
@@ -131,9 +140,25 @@ namespace Modules.API.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("sort_order");
 
-                    b.Property<string>("Width")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("width");
+                    b.Property<string>("WidthExpr")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("width_expr");
+
+                    b.Property<string>("X")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("x");
+
+                    b.Property<string>("Y")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("y");
+
+                    b.Property<string>("Z")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("z");
 
                     b.HasKey("Id");
 

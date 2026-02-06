@@ -8,9 +8,8 @@ public sealed record AssemblyDto(
     string CategoryId,
     string Type,
     string Name,
-    Dimensions Dimensions,
-    Constraints? Constraints,
-    Construction? Construction,
+    Dictionary<string, double> Parameters,
+    Dictionary<string, ParamConstraint>? ParamConstraints,
     bool IsActive,
     DateTime CreatedAt,
     List<AssemblyPartDto> Parts);

@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Modules.API.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class ParametricModel : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -57,6 +57,28 @@ namespace Modules.API.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "storage_connections",
+                schema: "modules",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    type = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false, defaultValue: "s3"),
+                    endpoint = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    bucket = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    region = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    access_key = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    secret_key = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_storage_connections", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "assemblies",
                 schema: "modules",
                 columns: table => new
@@ -65,9 +87,8 @@ namespace Modules.API.Migrations
                     category_id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     type = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    dimensions = table.Column<string>(type: "jsonb", nullable: false),
-                    constraints = table.Column<string>(type: "jsonb", nullable: true),
-                    construction = table.Column<string>(type: "jsonb", nullable: true),
+                    parameters = table.Column<string>(type: "jsonb", nullable: false),
+                    param_constraints = table.Column<string>(type: "jsonb", nullable: true),
                     is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
@@ -92,9 +113,16 @@ namespace Modules.API.Migrations
                     assembly_id = table.Column<Guid>(type: "uuid", nullable: false),
                     component_id = table.Column<Guid>(type: "uuid", nullable: false),
                     role = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    length = table.Column<string>(type: "jsonb", nullable: true),
-                    width = table.Column<string>(type: "jsonb", nullable: true),
-                    placement = table.Column<string>(type: "jsonb", nullable: false),
+                    length_expr = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    width_expr = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    x = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    y = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    z = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    rotation_x = table.Column<double>(type: "double precision", nullable: false),
+                    rotation_y = table.Column<double>(type: "double precision", nullable: false),
+                    rotation_z = table.Column<double>(type: "double precision", nullable: false),
+                    condition = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    shape = table.Column<string>(type: "jsonb", nullable: true),
                     quantity = table.Column<int>(type: "integer", nullable: false, defaultValue: 1),
                     quantity_formula = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     sort_order = table.Column<int>(type: "integer", nullable: false)
@@ -160,6 +188,12 @@ namespace Modules.API.Migrations
                 schema: "modules",
                 table: "module_categories",
                 column: "parent_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_storage_connections_is_active",
+                schema: "modules",
+                table: "storage_connections",
+                column: "is_active");
         }
 
         /// <inheritdoc />
@@ -167,6 +201,10 @@ namespace Modules.API.Migrations
         {
             migrationBuilder.DropTable(
                 name: "assembly_parts",
+                schema: "modules");
+
+            migrationBuilder.DropTable(
+                name: "storage_connections",
                 schema: "modules");
 
             migrationBuilder.DropTable(

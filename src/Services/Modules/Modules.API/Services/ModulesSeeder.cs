@@ -83,38 +83,26 @@ public sealed class ModulesSeeder
         var back = components.First(c => c.Name == "Задняя стенка");
         var shelf = components.First(c => c.Name == "Полка");
 
-        var defaultConstruction = new Construction(16, 4, 18, 2, 0, 2, 20, 10);
-
-        var t = defaultConstruction.PanelThickness;    // 16
-        var sg = defaultConstruction.ShelfSideGap;      // 2
-        var ri = defaultConstruction.ShelfRearInset;    // 20
-        var fi = defaultConstruction.ShelfFrontInset;   // 10
-
-        // Assembly definitions: (categoryId, type, name, w, h, d, wMin, wMax, hMin, hMax, dMin, dMax)
+        // Assembly definitions
         var assemblyDefs = new (string cat, string type, string name,
             double w, double h, double d,
             double wMin, double wMax, double hMin, double hMax, double dMin, double dMax)[]
         {
-            // Угловые верхние
             ("wall_corner", "wall-corner-straight-left", "Угловой прямой левый верхний", 600, 720, 320, 300, 900, 550, 920, 280, 350),
             ("wall_corner", "wall-corner-straight-right", "Угловой прямой правый верхний", 600, 720, 320, 300, 900, 550, 920, 280, 350),
             ("wall_corner", "wall-corner-l-shaped", "Угловой г-образный верхний", 600, 720, 600, 300, 1200, 550, 920, 550, 650),
             ("wall_corner", "wall-corner-diagonal", "Угловой диагональный верхний", 600, 720, 600, 550, 650, 550, 920, 550, 650),
 
-            // Угловые нижние
             ("base_corner", "base-corner-straight-left", "Угловой прямой левый нижний", 900, 720, 560, 300, 1200, 720, 720, 500, 600),
             ("base_corner", "base-corner-straight-right", "Угловой прямой правый нижний", 900, 720, 560, 300, 1200, 720, 720, 500, 600),
             ("base_corner", "base-corner-l-shaped", "Угловой г-образный нижний", 600, 720, 900, 300, 1200, 720, 720, 800, 1000),
             ("base_corner", "base-corner-diagonal", "Угловой диагональный нижний", 900, 720, 900, 800, 1000, 720, 720, 800, 1000),
 
-            // Антресоль
             ("mezzanine", "mezzanine", "Антресоль", 800, 360, 320, 300, 1200, 250, 550, 280, 350),
 
-            // Верхние базы
             ("wall_double_door", "wall-double-door", "Верхняя база двудверный", 800, 720, 320, 600, 1200, 550, 920, 280, 350),
             ("wall_single_door", "wall-single-door", "Верхняя база однодверный", 450, 720, 320, 300, 600, 550, 920, 280, 350),
 
-            // Нижние базы
             ("base_double_door", "base-double-door", "Нижняя база двудверный", 800, 720, 560, 600, 1200, 720, 720, 500, 600),
             ("base_single_door", "base-single-door", "Нижняя база однодверный", 450, 720, 560, 300, 600, 720, 720, 500, 600),
         };
@@ -124,123 +112,124 @@ public sealed class ModulesSeeder
 
         foreach (var def in assemblyDefs)
         {
-            var assembly = Assembly.Create(
-                def.cat, def.type, def.name,
-                new Dimensions(def.w, def.d, def.h),
-                new Constraints(def.wMin, def.wMax, def.hMin, def.hMax, def.dMin, def.dMax),
-                defaultConstruction);
+            var parameters = new Dictionary<string, double>
+            {
+                ["W"] = def.w,
+                ["H"] = def.h,
+                ["D"] = def.d,
+                ["t"] = 16,
+                ["tBack"] = 4,
+                ["facadeGap"] = 2,
+                ["shelfSideGap"] = 2,
+                ["shelfRearInset"] = 20,
+                ["shelfFrontInset"] = 10
+            };
 
+            var paramConstraints = new Dictionary<string, ParamConstraint>
+            {
+                ["W"] = new(def.wMin, def.wMax, null),
+                ["H"] = new(def.hMin, def.hMax, null),
+                ["D"] = new(def.dMin, def.dMax, null)
+            };
+
+            var assembly = Assembly.Create(def.cat, def.type, def.name, parameters, paramConstraints);
             assemblies.Add(assembly);
 
             var isDiagonal = def.type.Contains("diagonal");
             var isLShaped = def.type.Contains("l-shaped");
 
-            // Left: полная высота, полная глубина, привязка к левому краю
-            allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, PartRole.Left,
-                placement: new Placement(AnchorOrigin.Start, AnchorOrigin.Start, AnchorOrigin.Start, 0, 0, 0, 0, 0, 0),
-                length: new DynamicSize(DimensionSource.ParentHeight, 0, null),
-                width: new DynamicSize(DimensionSource.ParentDepth, 0, null),
+            // Left wall
+            allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, "left",
+                lengthExpr: "H",
+                widthExpr: "D",
+                x: "0", y: "0", z: "0",
                 sortOrder: 0));
 
-            // Right: полная высота, полная глубина, привязка к правому краю
-            allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, PartRole.Right,
-                placement: new Placement(AnchorOrigin.End, AnchorOrigin.Start, AnchorOrigin.Start, 0, 0, 0, 0, 0, 0),
-                length: new DynamicSize(DimensionSource.ParentHeight, 0, null),
-                width: new DynamicSize(DimensionSource.ParentDepth, 0, null),
+            // Right wall
+            allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, "right",
+                lengthExpr: "H",
+                widthExpr: "D",
+                x: "W - t", y: "0", z: "0",
                 sortOrder: 1));
 
             if (isDiagonal)
             {
-                // Диагональные шкафы: Top/Bottom — пятиугольники
-                var inner = def.w - 2 * t;  // внутренний размер
-                var cut = inner - 300;       // срез (зависит от размера шкафа)
+                // Diagonal: pentagon-shaped top/bottom
+                var innerExpr = "W - 2*t";
+                var cutExpr = "W - 2*t - 300";
 
-                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, PartRole.Top,
-                    placement: new Placement(AnchorOrigin.Start, AnchorOrigin.End, AnchorOrigin.Start, t, 0, 0, 0, 0, 0),
-                    length: new DynamicSize(DimensionSource.ParentWidth, -2 * t, null),
-                    width: new DynamicSize(DimensionSource.ParentDepth, 0, null),
+                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, "top",
+                    lengthExpr: "W - 2*t",
+                    widthExpr: "D",
+                    x: "t", y: "D", z: "0",
                     sortOrder: 2,
-                    shape: DiagonalPentagon(inner, cut)));
+                    shape: DiagonalPentagon(innerExpr, cutExpr)));
 
-                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, PartRole.Bottom,
-                    placement: new Placement(AnchorOrigin.Start, AnchorOrigin.Start, AnchorOrigin.Start, t, 0, 0, 0, 0, 0),
-                    length: new DynamicSize(DimensionSource.ParentWidth, -2 * t, null),
-                    width: new DynamicSize(DimensionSource.ParentDepth, 0, null),
+                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, "bottom",
+                    lengthExpr: "W - 2*t",
+                    widthExpr: "D",
+                    x: "t", y: "0", z: "0",
                     sortOrder: 3,
-                    shape: DiagonalPentagon(inner, cut)));
+                    shape: DiagonalPentagon(innerExpr, cutExpr)));
 
-                // Back для диагональных: прямоугольник вдоль диагонали (shape=null)
-                allParts.Add(AssemblyPart.Create(assembly.Id, back.Id, PartRole.Back,
-                    placement: new Placement(AnchorOrigin.Start, AnchorOrigin.Start, AnchorOrigin.End, t, t, -10, 0, 0, 0),
-                    length: new DynamicSize(DimensionSource.ParentWidth, -2 * t, null),
-                    width: new DynamicSize(DimensionSource.ParentHeight, -2 * t, null),
+                allParts.Add(AssemblyPart.Create(assembly.Id, back.Id, "back",
+                    lengthExpr: "W - 2*t",
+                    widthExpr: "H - 2*t",
+                    x: "t", y: "t", z: "-10",
                     sortOrder: 4));
             }
             else if (isLShaped)
             {
-                // Г-образные шкафы: Top/Bottom — L-контур (гексагон, 6 точек)
-                var innerW = def.w - 2 * t;
-                var innerD = def.d - 2 * t;
-                var armDepth = def.cat.StartsWith("wall") ? 304.0 : 544.0;
-                var lShape = LShapeHexagon(innerW, innerD, armDepth);
+                var armDepth = def.cat.StartsWith("wall") ? "304" : "544";
 
-                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, PartRole.Top,
-                    placement: new Placement(AnchorOrigin.Start, AnchorOrigin.End, AnchorOrigin.Start, t, 0, 0, 0, 0, 0),
-                    length: new DynamicSize(DimensionSource.ParentWidth, -2 * t, null),
-                    width: new DynamicSize(DimensionSource.ParentDepth, 0, null),
+                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, "top",
+                    lengthExpr: "W - 2*t",
+                    widthExpr: "D",
+                    x: "t", y: "D", z: "0",
                     sortOrder: 2,
-                    shape: lShape));
+                    shape: LShapeHexagon("W - 2*t", "D - 2*t", armDepth)));
 
-                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, PartRole.Bottom,
-                    placement: new Placement(AnchorOrigin.Start, AnchorOrigin.Start, AnchorOrigin.Start, t, 0, 0, 0, 0, 0),
-                    length: new DynamicSize(DimensionSource.ParentWidth, -2 * t, null),
-                    width: new DynamicSize(DimensionSource.ParentDepth, 0, null),
+                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, "bottom",
+                    lengthExpr: "W - 2*t",
+                    widthExpr: "D",
+                    x: "t", y: "0", z: "0",
                     sortOrder: 3,
-                    shape: lShape));
+                    shape: LShapeHexagon("W - 2*t", "D - 2*t", armDepth)));
 
-                // Back — прямоугольник с вырезами (как у обычных шкафов)
-                var backW = def.w - 2 * t;
-                var backH = def.h - 2 * t;
-
-                allParts.Add(AssemblyPart.Create(assembly.Id, back.Id, PartRole.Back,
-                    placement: new Placement(AnchorOrigin.Start, AnchorOrigin.Start, AnchorOrigin.End, t, t, -10, 0, 0, 0),
-                    length: new DynamicSize(DimensionSource.ParentWidth, -2 * t, null),
-                    width: new DynamicSize(DimensionSource.ParentHeight, -2 * t, null),
+                allParts.Add(AssemblyPart.Create(assembly.Id, back.Id, "back",
+                    lengthExpr: "W - 2*t",
+                    widthExpr: "H - 2*t",
+                    x: "t", y: "t", z: "-10",
                     sortOrder: 4,
-                    shape: BackPanelWithNotches(backW, backH)));
+                    shape: BackPanelWithNotches("W - 2*t", "H - 2*t")));
             }
             else
             {
-                // Обычные шкафы: Top/Bottom — прямоугольники (shape=null)
-                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, PartRole.Top,
-                    placement: new Placement(AnchorOrigin.Start, AnchorOrigin.End, AnchorOrigin.Start, t, 0, 0, 0, 0, 0),
-                    length: new DynamicSize(DimensionSource.ParentWidth, -2 * t, null),
-                    width: new DynamicSize(DimensionSource.ParentDepth, 0, null),
+                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, "top",
+                    lengthExpr: "W - 2*t",
+                    widthExpr: "D",
+                    x: "t", y: "D", z: "0",
                     sortOrder: 2));
 
-                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, PartRole.Bottom,
-                    placement: new Placement(AnchorOrigin.Start, AnchorOrigin.Start, AnchorOrigin.Start, t, 0, 0, 0, 0, 0),
-                    length: new DynamicSize(DimensionSource.ParentWidth, -2 * t, null),
-                    width: new DynamicSize(DimensionSource.ParentDepth, 0, null),
+                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, "bottom",
+                    lengthExpr: "W - 2*t",
+                    widthExpr: "D",
+                    x: "t", y: "0", z: "0",
                     sortOrder: 3));
 
-                // Back с вырезами в верхних углах
-                var backW = def.w - 2 * t;
-                var backH = def.h - 2 * t;
-
-                allParts.Add(AssemblyPart.Create(assembly.Id, back.Id, PartRole.Back,
-                    placement: new Placement(AnchorOrigin.Start, AnchorOrigin.Start, AnchorOrigin.End, t, t, -10, 0, 0, 0),
-                    length: new DynamicSize(DimensionSource.ParentWidth, -2 * t, null),
-                    width: new DynamicSize(DimensionSource.ParentHeight, -2 * t, null),
+                allParts.Add(AssemblyPart.Create(assembly.Id, back.Id, "back",
+                    lengthExpr: "W - 2*t",
+                    widthExpr: "H - 2*t",
+                    x: "t", y: "t", z: "-10",
                     sortOrder: 4,
-                    shape: BackPanelWithNotches(backW, backH)));
+                    shape: BackPanelWithNotches("W - 2*t", "H - 2*t")));
             }
 
-            // Shelf: ширина минус стенки и зазоры, глубина минус отступы спереди и сзади
-            allParts.Add(AssemblyPart.Create(assembly.Id, shelf.Id, PartRole.Shelf,
-                placement: new Placement(AnchorOrigin.Start, AnchorOrigin.Center, AnchorOrigin.Start, t + sg, 0, fi, 0, 0, 0),
-                length: new DynamicSize(DimensionSource.ParentWidth, -2 * t - 2 * sg, null),
-                width: new DynamicSize(DimensionSource.ParentDepth, -ri - fi, null),
+            // Shelf
+            allParts.Add(AssemblyPart.Create(assembly.Id, shelf.Id, "shelf",
+                lengthExpr: "W - 2*t - 2*shelfSideGap",
+                widthExpr: "D - shelfRearInset - shelfFrontInset",
+                x: "t + shelfSideGap", y: "0", z: "shelfFrontInset",
                 sortOrder: 5));
         }
 
@@ -253,45 +242,43 @@ public sealed class ModulesSeeder
         _logger.LogInformation("Seeded {Count} assembly parts", allParts.Count);
     }
 
-    /// <summary>
-    /// Задняя стенка с вырезами 25×50 в верхних углах (8 точек).
-    /// </summary>
-    private static List<ShapeSegment> BackPanelWithNotches(double w, double h)
+    private static List<ShapeSegment> BackPanelWithNotches(string w, string h)
     {
-        double cw = 25, ch = 50;
         return
         [
-            new LineSegment(0, 0),       new LineSegment(w, 0),
-            new LineSegment(w, h - ch),  new LineSegment(w - cw, h - ch),
-            new LineSegment(w - cw, h),  new LineSegment(cw, h),
-            new LineSegment(cw, h - ch), new LineSegment(0, h - ch)
+            new LineSegment("0", "0"),
+            new LineSegment(w, "0"),
+            new LineSegment(w, $"{h} - 50"),
+            new LineSegment($"{w} - 25", $"{h} - 50"),
+            new LineSegment($"{w} - 25", h),
+            new LineSegment("25", h),
+            new LineSegment("25", $"{h} - 50"),
+            new LineSegment("0", $"{h} - 50")
         ];
     }
 
-    /// <summary>
-    /// Пятиугольник для диагонального шкафа (вид сверху).
-    /// </summary>
-    private static List<ShapeSegment> DiagonalPentagon(double size, double cut)
+    private static List<ShapeSegment> DiagonalPentagon(string size, string cut)
     {
         return
         [
-            new LineSegment(0, 0),      new LineSegment(size, 0),
-            new LineSegment(size, cut),  new LineSegment(cut, size),
-            new LineSegment(0, size)
+            new LineSegment("0", "0"),
+            new LineSegment(size, "0"),
+            new LineSegment(size, cut),
+            new LineSegment(cut, size),
+            new LineSegment("0", size)
         ];
     }
 
-    /// <summary>
-    /// L-образный контур для г-образного углового шкафа (вид сверху, 6 точек).
-    /// innerW/innerD — внутренние размеры (W-2t, D-2t), armDepth — глубина рукава минус t.
-    /// </summary>
-    private static List<ShapeSegment> LShapeHexagon(double innerW, double innerD, double armDepth)
+    private static List<ShapeSegment> LShapeHexagon(string innerW, string innerD, string armDepth)
     {
         return
         [
-            new LineSegment(0, 0),             new LineSegment(innerW, 0),
-            new LineSegment(innerW, armDepth),  new LineSegment(armDepth, armDepth),
-            new LineSegment(armDepth, innerD),  new LineSegment(0, innerD)
+            new LineSegment("0", "0"),
+            new LineSegment(innerW, "0"),
+            new LineSegment(innerW, armDepth),
+            new LineSegment(armDepth, armDepth),
+            new LineSegment(armDepth, innerD),
+            new LineSegment("0", innerD)
         ];
     }
 }

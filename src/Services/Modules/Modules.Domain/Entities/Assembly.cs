@@ -8,9 +8,8 @@ public sealed class Assembly : Entity<Guid>
     public string CategoryId { get; private set; } = string.Empty;
     public string Type { get; private set; } = string.Empty;
     public string Name { get; private set; } = string.Empty;
-    public Dimensions Dimensions { get; private set; } = null!;
-    public Constraints? Constraints { get; private set; }
-    public Construction? Construction { get; private set; }
+    public Dictionary<string, double> Parameters { get; private set; } = new();
+    public Dictionary<string, ParamConstraint>? ParamConstraints { get; private set; }
     public bool IsActive { get; private set; } = true;
     public DateTime CreatedAt { get; private set; }
 
@@ -20,9 +19,8 @@ public sealed class Assembly : Entity<Guid>
         string categoryId,
         string type,
         string name,
-        Dimensions dimensions,
-        Constraints? constraints = null,
-        Construction? construction = null)
+        Dictionary<string, double> parameters,
+        Dictionary<string, ParamConstraint>? paramConstraints = null)
     {
         return new Assembly
         {
@@ -30,20 +28,21 @@ public sealed class Assembly : Entity<Guid>
             CategoryId = categoryId,
             Type = type,
             Name = name,
-            Dimensions = dimensions,
-            Constraints = constraints,
-            Construction = construction,
+            Parameters = parameters,
+            ParamConstraints = paramConstraints,
             IsActive = true,
             CreatedAt = DateTime.UtcNow
         };
     }
 
-    public void Update(string name, Dimensions dimensions, Constraints? constraints, Construction? construction)
+    public void Update(
+        string name,
+        Dictionary<string, double> parameters,
+        Dictionary<string, ParamConstraint>? paramConstraints)
     {
         Name = name;
-        Dimensions = dimensions;
-        Constraints = constraints;
-        Construction = construction;
+        Parameters = parameters;
+        ParamConstraints = paramConstraints;
     }
 
     public void Activate() => IsActive = true;
