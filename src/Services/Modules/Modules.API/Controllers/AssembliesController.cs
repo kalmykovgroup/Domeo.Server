@@ -4,6 +4,7 @@ using Modules.Contracts.DTOs.AssemblyParts;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Modules.Application.Commands.Assemblies;
 using Modules.Application.Commands.AssemblyParts;
 using Modules.Application.Queries.Assemblies;
 using Modules.Contracts.Routes;
@@ -41,6 +42,43 @@ public class AssembliesController : ControllerBase
         }
 
         return Ok(ApiResponse<List<AssemblyDto>>.Ok(response.Items));
+    }
+
+    [HttpPost]
+    [Authorize(Roles = "catalogAdmin,systemAdmin")]
+    public async Task<ActionResult<ApiResponse<AssemblyDto>>> CreateAssembly(
+        [FromBody] CreateAssemblyRequest request)
+    {
+        var result = await _sender.Send(new CreateAssemblyCommand(
+            request.CategoryId,
+            request.Type,
+            request.Name,
+            request.Parameters,
+            request.ParamConstraints));
+
+        return Created($"assemblies/{result.Id}", ApiResponse<AssemblyDto>.Ok(result));
+    }
+
+    [HttpPut(ModulesRoutes.ById)]
+    [Authorize(Roles = "catalogAdmin,systemAdmin")]
+    public async Task<ActionResult<ApiResponse<AssemblyDto>>> UpdateAssembly(
+        Guid id, [FromBody] UpdateAssemblyRequest request)
+    {
+        var result = await _sender.Send(new UpdateAssemblyCommand(
+            id,
+            request.Name,
+            request.Parameters,
+            request.ParamConstraints));
+
+        return Ok(ApiResponse<AssemblyDto>.Ok(result));
+    }
+
+    [HttpDelete(ModulesRoutes.ById)]
+    [Authorize(Roles = "catalogAdmin,systemAdmin")]
+    public async Task<IActionResult> DeleteAssembly(Guid id)
+    {
+        await _sender.Send(new DeleteAssemblyCommand(id));
+        return Ok(ApiResponse.Ok("Assembly deleted"));
     }
 
     [HttpPost("{assemblyId:guid}/parts")]
