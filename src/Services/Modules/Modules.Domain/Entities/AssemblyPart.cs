@@ -7,7 +7,6 @@ public sealed class AssemblyPart : Entity<Guid>
 {
     public Guid AssemblyId { get; private set; }
     public Guid ComponentId { get; private set; }
-    public string Role { get; private set; } = string.Empty;
     public string? LengthExpr { get; private set; }
     public string? WidthExpr { get; private set; }
     public string? X { get; private set; }
@@ -27,7 +26,6 @@ public sealed class AssemblyPart : Entity<Guid>
     public static AssemblyPart Create(
         Guid assemblyId,
         Guid componentId,
-        string role,
         string? lengthExpr = null,
         string? widthExpr = null,
         string? x = null,
@@ -47,7 +45,6 @@ public sealed class AssemblyPart : Entity<Guid>
             Id = Guid.NewGuid(),
             AssemblyId = assemblyId,
             ComponentId = componentId,
-            Role = role,
             LengthExpr = lengthExpr,
             WidthExpr = widthExpr,
             X = x,
@@ -66,7 +63,6 @@ public sealed class AssemblyPart : Entity<Guid>
 
     public void Update(
         Guid componentId,
-        string role,
         string? lengthExpr,
         string? widthExpr,
         string? x,
@@ -82,7 +78,6 @@ public sealed class AssemblyPart : Entity<Guid>
         List<ShapeSegment>? shape = null)
     {
         ComponentId = componentId;
-        Role = role;
         LengthExpr = lengthExpr;
         WidthExpr = widthExpr;
         X = x;

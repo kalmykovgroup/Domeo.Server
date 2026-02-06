@@ -4,7 +4,6 @@ namespace Modules.Contracts.DTOs.AssemblyParts;
 
 public sealed record CreateAssemblyPartRequest(
     Guid ComponentId,
-    string Role,
     string? LengthExpr,
     string? WidthExpr,
     string? X,

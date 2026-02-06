@@ -139,7 +139,6 @@ public sealed class ModulesDbContext : DbContext, IUnitOfWork
             builder.Property(x => x.Id).HasColumnName("id").ValueGeneratedNever();
             builder.Property(x => x.AssemblyId).HasColumnName("assembly_id").IsRequired();
             builder.Property(x => x.ComponentId).HasColumnName("component_id").IsRequired();
-            builder.Property(x => x.Role).HasColumnName("role").HasMaxLength(50).IsRequired();
             builder.Property(x => x.LengthExpr).HasColumnName("length_expr").HasMaxLength(500);
             builder.Property(x => x.WidthExpr).HasColumnName("width_expr").HasMaxLength(500);
             builder.Property(x => x.X).HasColumnName("x").HasMaxLength(500);

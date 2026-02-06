@@ -7,7 +7,6 @@ public sealed record AssemblyPartDto(
     Guid Id,
     Guid AssemblyId,
     Guid ComponentId,
-    string Role,
     string? LengthExpr,
     string? WidthExpr,
     string? X,

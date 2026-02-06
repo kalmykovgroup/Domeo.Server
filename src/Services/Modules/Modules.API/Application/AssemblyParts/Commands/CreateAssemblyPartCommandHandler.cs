@@ -39,7 +39,6 @@ public sealed class CreateAssemblyPartCommandHandler : IRequestHandler<CreateAss
         var part = AssemblyPart.Create(
             request.AssemblyId,
             request.ComponentId,
-            request.Role,
             request.LengthExpr,
             request.WidthExpr,
             request.X, request.Y, request.Z,
@@ -59,7 +58,7 @@ public sealed class CreateAssemblyPartCommandHandler : IRequestHandler<CreateAss
 
         return new AssemblyPartDto(
             part.Id, part.AssemblyId, part.ComponentId,
-            part.Role, part.LengthExpr, part.WidthExpr,
+            part.LengthExpr, part.WidthExpr,
             part.X, part.Y, part.Z,
             part.RotationX, part.RotationY, part.RotationZ,
             part.Condition,

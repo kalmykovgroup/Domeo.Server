@@ -25,7 +25,6 @@ public class PartsController : ControllerBase
         var result = await _sender.Send(new UpdateAssemblyPartCommand(
             id,
             request.ComponentId,
-            request.Role,
             request.LengthExpr,
             request.WidthExpr,
             request.X, request.Y, request.Z,

@@ -83,7 +83,6 @@ public sealed class ModulesSeeder
         var back = components.First(c => c.Name == "Задняя стенка");
         var shelf = components.First(c => c.Name == "Полка");
 
-        // Assembly definitions
         var assemblyDefs = new (string cat, string type, string name,
             double w, double h, double d,
             double wMin, double wMax, double hMin, double hMax, double dMin, double dMax)[]
@@ -112,6 +111,9 @@ public sealed class ModulesSeeder
 
         foreach (var def in assemblyDefs)
         {
+            var isDiagonal = def.type.Contains("diagonal");
+            var isLShaped = def.type.Contains("l-shaped");
+
             var parameters = new Dictionary<string, double>
             {
                 ["W"] = def.w,
@@ -122,115 +124,176 @@ public sealed class ModulesSeeder
                 ["facadeGap"] = 2,
                 ["shelfSideGap"] = 2,
                 ["shelfRearInset"] = 20,
-                ["shelfFrontInset"] = 10
+                ["shelfFrontInset"] = 10,
+                ["shelfY"] = Math.Round(def.h / 3.0)
             };
 
             var paramConstraints = new Dictionary<string, ParamConstraint>
             {
                 ["W"] = new(def.wMin, def.wMax, null),
                 ["H"] = new(def.hMin, def.hMax, null),
-                ["D"] = new(def.dMin, def.dMax, null)
+                ["D"] = new(def.dMin, def.dMax, null),
+                ["shelfY"] = new(32, def.h - 48, null)
             };
+
+            if (isLShaped)
+            {
+                var armDepthVal = def.cat.StartsWith("wall") ? 304.0 : 544.0;
+                parameters["armDepth"] = armDepthVal;
+            }
+
+            if (isDiagonal)
+            {
+                parameters["cutSize"] = 300;
+            }
 
             var assembly = Assembly.Create(def.cat, def.type, def.name, parameters, paramConstraints);
             assemblies.Add(assembly);
 
-            var isDiagonal = def.type.Contains("diagonal");
-            var isLShaped = def.type.Contains("l-shaped");
-
-            // Left wall
-            allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, "left",
-                lengthExpr: "H",
-                widthExpr: "D",
-                x: "0", y: "0", z: "0",
-                sortOrder: 0));
-
-            // Right wall
-            allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, "right",
-                lengthExpr: "H",
-                widthExpr: "D",
-                x: "W - t", y: "0", z: "0",
-                sortOrder: 1));
-
             if (isDiagonal)
             {
-                // Diagonal: pentagon-shaped top/bottom
-                var innerExpr = "W - 2*t";
-                var cutExpr = "W - 2*t - 300";
-
-                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, "top",
-                    lengthExpr: "W - 2*t",
-                    widthExpr: "D",
-                    x: "t", y: "H - t", z: "0",
-                    sortOrder: 2,
-                    shape: DiagonalPentagon(innerExpr, cutExpr)));
-
-                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, "bottom",
-                    lengthExpr: "W - 2*t",
-                    widthExpr: "D",
+                // #0 Left wall
+                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
                     x: "t", y: "0", z: "0",
-                    sortOrder: 3,
-                    shape: DiagonalPentagon(innerExpr, cutExpr)));
+                    rotationY: -90,
+                    sortOrder: 0,
+                    shape: Rectangle("D", "H")));
 
-                allParts.Add(AssemblyPart.Create(assembly.Id, back.Id, "back",
-                    lengthExpr: "W - 2*t",
-                    widthExpr: "H - 2*t",
-                    x: "t", y: "t", z: "-10",
-                    sortOrder: 4));
+                // #1 Right wall (reduced depth)
+                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
+                    x: "W", y: "0", z: "0",
+                    rotationY: -90,
+                    sortOrder: 1,
+                    shape: Rectangle("W-3*t-cutSize", "H")));
+
+                // #2 Top
+                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
+                    x: "t", y: "H", z: "0",
+                    rotationX: 90,
+                    sortOrder: 2,
+                    shape: DiagonalPentagon("W-2*t", "W-2*t-cutSize")));
+
+                // #3 Bottom
+                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
+                    x: "t", y: "t", z: "0",
+                    rotationX: 90,
+                    sortOrder: 3,
+                    shape: DiagonalPentagon("W-2*t", "W-2*t-cutSize")));
+
+                // #4 Back (rectangle)
+                allParts.Add(AssemblyPart.Create(assembly.Id, back.Id,
+                    x: "t", y: "t", z: "0",
+                    sortOrder: 4,
+                    shape: Rectangle("W - 2*t", "H - 2*t")));
+
+                // #5 Shelf
+                allParts.Add(AssemblyPart.Create(assembly.Id, shelf.Id,
+                    x: "t+shelfSideGap", y: "shelfY+t", z: "shelfFrontInset",
+                    rotationX: 90,
+                    sortOrder: 5,
+                    shape: Rectangle("W-2*t-2*shelfSideGap", "D-shelfRearInset-shelfFrontInset")));
             }
             else if (isLShaped)
             {
-                var armDepth = def.cat.StartsWith("wall") ? "304" : "544";
-
-                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, "top",
-                    lengthExpr: "W - 2*t",
-                    widthExpr: "D",
-                    x: "t", y: "H - t", z: "0",
-                    sortOrder: 2,
-                    shape: LShapeHexagon("W - 2*t", "D - 2*t", armDepth)));
-
-                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, "bottom",
-                    lengthExpr: "W - 2*t",
-                    widthExpr: "D",
+                // #0 Left wall
+                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
                     x: "t", y: "0", z: "0",
-                    sortOrder: 3,
-                    shape: LShapeHexagon("W - 2*t", "D - 2*t", armDepth)));
+                    rotationY: -90,
+                    sortOrder: 0,
+                    shape: Rectangle("D", "H")));
 
-                allParts.Add(AssemblyPart.Create(assembly.Id, back.Id, "back",
-                    lengthExpr: "W - 2*t",
-                    widthExpr: "H - 2*t",
-                    x: "t", y: "t", z: "-10",
+                // #1 Right wall (armDepth deep)
+                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
+                    x: "W", y: "0", z: "0",
+                    rotationY: -90,
+                    sortOrder: 1,
+                    shape: Rectangle("armDepth", "H")));
+
+                // #2 Top (L-shape)
+                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
+                    x: "t", y: "H", z: "0",
+                    rotationX: 90,
+                    sortOrder: 2,
+                    shape: LShapeHexagon("W-2*t", "D-2*t", "armDepth")));
+
+                // #3 Bottom (L-shape)
+                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
+                    x: "t", y: "t", z: "0",
+                    rotationX: 90,
+                    sortOrder: 3,
+                    shape: LShapeHexagon("W-2*t", "D-2*t", "armDepth")));
+
+                // #4 Back (with notches)
+                allParts.Add(AssemblyPart.Create(assembly.Id, back.Id,
+                    x: "t", y: "t", z: "0",
                     sortOrder: 4,
-                    shape: BackPanelWithNotches("W - 2*t", "H - 2*t")));
+                    shape: BackPanelWithNotches("W-2*t", "H-2*t")));
+
+                // #5 Shelf
+                allParts.Add(AssemblyPart.Create(assembly.Id, shelf.Id,
+                    x: "t+shelfSideGap", y: "shelfY+t", z: "shelfFrontInset",
+                    rotationX: 90,
+                    sortOrder: 5,
+                    shape: Rectangle("W-2*t-2*shelfSideGap", "D-shelfRearInset-shelfFrontInset")));
+
+                // #6 Partition wall (side, parallel to left wall)
+                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
+                    x: "armDepth+2*t", y: "0", z: "armDepth",
+                    rotationY: -90,
+                    sortOrder: 6,
+                    shape: Rectangle("W-2*t-armDepth", "H")));
+
+                // #7 Partition wall (front-facing)
+                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
+                    x: "armDepth+t", y: "0", z: "armDepth+t",
+                    sortOrder: 7,
+                    shape: Rectangle("D-2*t-armDepth", "H")));
             }
             else
             {
-                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, "top",
-                    lengthExpr: "W - 2*t",
-                    widthExpr: "D",
-                    x: "t", y: "H - t", z: "0",
-                    sortOrder: 2));
+                // Standard assemblies (straight, mezzanine, single/double door)
 
-                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id, "bottom",
-                    lengthExpr: "W - 2*t",
-                    widthExpr: "D",
+                // #0 Left wall
+                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
                     x: "t", y: "0", z: "0",
-                    sortOrder: 3));
+                    rotationY: -90,
+                    sortOrder: 0,
+                    shape: Rectangle("D", "H")));
 
-                allParts.Add(AssemblyPart.Create(assembly.Id, back.Id, "back",
-                    lengthExpr: "W - 2*t",
-                    widthExpr: "H - 2*t",
-                    x: "t", y: "t", z: "-10",
+                // #1 Right wall
+                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
+                    x: "W", y: "0", z: "0",
+                    rotationY: -90,
+                    sortOrder: 1,
+                    shape: Rectangle("D", "H")));
+
+                // #2 Top
+                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
+                    x: "t", y: "H", z: "0",
+                    rotationX: 90,
+                    sortOrder: 2,
+                    shape: Rectangle("W - 2*t", "D")));
+
+                // #3 Bottom
+                allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
+                    x: "t", y: "t", z: "0",
+                    rotationX: 90,
+                    sortOrder: 3,
+                    shape: Rectangle("W - 2*t", "D")));
+
+                // #4 Back (with notches)
+                allParts.Add(AssemblyPart.Create(assembly.Id, back.Id,
+                    x: "t", y: "t", z: "0",
                     sortOrder: 4,
                     shape: BackPanelWithNotches("W - 2*t", "H - 2*t")));
-            }
 
-            // Shelf
-            allParts.Add(AssemblyPart.Create(assembly.Id, shelf.Id, "shelf",
-                lengthExpr: "W - 2*t - 2*shelfSideGap",
-                widthExpr: "D - shelfRearInset - shelfFrontInset",
-                x: "t + shelfSideGap", y: "0", z: "shelfFrontInset",
-                sortOrder: 5));
+                // #5 Shelf
+                allParts.Add(AssemblyPart.Create(assembly.Id, shelf.Id,
+                    x: "t+shelfSideGap", y: "shelfY+t", z: "shelfFrontInset",
+                    rotationX: 90,
+                    sortOrder: 5,
+                    shape: Rectangle("W-2*t-2*shelfSideGap", "D-shelfRearInset-shelfFrontInset")));
+            }
         }
 
         _dbContext.Assemblies.AddRange(assemblies);
@@ -242,43 +305,42 @@ public sealed class ModulesSeeder
         _logger.LogInformation("Seeded {Count} assembly parts", allParts.Count);
     }
 
-    private static List<ShapeSegment> BackPanelWithNotches(string w, string h)
-    {
-        return
-        [
-            new LineSegment("0", "0"),
-            new LineSegment(w, "0"),
-            new LineSegment(w, $"{h} - 50"),
-            new LineSegment($"{w} - 25", $"{h} - 50"),
-            new LineSegment($"{w} - 25", h),
-            new LineSegment("25", h),
-            new LineSegment("25", $"{h} - 50"),
-            new LineSegment("0", $"{h} - 50")
-        ];
-    }
+    private static List<ShapeSegment> Rectangle(string w, string h) =>
+    [
+        new LineSegment("0", "0"),
+        new LineSegment(w, "0"),
+        new LineSegment(w, h),
+        new LineSegment("0", h)
+    ];
 
-    private static List<ShapeSegment> DiagonalPentagon(string size, string cut)
-    {
-        return
-        [
-            new LineSegment("0", "0"),
-            new LineSegment(size, "0"),
-            new LineSegment(size, cut),
-            new LineSegment(cut, size),
-            new LineSegment("0", size)
-        ];
-    }
+    private static List<ShapeSegment> BackPanelWithNotches(string w, string h) =>
+    [
+        new LineSegment("0", "0"),
+        new LineSegment(w, "0"),
+        new LineSegment(w, $"{h} - 50"),
+        new LineSegment($"{w} - 25", $"{h} - 50"),
+        new LineSegment($"{w} - 25", h),
+        new LineSegment("25", h),
+        new LineSegment("25", $"{h} - 50"),
+        new LineSegment("0", $"{h} - 50")
+    ];
 
-    private static List<ShapeSegment> LShapeHexagon(string innerW, string innerD, string armDepth)
-    {
-        return
-        [
-            new LineSegment("0", "0"),
-            new LineSegment(innerW, "0"),
-            new LineSegment(innerW, armDepth),
-            new LineSegment(armDepth, armDepth),
-            new LineSegment(armDepth, innerD),
-            new LineSegment("0", innerD)
-        ];
-    }
+    private static List<ShapeSegment> DiagonalPentagon(string size, string cut) =>
+    [
+        new LineSegment("0", "0"),
+        new LineSegment(size, "0"),
+        new LineSegment(size, cut),
+        new LineSegment(cut, size),
+        new LineSegment("0", size)
+    ];
+
+    private static List<ShapeSegment> LShapeHexagon(string innerW, string innerD, string armDepth) =>
+    [
+        new LineSegment("0", "0"),
+        new LineSegment(innerW, "0"),
+        new LineSegment(innerW, armDepth),
+        new LineSegment(armDepth, armDepth),
+        new LineSegment(armDepth, innerD),
+        new LineSegment("0", innerD)
+    ];
 }

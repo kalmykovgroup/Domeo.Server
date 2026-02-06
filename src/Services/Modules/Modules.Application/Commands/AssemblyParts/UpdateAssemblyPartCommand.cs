@@ -7,7 +7,6 @@ namespace Modules.Application.Commands.AssemblyParts;
 public sealed record UpdateAssemblyPartCommand(
     Guid Id,
     Guid ComponentId,
-    string Role,
     string? LengthExpr,
     string? WidthExpr,
     string? X,

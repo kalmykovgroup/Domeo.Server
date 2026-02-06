@@ -89,7 +89,6 @@ public class AssembliesController : ControllerBase
         var result = await _sender.Send(new CreateAssemblyPartCommand(
             assemblyId,
             request.ComponentId,
-            request.Role,
             request.LengthExpr,
             request.WidthExpr,
             request.X, request.Y, request.Z,
