@@ -67,6 +67,7 @@ public sealed class ModulesSeeder
             Component.Create("Задняя стенка", new PanelParams(4), ["panel", "back"], color: "#E8D5B7"),
             Component.Create("Полка", new PanelParams(16), ["panel", "shelf"], color: "#B8956A"),
             Component.Create("Полка г-образная", new PanelParams(16), ["panel", "shelf", "l-shaped"], color: "#B8956A"),
+            Component.Create("Ножка", new GlbParams("/uploads/glb/leg.glb", 1.0), ["leg", "glb"]),
             Component.Create("Ручка", new GlbParams("/uploads/glb/3DModelOfACabinetHandle.glb", 1.0), ["handle", "glb"]),
         };
 
@@ -84,6 +85,7 @@ public sealed class ModulesSeeder
         var back = components.First(c => c.Name == "Задняя стенка");
         var shelf = components.First(c => c.Name == "Полка");
         var shelfL = components.First(c => c.Name == "Полка г-образная");
+        var leg = components.First(c => c.Name == "Ножка");
 
         var assemblyDefs = new (string cat, string type, string name,
             double w, double h, double d,
@@ -252,6 +254,30 @@ public sealed class ModulesSeeder
                     x: "0", y: "0", z: "D - t",
                     sortOrder: 6,
                     shape: Rectangle("armDepth", "H")));
+
+                // Add legs for base cabinets only
+                if (def.type == "base-corner-l-shaped")
+                {
+                    // #7 Leg - front left corner
+                    allParts.Add(AssemblyPart.Create(assembly.Id, leg.Id,
+                        x: "10", y: "0", z: "D - 10",
+                        sortOrder: 7));
+
+                    // #8 Leg - front right corner
+                    allParts.Add(AssemblyPart.Create(assembly.Id, leg.Id,
+                        x: "W - t - 10", y: "0", z: "D - 10",
+                        sortOrder: 8));
+
+                    // #9 Leg - back left corner (short arm)
+                    allParts.Add(AssemblyPart.Create(assembly.Id, leg.Id,
+                        x: "10", y: "0", z: "D - armDepth + 10",
+                        sortOrder: 9));
+
+                    // #10 Leg - back right corner (long arm)
+                    allParts.Add(AssemblyPart.Create(assembly.Id, leg.Id,
+                        x: "W - t - 10", y: "0", z: "10",
+                        sortOrder: 10));
+                }
             }
             else
             {
