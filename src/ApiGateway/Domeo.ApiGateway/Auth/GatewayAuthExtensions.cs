@@ -41,6 +41,13 @@ public static class GatewayAuthExtensions
             {
                 OnMessageReceived = context =>
                 {
+                    // Use refreshed token if middleware already refreshed it
+                    if (context.HttpContext.Items.TryGetValue("RefreshedAccessToken", out var refreshed))
+                    {
+                        context.Token = (string)refreshed!;
+                        return Task.CompletedTask;
+                    }
+
                     // Try to get token from cookie
                     if (context.Request.Cookies.TryGetValue(AuthRoutes.Cookies.AccessToken, out var token))
                     {

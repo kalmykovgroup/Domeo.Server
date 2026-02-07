@@ -59,6 +59,14 @@ try
     // Auth - JWKS validation from MockAuthCenter
     builder.Services.AddGatewayAuth(builder.Configuration);
 
+    // HttpClient for token refresh calls to Auth.API
+    var authServiceUrl = builder.Configuration["Services:Auth"] ?? "http://localhost:5001";
+    builder.Services.AddHttpClient("auth-internal", client =>
+    {
+        client.BaseAddress = new Uri(authServiceUrl);
+        client.Timeout = TimeSpan.FromSeconds(5);
+    });
+
     // YARP Reverse Proxy - code-based configuration from Domeo.Shared.Routes
     builder.Services
         .AddReverseProxy()
@@ -89,6 +97,7 @@ try
 
     // Middleware Pipeline
     app.UseSerilogRequestLogging();
+    app.UseTokenRefresh();
     app.UseAuthentication();
     app.UseAuthorization();
     app.UseClaimsForwarding(); // Forward user claims to microservices
