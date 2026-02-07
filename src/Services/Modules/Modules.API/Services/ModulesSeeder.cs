@@ -161,14 +161,14 @@ public sealed class ModulesSeeder
                     x: "t", y: "0", z: "backOffset",
                     rotationY: -90,
                     sortOrder: 0,
-                    shape: Rectangle("D - backOffset", "H")));
+                    shape: Rectangle("D", "H")));
 
                 // #1 Right wall (reduced depth)
                 allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
                     x: "W", y: "0", z: "backOffset",
                     rotationY: -90,
                     sortOrder: 1,
-                    shape: Rectangle("W-3*t-cutSize - backOffset", "H")));
+                    shape: Rectangle("W-3*t-cutSize", "H")));
 
                 // #2 Top
                 allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
@@ -193,65 +193,65 @@ public sealed class ModulesSeeder
 
                 // #5 Shelf
                 allParts.Add(AssemblyPart.Create(assembly.Id, shelf.Id,
-                    x: "t+shelfSideGap", y: "shelfY+t", z: "shelfFrontInset",
+                    x: "t+shelfSideGap", y: "shelfY+t", z: "backOffset + shelfFrontInset",
                     rotationX: 90,
                     sortOrder: 5,
-                    shape: Rectangle("W-2*t-2*shelfSideGap", "D-2*backOffset-shelfRearInset-shelfFrontInset")));
+                    shape: Rectangle("W-2*t-2*shelfSideGap", "D-shelfRearInset-shelfFrontInset")));
             }
             else if (isLShaped)
             {
                 // L-shaped: левая сторона у стены (нет левой боковой),
                 // есть передняя боковая (x=0,z=D) и правая боковая (x=W)
 
-                // #0 Left back panel (overlay on left side)
+                // #0 Left back panel (overlay on left side, extrudes -X from x=tBack to x=0)
                 allParts.Add(AssemblyPart.Create(assembly.Id, back.Id,
-                    x: "2", y: "2", z: "0",
+                    x: "tBack", y: "2", z: "2",
                     rotationY: -90,
                     sortOrder: 0,
-                    shape: BackPanelWithNotches("D - 4", "H - 4"),
+                    shape: BackPanelWithNotches("backZOffset + D - 4", "H - 4"),
                     provides: new Dictionary<string, string> { ["backXOffset"] = "tBack" }));
 
                 // #1 Right wall (armDepth deep)
                 allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
-                    x: "W", y: "0", z: "backZOffset",
+                    x: "backXOffset + W", y: "0", z: "backZOffset",
                     rotationY: -90,
                     sortOrder: 1,
                     shape: Rectangle("armDepth", "H")));
 
                 // #2 Top (L-shape)
                 allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
-                    x: "0", y: "H", z: "backZOffset",
+                    x: "backXOffset", y: "H", z: "backZOffset",
                     rotationX: 90,
                     sortOrder: 2,
-                    shape: LShapeHexagon("W - t", "D - t - backZOffset", "armDepth - 2")));
+                    shape: LShapeHexagon("W - t", "D - t", "armDepth - 2")));
 
                 // #3 Bottom (L-shape)
                 allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
-                    x: "0", y: "t", z: "backZOffset",
+                    x: "backXOffset", y: "t", z: "backZOffset",
                     rotationX: 90,
                     sortOrder: 3,
-                    shape: LShapeHexagon("W - t", "D - t - backZOffset", "armDepth - 2")));
+                    shape: LShapeHexagon("W - t", "D - t", "armDepth - 2")));
 
                 // #4 Right back panel (overlay on rear side)
                 allParts.Add(AssemblyPart.Create(assembly.Id, back.Id,
-                    x: "2", y: "2", z: "2",
+                    x: "2", y: "2", z: "0",
                     sortOrder: 4,
-                    shape: BackPanelWithNotches("W - 4", "H - 4"),
+                    shape: BackPanelWithNotches("backXOffset + W - 4", "H - 4"),
                     provides: new Dictionary<string, string> { ["backZOffset"] = "tBack" }));
 
                 // #5 Shelf (L-shape)
                 allParts.Add(AssemblyPart.Create(assembly.Id, shelfL.Id,
-                    x: "shelfSideGap", y: "shelfY+t", z: "shelfFrontInset",
+                    x: "backXOffset + shelfSideGap", y: "shelfY+t", z: "backZOffset + shelfSideGap",
                     rotationX: 90,
                     sortOrder: 5,
                     shape: LShapeHexagon(
                         "W - t - 2*shelfSideGap",
-                        "D - t - backZOffset - shelfRearInset - shelfFrontInset",
-                        "armDepth - 2")));
+                        "D - t - 2*shelfSideGap",
+                        "armDepth - 2 - 2*shelfSideGap")));
 
                 // #6 Front side wall
                 allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
-                    x: "0", y: "0", z: "D - t",
+                    x: "backXOffset", y: "0", z: "backZOffset + D - t",
                     sortOrder: 6,
                     shape: Rectangle("armDepth", "H")));
 
@@ -260,22 +260,22 @@ public sealed class ModulesSeeder
                 {
                     // #7 Leg - front left corner
                     allParts.Add(AssemblyPart.Create(assembly.Id, leg.Id,
-                        x: "10", y: "0", z: "D - 10",
+                        x: "backXOffset + 10", y: "0", z: "backZOffset + D - 10",
                         sortOrder: 7));
 
                     // #8 Leg - front right corner
                     allParts.Add(AssemblyPart.Create(assembly.Id, leg.Id,
-                        x: "W - t - 10", y: "0", z: "D - 10",
+                        x: "backXOffset + W - t - 10", y: "0", z: "backZOffset + D - 10",
                         sortOrder: 8));
 
                     // #9 Leg - back left corner (short arm)
                     allParts.Add(AssemblyPart.Create(assembly.Id, leg.Id,
-                        x: "10", y: "0", z: "D - armDepth + 10",
+                        x: "backXOffset + 10", y: "0", z: "backZOffset + D - armDepth + 10",
                         sortOrder: 9));
 
                     // #10 Leg - back right corner (long arm)
                     allParts.Add(AssemblyPart.Create(assembly.Id, leg.Id,
-                        x: "W - t - 10", y: "0", z: "10",
+                        x: "backXOffset + W - t - 10", y: "0", z: "backZOffset + 10",
                         sortOrder: 10));
                 }
             }
@@ -288,28 +288,28 @@ public sealed class ModulesSeeder
                     x: "t", y: "0", z: "backOffset",
                     rotationY: -90,
                     sortOrder: 0,
-                    shape: Rectangle("D - backOffset", "H")));
+                    shape: Rectangle("D", "H")));
 
                 // #1 Right wall
                 allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
                     x: "W", y: "0", z: "backOffset",
                     rotationY: -90,
                     sortOrder: 1,
-                    shape: Rectangle("D - backOffset", "H")));
+                    shape: Rectangle("D", "H")));
 
                 // #2 Top
                 allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
                     x: "t", y: "H", z: "backOffset",
                     rotationX: 90,
                     sortOrder: 2,
-                    shape: Rectangle("W - 2*t", "D - 2*backOffset")));
+                    shape: Rectangle("W - 2*t", "D")));
 
                 // #3 Bottom
                 allParts.Add(AssemblyPart.Create(assembly.Id, wall.Id,
                     x: "t", y: "t", z: "backOffset",
                     rotationX: 90,
                     sortOrder: 3,
-                    shape: Rectangle("W - 2*t", "D - 2*backOffset")));
+                    shape: Rectangle("W - 2*t", "D")));
 
                 // #4 Back panel (overlay on base)
                 allParts.Add(AssemblyPart.Create(assembly.Id, back.Id,
@@ -320,10 +320,10 @@ public sealed class ModulesSeeder
 
                 // #5 Shelf
                 allParts.Add(AssemblyPart.Create(assembly.Id, shelf.Id,
-                    x: "t+shelfSideGap", y: "shelfY+t", z: "shelfFrontInset",
+                    x: "t+shelfSideGap", y: "shelfY+t", z: "backOffset + shelfFrontInset",
                     rotationX: 90,
                     sortOrder: 5,
-                    shape: Rectangle("W-2*t-2*shelfSideGap", "D-2*backOffset-shelfRearInset-shelfFrontInset")));
+                    shape: Rectangle("W-2*t-2*shelfSideGap", "D-shelfRearInset-shelfFrontInset")));
             }
         }
 
